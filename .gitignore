@@ -1,0 +1,11 @@
+# direnv files
+.envrc
+.direnv
+
+# Secrets
+.env
+
+# Backend / Python
+.venv/
+__pycache__/
+*.sqlite3
