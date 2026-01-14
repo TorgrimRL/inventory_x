@@ -1,3 +1,17 @@
+# direnv files
+.envrc
+.direnv
+
+# Secrets
+.env
+
+# Backend / Python
+.venv/
+__pycache__/
+*.sqlite3
+.postgres_data/
+.postgres_socket/
+
 # Logs
 logs
 *.log
@@ -22,3 +36,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Vite chace
+.vite/

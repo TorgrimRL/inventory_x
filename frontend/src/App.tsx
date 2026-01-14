@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [items, setItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/inventory/')
+      .then(res => res.json())
+      .then(data => setItems(data.data || data))
+      .catch(err => console.error(err));
+  }, []);
 
   return (
     <>
@@ -16,18 +23,22 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+
+      <h1>Inventory App</h1>
+
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <h2>Items from Database:</h2>
+
+        {items.length === 0 && <p>Loading items or no data found...</p>}
+
+        {items.map((item) => (
+          <div key={item.id} style={{ border: '1px solid #444', margin: '10px', padding: '10px', borderRadius: '8px' }}>
+            <h3>{item.name}</h3>
+            <p>Price: ${item.price}</p>
+            <p>Stock: {item.stock}</p>
+          </div>
+        ))}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
