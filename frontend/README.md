@@ -14,3 +14,13 @@ Make sure to be in the correct folder `frontend`
 Run this command: `npm run dev`
 
 Click on `http://localhost:5173/` to get to the web page
+
+
+# Install Jest
+`npm install --save-dev jest`
+`npm i -D jest`
+`npm i -D jest jest-environment-jsdom @types/jest ts-jest`
+`npm i -D @testing-library/react @testing-library/jest-dom @testing-library/user-event`
+`npm i -D identity-obj-proxy`
+`npm i -D @types/jest jest-environment-jsdom`
+`npm i -D ts-jest typescript`
