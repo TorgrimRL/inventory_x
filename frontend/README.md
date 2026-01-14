@@ -10,7 +10,7 @@ Commands:
 Command: `npm install`
 
 # Run the program
-Make sure to be in the correct folder `template_vite`
+Make sure to be in the correct folder `frontend`
 Run this command: `npm run dev`
 
 Click on `http://localhost:5173/` to get to the web page
