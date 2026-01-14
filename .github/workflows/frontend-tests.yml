@@ -5,11 +5,21 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-tests.yml"
+    paths-ignore:
+      - "frontend/README.md"
+      - ".vscode/**"
+      - "README.md"
+
   push:
-    branches: [main, master]
+    branches: ["**"]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-tests.yml"
+    paths-ignore:
+      - "frontend/README.md"
+      - ".vscode/**"
+      - "README.md"
+
   workflow_dispatch:
 
 jobs:
