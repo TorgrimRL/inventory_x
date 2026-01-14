@@ -15,8 +15,8 @@ Run this command: `npm run dev`
 
 Click on `http://localhost:5173/` to get to the web page
 
-
-# Install Jest
+# Testing
+## Install Jest
 `npm install --save-dev jest`
 `npm i -D jest`
 `npm i -D jest jest-environment-jsdom @types/jest ts-jest`
@@ -24,3 +24,6 @@ Click on `http://localhost:5173/` to get to the web page
 `npm i -D identity-obj-proxy`
 `npm i -D @types/jest jest-environment-jsdom`
 `npm i -D ts-jest typescript`
+
+## Run tests
+Command: `npm test`
