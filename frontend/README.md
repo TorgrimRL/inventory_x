@@ -13,4 +13,4 @@ Command: `npm install`
 Make sure to be in the correct folder `template_vite`
 Run this command: `npm run dev`
 
-Click on `http://localhosy:5173/` to get to the web page
+Click on `http://localhost:5173/` to get to the web page
