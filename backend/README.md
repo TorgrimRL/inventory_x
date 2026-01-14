@@ -8,19 +8,6 @@
 uv sync --frozen
 ```
 
-### MIGRATION
-
-**Add Migration**
-
-> A Database schema presents as a object, crete a new table is done by
-> initialize a new class, and sets its field by sets the class attributes in
-> 'api/inventory/models.py'. Then run the command below to generate a completed
-> migrate file and sync to the database.
-
-```bash
-uv run python manage.py makemigrations
-```
-
 **Apply Migration**
 
 ```bash
@@ -51,6 +38,31 @@ Note for docker this has to be run instead:
 uv run {command}
 ```
 
+### Run Testing for backend
+
+```bash
+uv run pytest -v -x
+```
+
+### Run Type checking
+
+```bash
+uv run mypy . --exclude 'migrations/'
+```
+
+### MIGRATION
+
+**Add Migration**
+
+> A Database schema presents as a object, crete a new table is done by
+> initialize a new class, and sets its field by sets the class attributes in
+> 'api/inventory/models.py'. Then run the command below to generate a completed
+> migrate file and sync to the database.
+
+```bash
+uv run python manage.py makemigrations
+```
+
 ---
 
 ## Architecture & Structure
@@ -72,6 +84,9 @@ backend/
 │   │   ├── management/
 │   │   │   └── commands/
 │   │   │       └── seed_db.py  <-- Script: Populates DB with mock data
+│   │   ├── tests/          <-- Domain Tests
+│   │   │   ├── test_services.py <-- Unit Tests (Logic only)
+│   │   │   └── test_views.py    <-- Integration Tests (API Endpoints)
 │   │   ├── apps.py     <-- App Configuration (api.inventory)
 │   │   ├── urls.py     <-- Domain-specific Routes
 │   │   ├── services.py <-- Business Logic (Pure Python)
