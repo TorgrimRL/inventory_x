@@ -16,7 +16,7 @@ Run this command: `npm run dev`
 Click on `http://localhost:5173/` to get to the web page
 
 # Testing
-## Install Jest
+## Install Jest and other packages
 `npm install --save-dev jest` 
 
 `npm i -D jest` 
