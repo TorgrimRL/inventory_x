@@ -8,6 +8,19 @@
 uv sync --frozen
 ```
 
+### MIGRATION
+
+**Add Migration**
+
+> A Database schema presents as a object, crete a new table is done by
+> initialize a new class, and sets its field by sets the class attributes in
+> 'api/inventory/models.py'. Then run the command below to generate a completed
+> migrate file and sync to the database.
+
+```bash
+uv run python manage.py makemigrations
+```
+
 **Apply Migration**
 
 ```bash
