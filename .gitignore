@@ -9,3 +9,5 @@
 .venv/
 __pycache__/
 *.sqlite3
+.postgres_data/
+.postgres_socket/

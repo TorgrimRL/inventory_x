@@ -8,13 +8,31 @@
 uv sync --frozen
 ```
 
+**Apply Migration**
+
+```bash
+uv run python manage.py migrate
+```
+
+**Seed Mock Data**
+
+```bash
+uv run python manage.py seed_db
+```
+
+NOTE: `seed_db` is just the name of the `.py` file in
+`api/<domain>/management/commands/`
+
 **Running the Server**
 
 ```bash
 uv run python manage.py runserver
 ```
 
-**Running General Commands**
+Note for docker this has to be run instead:
+`uv run python manage.py runserver 0.0.0.0:8000`
+
+**Running General Commands in uv**
 
 ```bash
 uv run {command}
@@ -32,12 +50,15 @@ robustness.
 The standard Django "inner project folder" (usually named `backend/`) has been
 renamed to `config/` to avoid the repetitive `backend/backend/` structure.
 
-```
+```text
 backend/
 ├── config/             <-- Global Settings, Env, & Main Router
 ├── api/                <-- Domain Logic Container
-│   ├── __init__.py
 │   ├── inventory/      <-- Inventory Domain (App)
+│   │   ├── migrations/     <-- Database schema changes (Do not edit manually)
+│   │   ├── management/
+│   │   │   └── commands/
+│   │   │       └── seed_db.py  <-- Script: Populates DB with mock data
 │   │   ├── apps.py     <-- App Configuration (api.inventory)
 │   │   ├── urls.py     <-- Domain-specific Routes
 │   │   ├── services.py <-- Business Logic (Pure Python)
@@ -70,10 +91,17 @@ This approach has the benefits of:
 
 - `uv 0.9.24`
 - `Python 3.12.12`
+- `PostgreSQL 16`
 
 **Formatters & Linters**
 
 - `ruff` (Python)
 - `prettier` (Markdown/Web)
-- `nixfmt` (Nix)
 - `typos` (Spell checking)
+- `shfmt` (Shell/Bash)
+
+**Environment Variables**
+
+- `DATABASE_URL`: `postgres://<USERNAME>:pass@db_container:5432/inventory_db`
+- `DEBUG`: `True`
+- `SECRET_KEY`: `<any-random-string>`

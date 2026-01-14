@@ -28,14 +28,34 @@
             packages = [
               pkgs.uv
               python
+              pkgs.postgresql_16
             ];
 
             shellHook = ''
               export UV_PYTHON="${python}/bin/python"
               export UV_NO_MANAGED_PYTHON=1
 
-              echo "uv: $(uv --version)"
-              echo "python: $(${python}/bin/python --version)"
+              # Database Variables
+              export PGDATA="$PWD/.postgres_data"
+              export PGHOST="$PWD/.postgres_socket"
+              export PGPORT="5433"
+              export DATABASE_NAME="inventory_dev"
+              export DATABASE_URL="postgres://$(whoami)@localhost:$PGPORT/$DATABASE_NAME"
+
+              export LD_LIBRARY_PATH="${pkgs.postgresql.lib}/lib:$LD_LIBRARY_PATH"
+              export PKG_CONFIG_PATH="${pkgs.postgresql}/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+              export PATH="$PWD/scripts:$PATH"
+
+              source ./scripts/_boot_postgres.sh
+
+              alias backend="uv run python manage.py runserver"
+
+              echo "------------------------------------------------"
+              echo " Django Environment Ready"
+              echo "   Database: $DATABASE_URL"
+              echo "   Commands: backend, db_reset.sh"
+              echo "------------------------------------------------"
             '';
           };
         }
@@ -65,6 +85,9 @@
                 proseWrap = "always";
               };
             };
+
+            # Shell / Bash
+            shfmt.enable = true;
 
             # Spelling
             typos.enable = true;
