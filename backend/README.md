@@ -1,6 +1,8 @@
 # Backend
-> **Recommended:** For local development, use the Docker quickstart in the repo root (`../README.md`).
-> This README is mainly for running the backend outside Docker.
+
+> **Recommended:** For local development, use the Docker quickstart in the repo
+> root (`../README.md`). This README is mainly for running the backend outside
+> Docker.
 
 ## Commands
 

@@ -1,0 +1,44 @@
+# dependencies
+**/node_modules
+
+# build outputs
+**/dist
+**/build
+**/out
+**/.vite
+**/.next
+
+# coverage / test artifacts
+**/coverage
+**/.nyc_output
+
+# caches
+**/.eslintcache
+**/.cache
+**/.tmp
+**/.temp
+
+# python caches / venv
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
+**/env/
+
+# env files
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# misc
+**/.DS_Store
+
+**/.git
+**/.idea
+**/.vscode
