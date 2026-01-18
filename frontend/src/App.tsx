@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 
 import viteLogo from "/vite.svg";
 
@@ -8,7 +8,6 @@ import reactLogo from "./assets/react.svg";
 
 function App() {
   const [items, setItems] = useState<any[]>([]);
-  console.log(doesNotExist);
 
   useEffect(() => {
     fetch("/api/inventory/")
