@@ -108,7 +108,7 @@ backend/
 This approach has the benefits of:
 
 1. better testing experience (service and responses can be tested separately)
-1. in the case of frontend changes (where response might change) the service
+1. in the case of frontend changes (where response might change)                                     the service
    remains the same
 
 ---
