@@ -1,6 +1,6 @@
 name: "User Story (Draft)"
-description: "Backlog user story. Add specification-by-example before sprint."
-title: "US: "
+description: "Backlog user story. Put the user story in the ISSUE TITLE. Add specification-by-example before sprint."
+title: "As a "
 labels:
   - "type: user story"
   - "needs-spec"
@@ -12,16 +12,11 @@ body:
         ### How we use this (INF-2900)
         - **User stories** should describe **visible value** to the user (avoid technical jargon).
         - Before moving a story to **Sprint / In Progress**, add **Specification by example** (Context → Action → Assertion).
-        - Keep label **needs-spec** until examples are added.
+        - Keep label **needs-spec** until you add specification-by-example before sprint.
 
-  - type: input
-    id: story
-    attributes:
-      label: "User story (Why / Who / What)"
-      description: 'Use: "As a <role>, I can <action> so that <value>."'
-      placeholder: "As a business owner, I can create an account so that I can access InventoryX securely."
-    validations:
-      required: true
+        ## Title rule (important)
+        Put the user story in the **issue title** using this format:
+        **As a <role>, I can <action> so that <value>.**
 
   - type: textarea
     id: notes
