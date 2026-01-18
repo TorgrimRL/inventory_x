@@ -1,3 +1,7 @@
+# Frontend
+> **Recommended:** For local development, use the Docker quickstart in the repo root (`../README.md`).
+> This README is mainly for running the frontend outside Docker.
+
 # Download Node.js
 
 `https://nodejs.org/en/download`
