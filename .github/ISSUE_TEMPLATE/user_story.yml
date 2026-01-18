@@ -1,21 +1,24 @@
-name: User Story (Draft)
-description: Create a user story (specification can be added later before sprint)
-labels: ["type: user story", "needs-spec"]
+name: "User Story (Draft)"
+description: "Backlog user story. Add specification-by-example before sprint."
+title: "US: "
+labels:
+  - "type: user story"
+  - "needs-spec"
+
 body:
   - type: markdown
     attributes:
       value: |
-        ## User Story
-        Write the story now. Add "Specification by example" later during refinement (before moving to Sprint/In Progress).
-        
-        **Team rule suggestion:**
-        - Keep label `needs-spec` until examples are added.
-        - Remove `needs-spec` when story is sprint-ready.
+        ### How we use this (INF-2900)
+        - **User stories** should describe **visible value** to the user (avoid technical jargon).
+        - Before moving a story to **Sprint / In Progress**, add **Specification by example** (Context → Action → Assertion).
+        - Keep label **needs-spec** until examples are added.
 
   - type: input
     id: story
     attributes:
-      label: User story (As a... I can... so that...)
+      label: "User story (Why / Who / What)"
+      description: 'Use: "As a <role>, I can <action> so that <value>."'
       placeholder: "As a business owner, I can create an account so that I can access InventoryX securely."
     validations:
       required: true
@@ -23,21 +26,40 @@ body:
   - type: textarea
     id: notes
     attributes:
-      label: Notes / assumptions
-      description: Optional. Add context, constraints, or clarifications.
+      label: "Notes / questions (for refinement)"
+      description: "Anything unclear? Any assumptions?"
       placeholder: |
-        - Minimum password length: 8
-        - Email must be unique
+        - What fields are required?
+        - Any constraints or edge cases?
     validations:
       required: false
+
+  - type: checkboxes
+    id: invest
+    attributes:
+      label: "INVEST quick check (before sprint)"
+      options:
+        - label: "Independent (not blocked by another story)"
+        - label: "Valuable (visible value to the user)"
+        - label: "Estimable (we understand enough)"
+        - label: "Small (fits in a sprint)"
+        - label: "Testable (we can specify examples)"
 
   - type: textarea
     id: spec_examples
     attributes:
-      label: Specification by example (add before sprint)
-      description: Optional now. Add examples later: Title + Context + Action + Assertion.
+      label: "Specification by example (add before sprint)"
+      description: "Add 1–3 happy + exceptional cases (and edge cases if relevant)."
       placeholder: |
-        Example: Successful account creation (happy case)
+        Example: <Short, descriptive title> (happy case)
+        Context:
+        - ...
+        Action:
+        - ...
+        Assertion:
+        - ...
+
+        Example: <Short, descriptive title> (exceptional case)
         Context:
         - ...
         Action:
@@ -50,11 +72,8 @@ body:
   - type: checkboxes
     id: sprint_ready
     attributes:
-      label: Sprint-ready checklist (fill out before moving to Sprint/In Progress)
+      label: "Sprint-ready gate (team rule)"
       options:
-        - label: I added at least one specification-by-example case
-          required: false
-        - label: Story is small enough (INVEST)
-          required: false
-        - label: Story has an estimate (if used)
-          required: false
+        - label: "At least one specification-by-example case is written"
+        - label: "Story has an estimate (if we estimate stories)"
+        - label: "needs-spec label removed before moving to Sprint/In Progress"
