@@ -1,0 +1,61 @@
+name: User Story (Draft)
+description: Create a user story (specification can be added later before sprint)
+title: ""
+labels: ["type: user story", "needs-spec"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## User Story
+        Write the story now. Add "Specification by example" later during refinement (before moving to Sprint/In Progress).
+        
+        **Team rule suggestion:**
+        - Keep label `needs-spec` until examples are added.
+        - Remove `needs-spec` when story is sprint-ready.
+
+  - type: input
+    id: story
+    attributes:
+      label: User story (As a... I can... so that...)
+      placeholder: "As a business owner, I can create an account so that I can access InventoryX securely."
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / assumptions
+      description: Optional. Add context, constraints, or clarifications.
+      placeholder: |
+        - Minimum password length: 8
+        - Email must be unique
+    validations:
+      required: false
+
+  - type: textarea
+    id: spec_examples
+    attributes:
+      label: Specification by example (add before sprint)
+      description: Optional now. Add examples later: Title + Context + Action + Assertion.
+      placeholder: |
+        Example: Successful account creation (happy case)
+        Context:
+        - ...
+        Action:
+        - ...
+        Assertion:
+        - ...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: sprint_ready
+    attributes:
+      label: Sprint-ready checklist (fill out before moving to Sprint/In Progress)
+      options:
+        - label: I added at least one specification-by-example case
+          required: false
+        - label: Story is small enough (INVEST)
+          required: false
+        - label: Story has an estimate (if used)
+          required: false
