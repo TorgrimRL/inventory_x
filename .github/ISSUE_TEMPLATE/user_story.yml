@@ -1,6 +1,5 @@
 name: User Story (Draft)
 description: Create a user story (specification can be added later before sprint)
-title: ""
 labels: ["type: user story", "needs-spec"]
 body:
   - type: markdown
