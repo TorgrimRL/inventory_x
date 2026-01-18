@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+
+import { useEffect, useState } from "react";
+
+import viteLogo from "/vite.svg";
+
+import reactLogo from "./assets/react.svg";
 
 function App() {
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/inventory/')
-      .then(res => res.json())
-      .then(data => setItems(data.data || data))
-      .catch(err => console.error(err));
+    fetch("/api/inventory/")
+      .then((res) => res.json())
+      .then((data) => setItems(data.data || data))
+      .catch((err) => console.error(err));
   }, []);
 
   return (
@@ -32,7 +35,15 @@ function App() {
         {items.length === 0 && <p>Loading items or no data found...</p>}
 
         {items.map((item) => (
-          <div key={item.id} style={{ border: '1px solid #444', margin: '10px', padding: '10px', borderRadius: '8px' }}>
+          <div
+            key={item.id}
+            style={{
+              border: "1px solid #444",
+              margin: "10px",
+              padding: "10px",
+              borderRadius: "8px",
+            }}
+          >
             <h3>{item.name}</h3>
             <p>Price: ${item.price}</p>
             <p>Stock: {item.stock}</p>
@@ -40,7 +51,7 @@ function App() {
         ))}
       </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

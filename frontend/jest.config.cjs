@@ -17,7 +17,8 @@ module.exports = {
 
   moduleNameMapper: {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-    "\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$": "<rootDir>/src/test/fileMock.cjs",
+    "\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$":
+      "<rootDir>/src/test/fileMock.cjs",
   },
 
   testMatch: ["<rootDir>/src/**/*.test.(ts|tsx)"],
