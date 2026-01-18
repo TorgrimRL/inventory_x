@@ -38,6 +38,48 @@ Note for docker this has to be run instead:
 uv run {command}
 ```
 
+### Format (Ruff)
+
+**Check formatting**
+
+```bash
+uv run ruff format --check .
+```
+
+**Auto-fix formatting**
+
+```bash
+uv run ruff format .
+```
+
+### Lint (Ruff)
+
+**Check lint**
+
+```bash
+uv run ruff check .
+```
+
+**Auto-fix lint**
+
+```bash
+uv run ruff check --fix .
+```
+
+### Format README (Prettier)
+
+**Check formatting**
+
+```bash
+npx prettier --check README.md
+```
+
+**Auto-fix formatting**
+
+```bash
+npx prettier --write README.md
+```
+
 ### Run Testing for backend
 
 ```bash
