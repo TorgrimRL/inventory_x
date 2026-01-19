@@ -3,7 +3,6 @@ description: "Backlog user story. Put the user story in the ISSUE TITLE. Add spe
 title: "As a "
 labels:
   - "type: user story"
-  - "needs-spec"
 
 body:
   - type: markdown
@@ -12,7 +11,6 @@ body:
         ### How we use this (INF-2900)
         - **User stories** should describe **visible value** to the user (avoid technical jargon).
         - Before moving a story to **Sprint / In Progress**, add **Specification by example** (Context → Action → Assertion).
-        - Keep label **needs-spec** until you add specification-by-example before sprint.
 
         ## Title rule (important)
         Put the user story in the **issue title** using this format:
