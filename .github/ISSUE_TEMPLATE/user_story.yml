@@ -69,4 +69,3 @@ body:
       options:
         - label: "At least one specification-by-example case is written"
         - label: "Story has an estimate (if we estimate stories)"
-        - label: "needs-spec label removed before moving to Sprint/In Progress"
