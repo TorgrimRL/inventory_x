@@ -1,4 +1,4 @@
-.PHONY: up down reset seed logs fmt lint test check init
+.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db
 
 BACKEND_RUN = docker compose run --rm backend
 BACKEND_RUN_NODEPS = docker compose run --rm --no-deps backend
@@ -11,14 +11,23 @@ down:
 	docker compose down
 
 reset:
-	docker compose down -v
-	docker compose up --build
+	docker compose down -v 
+	docker compose up --build -d
 
 seed:
 	$(BACKEND_RUN) uv run python manage.py seed_db
 
 logs:
 	docker compose logs -f
+
+logs-backend:
+	docker compose logs -f backend
+
+logs-frontend:
+	docker compose logs -f frontend
+
+logs-db:
+	docker compose logs -f db
 
 fmt:
 	$(BACKEND_RUN_NODEPS) uv run ruff format .
@@ -41,6 +50,7 @@ check:
 	$(FRONTEND_RUN) npx eslint .
 	$(BACKEND_RUN) uv run pytest -v -x
 	$(FRONTEND_RUN) npm test
+	@echo "✅ All checks passed"
 
 init:
 	make reset
