@@ -74,6 +74,12 @@ Seed mock data:
 make seed
 ```
 
+Follow logs:
+
+```bash
+make seed
+```
+
 Follow logs for a single service:
 
 ```bash
