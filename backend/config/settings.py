@@ -2,15 +2,23 @@
 Django settings for backend project.
 """
 
+import os
 from pathlib import Path
 
 import environ
 
-# Environment Setup
-env = environ.Env()
-environ.Env.read_env()
-
+# Define BASE_DIR first (Project Root)
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environ
+env = environ.Env()
+
+# Explicitly point to the .env file in the Project Root
+ENV_FILE = os.path.join(BASE_DIR, ".env")
+if os.path.exists(ENV_FILE):
+    environ.Env.read_env(ENV_FILE)
+else:
+    raise FileNotFoundError(f" Ensure .env is located in: {ENV_FILE}")
 
 # Security & Core Config
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-me")
