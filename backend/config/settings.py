@@ -45,6 +45,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 DATABASES = {"default": env.db("DATABASE_URL")}
 
+AUTH_USER_MODEL = "user.User"
+
 # Internationalization & Time
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
