@@ -29,6 +29,35 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py", "*_test.py"]
 addopts = "--reuse-db"
 
+[tool.ruff]
+line-length = 80
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "B",
+    "S",
+    "A",
+    "C4",
+    "UP",
+    "SIM",
+    "RUF",
+    "I",
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore "Use of assert" (S101) in tests
+"**/tests/*" = ["S101"]
+
+# Ignore "Mutable class attributes" in all migration files
+"**/migrations/*.py" = ["RUF012"]
+
+# Ignore "Standard pseudo-random generators" in the seed script
+"**/management/commands/seed_db.py" = ["S311"]
+
 [dependency-groups]
 dev = [
     "django-stubs>=5.2.8",
