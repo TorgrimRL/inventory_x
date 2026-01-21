@@ -3,6 +3,7 @@ Django settings for backend project.
 """
 
 from pathlib import Path
+
 import environ
 
 # Environment Setup
@@ -34,7 +35,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    "default": env.db(
+        "DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
 }
 
 # Internationalization & Time
