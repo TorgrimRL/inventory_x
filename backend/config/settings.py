@@ -3,6 +3,7 @@ Django settings for backend project.
 """
 
 from pathlib import Path
+
 import environ
 
 # Environment Setup
@@ -23,6 +24,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Our apps
     "api.inventory.apps.InventoryConfig",
+    "api.user.apps.UserConfig",
 ]
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -33,9 +35,7 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
-DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-}
+DATABASES = {"default": env.db("DATABASE_URL")}
 
 # Internationalization & Time
 LANGUAGE_CODE = "en-us"
