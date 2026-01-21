@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import Any
 
@@ -21,7 +23,7 @@ class UserManager(BaseUserManager["User"]):
 
     def create_user(
         self, email: str, password: str, **extra_fields: Any
-    ) -> "User":
+    ) -> User:
         """Create and persist a user identified by email."""
         if not email:
             raise ValueError("Email must be set")
