@@ -35,7 +35,7 @@ fmt:
 	$(FRONTEND_RUN) npm run format
 
 lint:
-	$(BACKEND_RUN_NODEPS) uv run ruff check .
+	$(BACKEND_RUN_NODEPS) uv run ruff check . --fix
 	$(FRONTEND_RUN) npx eslint . --fix
 
 test:
