@@ -35,16 +35,20 @@ fmt:
 	$(FRONTEND_RUN) npm run format
 
 lint:
-	$(BACKEND_RUN_NODEPS) uv run ruff check .
+	$(BACKEND_RUN_NODEPS) uv run ruff check . --fix
 	$(FRONTEND_RUN) npx eslint . --fix
 
 test:
 	$(BACKEND_RUN) uv run pytest -v -x
 	$(FRONTEND_RUN) npm test
 
+type-check:
+	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/'
+
 check:
 	$(BACKEND_RUN_NODEPS) uv run ruff format --check .
 	$(BACKEND_RUN_NODEPS) uv run ruff check .
+	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/'
 	$(FRONTEND_RUN) npx prettier --ignore-path /repo/.prettierignore --check /repo/README.md /repo/backend/README.md /repo/frontend/README.md
 	$(FRONTEND_RUN) npm run format:check
 	$(FRONTEND_RUN) npx eslint .

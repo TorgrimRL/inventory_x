@@ -1,4 +1,5 @@
 import pytest
+
 from api.inventory.models import InventoryItem
 from api.inventory.services import get_all_items
 
