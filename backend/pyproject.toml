@@ -32,6 +32,9 @@ addopts = "--reuse-db"
 [tool.ruff]
 line-length = 80
 target-version = "py312"
+extend-exclude = [
+    "*/migrations/*",
+]
 
 [tool.ruff.lint]
 select = [
@@ -49,11 +52,8 @@ select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-# Tests intentionally use `assert` (S101) and dummy passwords (S106).
-"**/tests/**/*.py" = ["S101", "S106"]
-
-# Ignore "Mutable class attributes" in all migration files
-"**/migrations/*.py" = ["RUF012"]
+# Tests intentionally use `assert` (S101) and dummy passwords (S105)(S106).
+"**/tests/**/*.py" = ["S101", "S105", "S106"]
 
 # Ignore "Standard pseudo-random generators" in the seed script
 "**/management/commands/seed_db.py" = ["S311"]
