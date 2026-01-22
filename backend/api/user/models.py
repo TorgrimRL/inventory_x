@@ -66,14 +66,14 @@ class User(AbstractBaseUser):
     display_name: models.CharField[str, str] = models.CharField(
         max_length=80, blank=True
     )
-    is_active: models.BooleanField[bool, bool] = models.BooleanField(  # type: ignore[reportIncompatibleVariableOverride]
+    is_active: models.BooleanField[bool, bool] = models.BooleanField(
         default=True
     )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = []
 
-    objects = UserManager()
+    objects: UserManager = UserManager()
 
     class Meta:
         ordering: ClassVar[list[str]] = ["email"]

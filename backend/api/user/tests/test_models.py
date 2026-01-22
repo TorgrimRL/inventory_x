@@ -1,12 +1,11 @@
 import uuid
-from typing import cast
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from api.user.models import User, UserManager
+from api.user.models import User
 
-manager = cast(UserManager, User.objects)
+manager = User.objects
 
 
 class UserModelTests(TestCase):
