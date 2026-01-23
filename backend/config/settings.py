@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Our apps
     "api.inventory.apps.InventoryConfig",
+    "api.user.apps.UserConfig",
 ]
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
