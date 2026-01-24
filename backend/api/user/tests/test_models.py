@@ -46,12 +46,7 @@ class UserModelTests(TestCase):
 
     def test_create_user_enforces_email_validation(self):
         """Ensures email format is valid."""
-        invalid_emails = [
-            "not-an-email",
-            "user@",
-            "@domain.com",
-            "user@domain",
-        ]
+        invalid_emails = ["not-an-email", "user@", "@domain.com", "user@domain"]
         for email in invalid_emails:
             with self.subTest(email=email), self.assertRaises(ValidationError):
                 manager.create_user(email=email, password="pass123")
