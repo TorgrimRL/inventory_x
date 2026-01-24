@@ -17,6 +17,8 @@ env = environ.Env()
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 if os.path.exists(ENV_FILE):
     environ.Env.read_env(ENV_FILE)
+elif os.environ.get("GITHUB_ACTIONS") == "true":
+    pass  # If on GitHub, we don't need the file;
 else:
     raise FileNotFoundError(f" Ensure .env is located in: {ENV_FILE}")
 

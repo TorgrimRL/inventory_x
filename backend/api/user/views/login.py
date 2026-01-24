@@ -1,5 +1,6 @@
 # login.py
 import logging
+from typing import cast
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AbstractBaseUser
@@ -7,6 +8,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from api.user.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,7 @@ def login_handler(request: Request) -> Response:
         )
     # CREATE SESSION
     # Cookies will be include in HTTP Response header.
-    login(request, user)
+    login(request, cast(User, user))
 
     logger.info(f"User {user.get_username()} logged in successfully.")
     return Response(
