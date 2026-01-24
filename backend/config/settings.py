@@ -74,6 +74,9 @@ CORS_ALLOWED_ORIGINS = [
 
 # COOKIES SESSOIN
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Closing the browser kills the session
+SESSION_COOKIE_AGE = 60 * 60 * 2  # 2H
+SESSION_COOKIE_HTTPONLY = True  # Hides cookie from document.cookie
+SESSION_COOKIE_SECURE = True  # Only sends cookie over https://
 
 # LOGGING STREAM. USE TO DEBUG LIVE ACTIONS
 LOGGING = {
