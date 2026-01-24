@@ -1,4 +1,4 @@
-# Created By Blackh-t
+# Created By Inventory X
 # 2026-01-24
 import logging
 from typing import cast
@@ -28,11 +28,11 @@ class LoginView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"ERR": serializer.errors},
+                {"details": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        email: str | None = serializer.validated_data["email"]
-        password: str | None = serializer.validated_data["password"]
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
 
         # Authenticate
         ip = request.META.get("REMOTE_ADDR")
