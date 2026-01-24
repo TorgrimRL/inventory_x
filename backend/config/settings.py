@@ -42,7 +42,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
-    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Populates request.user
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
     "django.middleware.security.SecurityMiddleware",
 ]
 
