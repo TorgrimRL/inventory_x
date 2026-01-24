@@ -16,7 +16,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-me")
 DEBUG = env.bool("DEBUG", default=True)
 # If DEBUG is True, allow all. Otherwise, read from env.
-ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = (
+    ["*"]
+    if DEBUG
+    else env.list(
+        "ALLOWED_HOSTS",
+        default=[
+            "localhost",
+            "127.0.0.1",
+        ],
+    )
+)
 
 
 # Application definition

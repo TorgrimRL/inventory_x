@@ -28,7 +28,7 @@ class LoginView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
-                serializers.ErrorDetail,
+                {"ERR": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         email: str | None = serializer.validated_data["email"]
