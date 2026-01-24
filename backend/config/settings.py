@@ -2,25 +2,15 @@
 Django settings for backend project.
 """
 
-import os
 from pathlib import Path
 
 import environ
 
-# Define BASE_DIR first (Project Root)
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Initialize environ
+# Environment Setup
 env = environ.Env()
+environ.Env.read_env()
 
-# Explicitly point to the .env file in the Project Root
-ENV_FILE = os.path.join(BASE_DIR, ".env")
-if os.path.exists(ENV_FILE):
-    environ.Env.read_env(ENV_FILE)
-elif os.environ.get("GITHUB_ACTIONS") == "true":
-    pass  # If on GitHub, we don't need the file;
-else:
-    raise FileNotFoundError(f" Ensure .env is located in: {ENV_FILE}")
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security & Core Config
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-me")
