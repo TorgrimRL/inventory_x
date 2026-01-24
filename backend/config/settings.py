@@ -30,6 +30,10 @@ ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
 # Application definition
 INSTALLED_APPS = [
     "corsheaders",
+    "rest_framework",
+    "django.contrib.auth",  # Required for AUTH_USER_MODEL
+    "django.contrib.contenttypes",  # Required for permissions
+    "django.contrib.sessions",  # Required for login state
     # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
@@ -37,6 +41,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Populates request.user
+    "django.middleware.security.SecurityMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -58,9 +65,13 @@ USE_I18N = True
 USE_TZ = True
 
 # CORS Configuration
+CORS_ALLOW_CREDENTIALS = True  # Allows cookies to be sent/received
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
+
+# COOKIES SESSOIN
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Closing the browser kills the session
 
 # LOGGING STREAM. USE TO DEBUG LIVE ACTIONS
 LOGGING = {
