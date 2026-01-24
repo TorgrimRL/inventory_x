@@ -53,20 +53,16 @@ class UserModelTests(TestCase):
             "user@domain",
         ]
         for email in invalid_emails:
-            with self.subTest(email=email) and self.assertRaises(
-                ValidationError
-            ):
+            with self.subTest(email=email), self.assertRaises(ValidationError):
                 manager.create_user(email=email, password="pass123")
 
     def test_create_user_enforces_uniqueness(self):
         """Ensures duplicate emails cannot be created (case-insensitive)."""
         email = "unique@example.com"
-        u = manager.create_user(email=email, password="pass123")
-        print(u.email)
+        manager.create_user(email=email, password="pass123")
         # Try creating the same user again (different case should still fail)
         with self.assertRaises(ValidationError):
-            b = manager.create_user(email=email.upper(), password="pass456")
-            print(b.email)
+            manager.create_user(email=email.upper(), password="pass456")
 
     # ----------------------------------------------------------------------
     # Model Instance Tests
@@ -126,10 +122,7 @@ class UserModelTests(TestCase):
         self.assertIsInstance(user.id, uuid.UUID)
         # is_active should default to True
         self.assertTrue(user.is_active)
-
-    def test_display_name_defaults_to_empty_string(self):
-        """Display name should be an empty string, not None, if omitted."""
-        user = manager.create_user(email="empty@test.com", password="pw")
+        # Display name is empty when not provided
         self.assertEqual(user.display_name, "")
 
     def test_fail_on_incorrect_password(self):
