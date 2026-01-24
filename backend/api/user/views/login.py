@@ -31,6 +31,14 @@ class LoginView(views.APIView):
                 {"details": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if not isinstance(serializer.validated_data, dict):
+            logger.critical("Serializer validated_data is not a dict")
+            return Response(
+                {"detail": "Internal processing error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
 
