@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django runserver in Docker (attach :5678)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "pathMappings": [
+        { "localRoot": "${workspaceFolder}/backend", "remoteRoot": "/app" }
+      ],
+      "justMyCode": false
+    },
+    {
+      "name": "Pytest in Docker (attach :5679)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5679 },
+      "pathMappings": [
+        { "localRoot": "${workspaceFolder}/backend", "remoteRoot": "/app" }
+      ],
+      "preLaunchTask": "docker-pytest-debugpy-5679",
+      "postDebugTask": "docker-stop-pytest-debug",
+      "justMyCode": false,
+      "subProcess": true
+    }
+  ]
+}
