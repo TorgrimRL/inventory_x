@@ -36,6 +36,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+pyrightconfig.json
 
-# Vite chace
+# Vite cache
 .vite/
