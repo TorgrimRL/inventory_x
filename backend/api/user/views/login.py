@@ -28,7 +28,7 @@ class LoginView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"details": serializer.errors},
+                {"detail": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -45,24 +45,23 @@ class LoginView(views.APIView):
         # Authenticate
         ip = request.META.get("REMOTE_ADDR")
         user: AbstractBaseUser | None = authenticate(
-            request, username=email, password=password
+            request._request, username=email, password=password
         )
 
         if user is None:
             logger.warning(f"Failed login attempt from: {ip}")
             return Response(
-                {"error": "Invalid credentials"},
+                {"detail": "Invalid credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         # Create Session
-        login(request, cast(UserModel, user))
+        login(request._request, cast(UserModel, user))
         logger.info(f"User {user.get_username()} logged in from {ip}")
 
         return Response(
             {
-                "status": "success",
-                "username": user.get_username(),
+                "username": str(user),
             },
             status=status.HTTP_200_OK,
         )

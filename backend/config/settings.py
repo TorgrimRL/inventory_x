@@ -16,17 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-me")
 DEBUG = env.bool("DEBUG", default=True)
 # If DEBUG is True, allow all. Otherwise, read from env.
-ALLOWED_HOSTS = (
-    ["*"]
-    if DEBUG
-    else env.list(
-        "ALLOWED_HOSTS",
-        default=[
-            "localhost",
-            "127.0.0.1",
-        ],
-    )
-)
+# TODO: For prod double check all `DEBUG` and env settings
+ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
 
 
 # Application definition
@@ -45,8 +36,35 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
-    "django.middleware.security.SecurityMiddleware",
 ]
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+            ],
+        },
+    },
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ]
+}
+
+# Render a tool to easily send requests
+if DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ]
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
@@ -76,7 +94,7 @@ CORS_ALLOWED_ORIGINS = [
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Closing the browser kills the session
 SESSION_COOKIE_AGE = 60 * 60 * 2  # 2H
 SESSION_COOKIE_HTTPONLY = True  # Hides cookie from document.cookie
-SESSION_COOKIE_SECURE = True  # Only sends cookie over https://
+SESSION_COOKIE_SECURE = not DEBUG  # Only sends cookie over https://
 
 # LOGGING STREAM. USE TO DEBUG LIVE ACTIONS
 LOGGING = {
@@ -97,12 +115,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,  # prevent double logging
-        },
-        "login": {
+        "api": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,

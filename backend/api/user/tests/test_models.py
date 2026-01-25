@@ -5,8 +5,6 @@ from django.test import TestCase
 
 from api.user.models import User
 
-manager = User.objects
-
 
 class UserModelTests(TestCase):
     # ----------------------------------------------------------------------
@@ -18,7 +16,7 @@ class UserModelTests(TestCase):
         email = "ValidUser@Example.com"
         password = "strong_password_123"
 
-        user = manager.create_user(email=email, password=password)
+        user = User.objects.create_user(email=email, password=password)
 
         # Check persistence
         self.assertIsNotNone(user.pk)
@@ -37,27 +35,27 @@ class UserModelTests(TestCase):
     def test_create_user_requires_password(self):
         """Reject empty passwords"""
         with self.assertRaisesMessage(ValueError, "Password must be set"):
-            manager.create_user(email="user@example.com", password="")
+            User.objects.create_user(email="user@example.com", password="")
 
     def test_create_user_requires_email(self):
         """Reject empty emails"""
         with self.assertRaises(ValidationError):
-            manager.create_user(email="", password="pass123")
+            User.objects.create_user(email="", password="pass123")
 
     def test_create_user_enforces_email_validation(self):
         """Ensures email format is valid."""
         invalid_emails = ["not-an-email", "user@", "@domain.com", "user@domain"]
         for email in invalid_emails:
             with self.subTest(email=email), self.assertRaises(ValidationError):
-                manager.create_user(email=email, password="pass123")
+                User.objects.create_user(email=email, password="pass123")
 
     def test_create_user_enforces_uniqueness(self):
         """Ensures duplicate emails cannot be created (case-insensitive)."""
         email = "unique@example.com"
-        manager.create_user(email=email, password="pass123")
+        User.objects.create_user(email=email, password="pass123")
         # Try creating the same user again (different case should still fail)
         with self.assertRaises(ValidationError):
-            manager.create_user(email=email.upper(), password="pass456")
+            User.objects.create_user(email=email.upper(), password="pass456")
 
     # ----------------------------------------------------------------------
     # Model Instance Tests
@@ -77,7 +75,7 @@ class UserModelTests(TestCase):
 
     def test_model_update_normalizes_email(self):
         """Updating an existing user's email should trigger normalization."""
-        user = manager.create_user(
+        user = User.objects.create_user(
             email="original@test.com", password="pass123"
         )
 
@@ -90,22 +88,22 @@ class UserModelTests(TestCase):
     def test_str_method_behavior(self):
         """__str__ should prefer display_name, fall back to email."""
         # Case 1: Display Name present
-        user_with_name = manager.create_user(
+        user_with_name = User.objects.create_user(
             email="a@test.com", password="pw", display_name="John Doe"
         )
         self.assertEqual(str(user_with_name), "John Doe")
 
         # Case 2: No Display Name
-        user_no_name = manager.create_user(
+        user_no_name = User.objects.create_user(
             email="b@test.com", password="pw", display_name=""
         )
         self.assertEqual(str(user_no_name), "b@test.com")
 
     def test_ordering(self):
         """Users should be ordered by email alphabetically."""
-        u1 = manager.create_user(email="c@test.com", password="pw")
-        u2 = manager.create_user(email="a@test.com", password="pw")
-        u3 = manager.create_user(email="b@test.com", password="pw")
+        u1 = User.objects.create_user(email="c@test.com", password="pw")
+        u2 = User.objects.create_user(email="a@test.com", password="pw")
+        u3 = User.objects.create_user(email="b@test.com", password="pw")
 
         users = list(User.objects.all())
         self.assertEqual(users, [u2, u3, u1])  # a, b, c
@@ -122,7 +120,7 @@ class UserModelTests(TestCase):
 
     def test_fail_on_incorrect_password(self):
         """Ensure checking wrong password returns false"""
-        u = manager.create_user(email="b@example.com", password="pass123")
+        u = User.objects.create_user(email="b@example.com", password="pass123")
         self.assertFalse(u.check_password("pass321"))
 
     def test_model_configures_email_as_username(self):
