@@ -15,7 +15,8 @@ reset:
 	docker compose up --build -d
 
 seed:
-	$(BACKEND_RUN) uv run python manage.py seed_db
+	$(BACKEND_RUN) uv run python manage.py seed_inventory
+	$(BACKEND_RUN) uv run python manage.py seed_users
 
 logs:
 	docker compose logs -f

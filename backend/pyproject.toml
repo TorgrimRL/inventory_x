@@ -8,6 +8,7 @@ dependencies = [
     "django>=6.0.1",
     "django-cors-headers>=4.9.0",
     "django-environ>=0.12.0",
+    "djangorestframework>=3.16.1",
     "psycopg>=3.3.2",
 ]
 
@@ -55,8 +56,8 @@ ignore = []
 # Tests intentionally use `assert` (S101) and dummy passwords (S105)(S106).
 "**/tests/**/*.py" = ["S101", "S105", "S106"]
 
-# Ignore "Standard pseudo-random generators" in the seed script
-"**/management/commands/seed_db.py" = ["S311"]
+# Ignore "Standard pseudo-random generators" in the seed scripts
+"**/management/commands/*.py" = ["S311"]
 
 [dependency-groups]
 dev = [
