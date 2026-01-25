@@ -4,7 +4,7 @@ import sys
 import debugpy
 import pytest
 
-host = os.getenv("DEBUGPY_HOST", "0.0.0.0")
+host = os.getenv("DEBUGPY_HOST", "0.0.0.0")  # noqa: S104
 port = int(os.getenv("DEBUGPY_PORT", "5679"))
 
 debugpy.listen((host, port))
