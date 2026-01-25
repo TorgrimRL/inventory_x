@@ -1,11 +1,11 @@
-.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db
+.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db debug-up debug-down
 
 BACKEND_RUN = docker compose run --rm backend
 BACKEND_RUN_NODEPS = docker compose run --rm --no-deps backend
 FRONTEND_RUN = docker compose run --rm --no-deps frontend
 
 up:
-	docker compose up --build
+	docker compose up --build -d
 
 down:
 	docker compose down
@@ -57,6 +57,10 @@ check:
 	$(FRONTEND_RUN) npm test
 	@echo "✅ All checks passed"
 
+debug-up:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build -d backend db
+debug-down:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml stop backend db
 init:
 	make reset
 	make seed
