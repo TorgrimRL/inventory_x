@@ -125,5 +125,6 @@ make debug-down
 ### Swagger documentation
 
 ```bash
-make swagger
+make init # initialize server
+make swagger # load the swagger
 ```
