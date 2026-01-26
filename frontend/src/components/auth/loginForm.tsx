@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import './login.css';
-import { checkSession } from "../../services/authService.ts";
+import "./login.css";
 
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { checkSession } from "../../services/authService.ts";
 
 const Login: React.FC = () => {
   // init app state.
@@ -17,7 +18,6 @@ const Login: React.FC = () => {
   // Valite session, skip the login.
   useEffect(() => {
     const verifyUser = async () => {
-
       const isValid = await checkSession();
 
       if (isValid) {
@@ -32,9 +32,7 @@ const Login: React.FC = () => {
 
   // show loading, while waiting for checkSession to complete.
   if (checkingAuth) {
-    return (
-      <p className="text-gray-600 font-medium">Verifying session...</p>
-    );
+    return <p className="text-gray-600 font-medium">Verifying session...</p>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,18 +45,18 @@ const Login: React.FC = () => {
         { email, password },
         {
           withCredentials: true,
-        }
+        },
       );
 
       console.log("Response Headers:", res.headers);
       console.log("Response Data:", res.data);
       console.log("Cookies visible to JS:", document.cookie);
       navigate("/dashboard");
-
     } catch (err: any) {
       console.error(err);
       setError(
-        err.response?.data?.detail || "Login failed. Please check your credentials."
+        err.response?.data?.detail ||
+          "Login failed. Please check your credentials.",
       );
     }
   };
@@ -67,7 +65,6 @@ const Login: React.FC = () => {
     <div className="login-form">
       <h2>login</h2>
       <form onSubmit={handleSubmit}>
-
         {/* inputs */}
         <div className="input-group">
           <input

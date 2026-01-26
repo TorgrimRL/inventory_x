@@ -1,15 +1,14 @@
 // REACT libs
-import { Routes, Route } from "react-router-dom";
+// CSS
+import "./App.css";
+import "./components/utils/buttons.css";
+
+import { Route, Routes } from "react-router-dom";
 
 // PAGES
 import LoginPage from "./components/auth/loginForm";
-import Dashboard from "./pages/dashboard";
 import Registration from "./components/auth/registrationForm";
-
-// CSS
-import "./App.css";
-import "./components/utils/buttons.css"
-
+import Dashboard from "./pages/dashboard";
 
 function App() {
   return (
