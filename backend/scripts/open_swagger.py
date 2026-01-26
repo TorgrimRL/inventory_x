@@ -13,7 +13,7 @@ parsed = urlparse(URL)
 if parsed.scheme not in {"http", "https"}:
     raise SystemExit(f"Unsupported URL scheme: {parsed.scheme}")
 
-# Stram inn “untrusted input” litt: vi forventer local dev
+
 allowed_hosts = {"localhost", "127.0.0.1"}
 if parsed.hostname not in allowed_hosts:
     raise SystemExit(f"Refusing to open non-local URL: {URL}")
@@ -45,7 +45,6 @@ def open_url(url: str) -> None:
             _popen_detached([exe, "/c", "start", "", url])
             return
 
-    # Fallback: bruk python sin webbrowser modul via current interpreter
     _popen_detached([sys.executable, "-m", "webbrowser", url])
 
 
@@ -67,4 +66,4 @@ while time.time() < deadline:
 if not opened:
     print(f"Swagger not reachable after {timeout_seconds}s: {URL}")
 
-raise SystemExit(0)  # best effort for make
+raise SystemExit(0)
