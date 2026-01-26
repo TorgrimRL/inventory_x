@@ -121,3 +121,9 @@ make debug-down
 
 - Backend docs: `backend/README.md`
 - Frontend docs: `frontend/README.md`
+
+### Swagger documentation
+
+```bash
+make swagger
+```

@@ -9,6 +9,7 @@
       "pathMappings": [
         { "localRoot": "${workspaceFolder}/backend", "remoteRoot": "/app" }
       ],
+      "preLaunchTask": "open-swagger",
       "justMyCode": false
     },
     {
@@ -19,7 +20,7 @@
       "pathMappings": [
         { "localRoot": "${workspaceFolder}/backend", "remoteRoot": "/app" }
       ],
-      "preLaunchTask": "docker-pytest-debugpy-5679",
+      "preLaunchTask": "pytest+swagger",
       "postDebugTask": "docker-stop-pytest-debug",
       "justMyCode": false,
       "subProcess": true

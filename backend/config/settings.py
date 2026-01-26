@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
+    "drf_spectacular",
 ]
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -54,9 +55,10 @@ TEMPLATES = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-    ]
+    ],
 }
 
 # Render a tool to easily send requests
@@ -65,6 +67,10 @@ if DEBUG:
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ]
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Inventory API",
+    "VERSION": "1.0.0",
+}
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
