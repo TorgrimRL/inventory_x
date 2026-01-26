@@ -94,9 +94,36 @@ make logs-frontend
 make logs-db
 ```
 
----
+## Debugging (VS Code + Docker)
+
+### 1) Start backend + db i debug-modus (debugpy på :5678)
+
+```bash
+make debug-up
+```
+
+### 2) Debug Django runserver (attach :5678)
+
+VS Code → Run and Debug → Django runserver in Docker (attach :5678)
+
+### 3) Debug Pytest (attach :5679)
+
+VS Code → Run and Debug → Pytest in Docker (attach :5679)
+Stop debug
+
+### Stop debug
+
+```bash
+make debug-down
+```
 
 ## Documentation
 
 - Backend docs: `backend/README.md`
 - Frontend docs: `frontend/README.md`
+
+### Swagger documentation
+
+```bash
+make swagger
+```
