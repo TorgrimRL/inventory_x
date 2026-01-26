@@ -8,6 +8,7 @@ import Registration from "./components/auth/registrationForm";
 
 // CSS
 import "./App.css";
+import "./components/utils/buttons.css"
 
 
 function App() {
