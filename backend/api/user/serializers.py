@@ -27,3 +27,8 @@ class ValidationErrorResponseSerializer(serializers.Serializer):
     """Format for 400 errors (contains validation dictionary)"""
 
     detail = serializers.DictField()
+
+
+class VerifySessionResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    username = serializers.CharField()
