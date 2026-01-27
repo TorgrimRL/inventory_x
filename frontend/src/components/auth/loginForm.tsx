@@ -40,7 +40,7 @@ const Login: React.FC = () => {
     setError("");
 
     // Check if email is missing '@' OR missing '.'
-    if (!email.includes('@') || !email.includes('.')) {
+    if (!email.includes("@") || !email.includes(".")) {
       setError("Invalid email: Must contain '@' and '.'");
       return;
     }
@@ -67,7 +67,7 @@ const Login: React.FC = () => {
       // console.error(err);
       setError(
         err.response?.data?.detail ||
-        "Login failed. Please check your credentials.",
+          "Login failed. Please check your credentials.",
       );
     }
   };
