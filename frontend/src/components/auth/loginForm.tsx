@@ -39,6 +39,17 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError("");
 
+    // Check if email is missing '@' OR missing '.'
+    if (!email.includes('@') || !email.includes('.')) {
+      setError("Invalid email: Must contain '@' and '.'");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter password.");
+      return;
+    }
+
     try {
       await axios.post(
         "/api/user/login/",
@@ -56,7 +67,7 @@ const Login: React.FC = () => {
       // console.error(err);
       setError(
         err.response?.data?.detail ||
-          "Login failed. Please check your credentials.",
+        "Login failed. Please check your credentials.",
       );
     }
   };
@@ -68,7 +79,7 @@ const Login: React.FC = () => {
         {/* inputs */}
         <div className="input-group">
           <input
-            type="email"
+            type="txt"
             placeholder="info@inventoryx.no"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
