@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker-pytest-debugpy-5679",
+      "type": "shell",
+      "isBackground": true,
+      "command": "bash",
+      "args": [
+        "-lc",
+        "docker rm -f inventory_x_pytest_dbg 2>/dev/null || true; echo '::PYTEST_DEBUG_TASK_START::'; docker compose run --name inventory_x_pytest_dbg --rm -T -p 5679:5679 -w /app -e PYTHONUNBUFFERED=1 -e DEBUGPY_PORT=5679 backend uv run python -u -Xfrozen_modules=off scripts/debug_pytest.py -vv -x"
+      ],
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": [
+          {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*::PYTEST_DEBUG_TASK_START::.*",
+          "endsPattern": ".*DEBUGPY_LISTENING.*"
+        }
+      }
+    },
+    {
+      "label": "docker-stop-pytest-debug",
+      "type": "shell",
+      "command": "docker rm -f inventory_x_pytest_dbg 2>/dev/null || true"
+    },
+    {
+      "label": "open-swagger",
+      "type": "shell",
+      "command": "bash",
+      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "-lc",
+        "python3 -u backend/scripts/open_swagger.py http://localhost:8000/api/docs/ || true"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "pytest+swagger",
+      "dependsOn": ["docker-pytest-debugpy-5679", "open-swagger"],
+      "problemMatcher": []
+    }
+    
+  ]
+}

@@ -1,5 +1,7 @@
-import pytest
 import json
+
+import pytest
+
 from api.inventory.models import InventoryItem
 
 

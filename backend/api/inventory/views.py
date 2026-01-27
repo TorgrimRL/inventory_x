@@ -1,9 +1,13 @@
 import json
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from rest_framework.decorators import api_view
+
 from . import services
 
 
+@api_view(["GET"])
 def inventory_list(request):
     data = services.get_all_items()
     return JsonResponse({"data": data})

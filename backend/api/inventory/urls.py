@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import inventory_list, adjust_stock_view
+
+from .views import adjust_stock_view, inventory_list
 
 urlpatterns = [
     path("", inventory_list),
