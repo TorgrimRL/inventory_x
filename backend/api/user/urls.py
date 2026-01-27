@@ -1,8 +1,7 @@
 from django.urls import path
 
-from api.user.views.verify import VerifyView
-
 from .views.login import LoginView
+from .views.verify import VerifyView
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),

@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",  # Required for AUTH_USER_MODEL
     "django.contrib.contenttypes",  # Required for permissions
     "django.contrib.sessions",  # Required for login state
+    "django.contrib.staticfiles",
     # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
@@ -36,6 +37,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
 ]
 
@@ -54,8 +56,14 @@ TEMPLATES = [
     },
 ]
 
+STATIC_URL = "static/"
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
