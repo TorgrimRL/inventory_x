@@ -79,7 +79,7 @@ const Login: React.FC = () => {
         {/* inputs */}
         <div className="input-group">
           <input
-            type="txt"
+            type="email"
             placeholder="info@inventoryx.no"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
