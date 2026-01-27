@@ -5,24 +5,44 @@ from typing import cast
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AbstractBaseUser
-from rest_framework import serializers, status, views
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import status, views
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.user.models import User as UserModel
+from api.user.serializer.login_serializer import (
+    ErrorResponseSerializer,
+    LoginResponseSerializer,
+    LoginSerializer,
+    ValidationErrorResponseSerializer,
+)
 
 logger = logging.getLogger(__name__)
-
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
 
 
 class LoginView(views.APIView):
     # load serializers isinstance.
     serializer_class = LoginSerializer
 
+    @extend_schema(
+        summary="User Login",
+        responses={
+            200: LoginResponseSerializer,
+            400: OpenApiResponse(
+                response=ValidationErrorResponseSerializer,
+                description="Validation failed (example: invalid email)",
+            ),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Invalid credentials",
+            ),
+            500: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Internal server error",
+            ),
+        },
+    )
     def post(self, request: Request) -> Response:
         # Parse Requst payload.
         serializer = self.serializer_class(data=request.data)
@@ -59,9 +79,9 @@ class LoginView(views.APIView):
         login(request._request, cast(UserModel, user))
         logger.info(f"User {user.get_username()} logged in from {ip}")
 
+        response_data = LoginResponseSerializer({"username": str(user)}).data
+
         return Response(
-            {
-                "username": str(user),
-            },
+            response_data,
             status=status.HTTP_200_OK,
         )
