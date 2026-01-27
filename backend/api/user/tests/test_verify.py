@@ -11,6 +11,7 @@ class AuthTests(APITestCase):
         # Assuming you have a url named 'verify' mapped to VerifyView
         self.verify_url = reverse("verify")
 
+        self.url = reverse("login")
         self.email = "user@test.com"
         self.password = "k123m456"
 
@@ -19,12 +20,22 @@ class AuthTests(APITestCase):
             password=self.password,
         )
 
+    def _login(self, data):
+        """Helper to reduce boilerplate for login requests."""
+        return self.client.post(
+            self.url,
+            data,
+            content_type="application/json",
+        )
+
     def test_verify_view_authorized(self):
         """
         Ensure an authenticated user gets a 200 OK and the expected data.
         """
         # Authenticate the request for this test
-        self.client.force_authenticate(user=self.user)
+
+        data = {"email": self.email, "password": self.password}
+        self._login(data)
 
         response = self.client.get(self.verify_url)
 
