@@ -40,7 +40,7 @@ const Login: React.FC = () => {
     setError("");
 
     try {
-      const res = await axios.post(
+      await axios.post(
         "/api/user/login/",
         { email, password },
         {
@@ -48,12 +48,12 @@ const Login: React.FC = () => {
         },
       );
 
-      console.log("Response Headers:", res.headers);
-      console.log("Response Data:", res.data);
-      console.log("Cookies visible to JS:", document.cookie);
+      // console.log("Response Headers:", res.headers);
+      // console.log("Response Data:", res.data);
+      // console.log("Cookies visible to JS:", document.cookie);
       navigate("/dashboard");
     } catch (err: any) {
-      console.error(err);
+      // console.error(err);
       setError(
         err.response?.data?.detail ||
           "Login failed. Please check your credentials.",
