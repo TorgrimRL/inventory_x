@@ -121,3 +121,10 @@ make debug-down
 
 - Backend docs: `backend/README.md`
 - Frontend docs: `frontend/README.md`
+
+### Swagger documentation
+
+```bash
+make init # initialize server
+make swagger # load the swagger
+```

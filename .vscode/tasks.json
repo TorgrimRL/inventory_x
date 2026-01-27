@@ -32,6 +32,23 @@
       "label": "docker-stop-pytest-debug",
       "type": "shell",
       "command": "docker rm -f inventory_x_pytest_dbg 2>/dev/null || true"
+    },
+    {
+      "label": "open-swagger",
+      "type": "shell",
+      "command": "bash",
+      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "-lc",
+        "python3 -u backend/scripts/open_swagger.py http://localhost:8000/api/docs/ || true"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "pytest+swagger",
+      "dependsOn": ["docker-pytest-debugpy-5679", "open-swagger"],
+      "problemMatcher": []
     }
+    
   ]
 }
