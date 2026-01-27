@@ -15,6 +15,7 @@ def get_all_items():
     # Force conversion to a standard Python list
     return list(items)
 
+
 def adjust_stock(item_id: int, direction: str, amount: int):
     """
     Adjusts stock for an inventory item.

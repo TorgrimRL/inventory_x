@@ -8,22 +8,25 @@ def inventory_list(request):
     data = services.get_all_items()
     return JsonResponse({"data": data})
 
+
 def is_authenticated(request):
     # Minimal "auth": frontend må sende en header
     return request.headers.get("X-Auth") == "1"
 
+
 @require_POST
 def adjust_stock_view(request, item_id):
-
     if not is_authenticated(request):
         return JsonResponse({"error": "Authentication required"}, status=401)
-    
+
     try:
         body = json.loads(request.body)
         direction = body.get("direction")
         amount = body.get("amount")
 
-        item = services.adjust_stock(item_id=item_id, direction=direction, amount=amount)
+        item = services.adjust_stock(
+            item_id=item_id, direction=direction, amount=amount
+        )
 
         return JsonResponse(
             {
@@ -42,4 +45,3 @@ def adjust_stock_view(request, item_id):
 
     except Exception:
         return JsonResponse({"error": "Invalid request"}, status=400)
-    
