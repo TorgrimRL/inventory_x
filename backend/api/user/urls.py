@@ -6,5 +6,5 @@ from .views.login import LoginView
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
-    path("verify/", VerifyView.as_view()),
+    path("verify/", VerifyView.as_view(), name="verify"),
 ]
