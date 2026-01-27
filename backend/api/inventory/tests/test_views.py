@@ -1,5 +1,7 @@
-import pytest
 import json
+
+import pytest
+
 from api.inventory.models import InventoryItem
 
 
@@ -19,8 +21,6 @@ def test_inventory_list_view(client):
     assert data["data"][0]["name"] == "Monitor"
 
 
-
-
 @pytest.mark.django_db
 def test_adjust_stock_view_increase(client):
     item = InventoryItem.objects.create(name="Milk", price=10, stock=10)
@@ -34,6 +34,7 @@ def test_adjust_stock_view_increase(client):
 
     assert response.status_code == 200
     assert response.json()["stock"] == 15
+
 
 @pytest.mark.django_db
 def test_adjust_stock_view_decrease(client):
@@ -49,6 +50,7 @@ def test_adjust_stock_view_decrease(client):
     assert response.status_code == 200
     assert response.json()["stock"] == 7
 
+
 @pytest.mark.django_db
 def test_adjust_stock_view_invalid_amount(client):
     item = InventoryItem.objects.create(name="Milk", price=10, stock=10)
@@ -61,6 +63,7 @@ def test_adjust_stock_view_invalid_amount(client):
     )
 
     assert response.status_code == 400
+
 
 @pytest.mark.django_db
 def test_adjust_stock_requires_authenticator(client):
