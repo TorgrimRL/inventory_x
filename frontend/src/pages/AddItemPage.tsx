@@ -8,9 +8,8 @@ const AddItemPage: React.FC = () => {
   const [stock, setStock] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const navigate = useNavigate(); // Fixed: useNavigate instead of useHistory
+  const navigate = useNavigate(); // useNavigate for programmatic navigation
 
-  // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -19,20 +18,14 @@ const AddItemPage: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const response = await axios.post("/api/inventory/", {
-        name,
-        price,
-        stock,
-      });
-      console.log(response.data); // Example of logging the response data
+      await axios.post("/api/inventory/", { name, price, stock });
 
-      // On success, show success message and redirect
+      // On success, show success message and redirect to inventory list
       setSuccessMessage("Item added successfully!");
       setTimeout(() => {
-        navigate("/inventory"); // Fixed: navigate() instead of navigate.push()
+        navigate("/"); // Redirect to the inventory page after 2 seconds
       }, 2000);
     } catch (err) {
-      // Handle errors
       if (err instanceof Error) {
         setError(err.message); // Log the error message if it's an instance of Error
       } else {
