@@ -11,7 +11,7 @@ class AuthTests(APITestCase):
         # Assuming you have a url named 'verify' mapped to VerifyView
         self.verify_url = reverse("verify")
 
-        self.url = reverse("login")
+        self.login_url = reverse("login")
         self.email = "user@test.com"
         self.password = "k123m456"
 
@@ -23,7 +23,7 @@ class AuthTests(APITestCase):
     def _login(self, data):
         """Helper to reduce boilerplate for login requests."""
         return self.client.post(
-            self.url,
+            self.login_url,
             data,
             content_type="application/json",
         )
@@ -42,14 +42,16 @@ class AuthTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["detail"], "Session is valid")
         self.assertEqual(response.data["username"], str(self.user))
+        self.client.logout()
 
     def test_verify_view_unauthorized(self):
         """
         Ensure an unauthenticated user gets a 403 Forbidden (or 401).
         """
         # Ensure client is anonymous (no force_authenticate called)
-        self.client.logout()
 
+        data = {"email": "ma@uit.no", "password": self.password}
+        self._login(data)
         response = self.client.get(self.verify_url)
 
         # DRF 'IsAuthenticated' typically returns 403 Forbidden
