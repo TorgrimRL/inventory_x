@@ -3,6 +3,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from api.user.serializers import VerifySessionResponseSerializer
+
 User = get_user_model()
 
 
@@ -40,8 +42,13 @@ class AuthTests(APITestCase):
         response = self.client.get(self.verify_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["detail"], "Session is valid")
-        self.assertEqual(response.data["username"], str(self.user))
+
+        serializer = VerifySessionResponseSerializer(data=response.json())
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data["username"], str(self.user))
+        self.assertEqual(
+            serializer.validated_data["detail"], "Session is valid"
+        )
         self.client.logout()
 
     def test_verify_view_unauthorized(self):
