@@ -31,8 +31,8 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
     try:
         item = InventoryItem.objects.get(id=item_id)
-    except InventoryItem.DoesNotExist:
-        raise LookupError("Item not found")
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err
 
     if direction == "increase":
         item.stock += amount

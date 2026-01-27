@@ -1,9 +1,8 @@
 import pytest
 
-from api.inventory.models import InventoryItem
-from api.inventory.services import get_all_items, adjust_stock
-
 from api.inventory import services
+from api.inventory.models import InventoryItem
+from api.inventory.services import adjust_stock, get_all_items
 
 
 @pytest.mark.django_db
