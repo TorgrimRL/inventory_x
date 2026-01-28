@@ -1,4 +1,4 @@
-.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db debug-up debug-down
+.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db debug-up debug-down swagger
 
 BACKEND_RUN = docker compose run --rm backend
 BACKEND_RUN_NODEPS = docker compose run --rm --no-deps backend
@@ -61,6 +61,10 @@ debug-up:
 	docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build -d backend db
 debug-down:
 	docker compose -f docker-compose.yml -f docker-compose.debug.yml stop backend db
+
+swagger:
+	python3 -u backend/scripts/open_swagger.py http://localhost:8000/api/docs/ || true
+
 init:
 	make reset
 	make seed
