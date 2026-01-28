@@ -61,3 +61,31 @@ def test_inventory_list_invalid_url(client):
 
     # Assert
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_inventory_item_empty_name(client):
+    """Test that an item with an empty name cannot be created."""
+    # Setup: Trying to create an item with an empty name
+    response = client.post(
+        "/api/inventory/", {"name": "", "price": 100, "stock": 5}
+    )
+
+    # Assert: Should return a 400 Bad Request with validation errors
+    assert response.status_code == 400
+    data = response.json()
+    assert "name" in data["detail"]  # Assuming the error is named 'name'
+
+
+@pytest.mark.django_db
+def test_inventory_item_negative_stock(client):
+    """Test that an item with a negative stock cannot be created."""
+    # Setup: Trying to create an item with a negative stock
+    response = client.post(
+        "/api/inventory/", {"name": "Test Item", "price": 100, "stock": -5}
+    )
+
+    # Assert: Should return a 400 Bad Request with validation errors
+    assert response.status_code == 400
+    data = response.json()
+    assert "stock" in data["detail"]  # Assuming the error is named 'stock'
