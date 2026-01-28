@@ -63,11 +63,14 @@
   margin-top: 20px;
 }
 
-.inventory-table th,
+.inventory-table th {
+  background-color: #4caf50; /* Endre til ønsket farge */
+  color: #000000; /* Sett tekstfargen til hvit for kontrast */
+}
 .inventory-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid 242424;
 }
 
 .inventory-table th {
@@ -84,16 +87,16 @@
 .inventory-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid 242424;
 }
 
 .inventory-table th {
-  background-color: black;
+  background-color: 242424;
 }
 
 .add-item-button {
   background-color: #4caf50;
-  color: black;
+  color: 242424;
   padding: 1rem 2rem;
   border: none;
   border-radius: 5px;
@@ -115,7 +118,7 @@
 }
 
 .modal {
-  background-color: black;
+  background-color: #242424;
   padding: 20px;
   border-radius: 5px;
   width: 300px;
@@ -127,7 +130,7 @@
   padding: 8px;
   margin: 10px 0;
   border-radius: 5px;
-  border: 1px solid black;
+  border: 1px solid #242424;
 }
 
 .modal button {
@@ -144,6 +147,6 @@
 
 .modal button[type="button"] {
   background-color: #f44336;
-  color: black;
+  color: #242424;
   margin-left: 10px;
 }

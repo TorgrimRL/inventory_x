@@ -84,8 +84,7 @@ function App() {
         <table className="inventory-table">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Product</th>
+              <th>Product name</th>
               <th>Stock</th>
               <th>Price</th>
             </tr>
@@ -93,7 +92,6 @@ function App() {
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td>{item.order_id}</td>
                 <td>{item.name}</td>
                 <td>{item.stock}</td>
                 <td>${item.price}</td>
@@ -112,7 +110,6 @@ function App() {
               <div>
                 <label htmlFor="name">Name</label>
                 <input
-                  id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
