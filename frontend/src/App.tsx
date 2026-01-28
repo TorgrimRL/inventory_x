@@ -1,4 +1,3 @@
-
 // REACT libs
 // CSS
 import "./App.css";
@@ -10,7 +9,6 @@ import { Route, Routes } from "react-router-dom";
 import LoginPage from "./components/auth/loginForm";
 import Registration from "./components/auth/registrationForm";
 import Dashboard from "./pages/dashboard";
-import AddItemPage from "./pages/AddItemPage";
 
 function App() {
   return (
@@ -18,7 +16,6 @@ function App() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/registration" element={<Registration />} />
-      <Route path="/add_item" element={<AddItemPage />} />
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );
