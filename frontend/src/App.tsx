@@ -9,6 +9,7 @@ import { Route, Routes } from "react-router-dom";
 import LoginPage from "./components/auth/loginForm";
 import Registration from "./components/auth/registrationForm";
 import Dashboard from "./pages/dashboard";
+import ItemPage from "./pages/ItemPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/registration" element={<Registration />} />
+      <Route path="/add_item" element={<ItemPage />} />
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );

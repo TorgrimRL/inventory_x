@@ -1,4 +1,4 @@
-import "./App.css"; // Assuming you want to keep styles in your CSS file
+import "../App.css"; // Assuming you want to keep styles in your CSS file
 
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -148,7 +148,6 @@ function App() {
         </div>
       )}
     </>
-
   );
 }
 
