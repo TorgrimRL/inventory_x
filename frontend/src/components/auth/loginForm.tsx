@@ -64,18 +64,30 @@ const Login: React.FC = () => {
       // console.log("Cookies visible to JS:", document.cookie);
       navigate("/dashboard");
     } catch (err: any) {
-      // console.error(err);
-      setError(
-        err.response?.data?.detail ||
-          "Login failed. Please check your credentials.",
-      );
+      const data = err.response?.data;
+      let message = "Login failed. Please check your credentials.";
+
+      // Disply frontend error invalid email input if its exists else show the error msg from server.
+      if (data?.email) {
+        message = Array.isArray(data.email) ? data.email[0] : data.email;
+      }
+      else if (data?.detail) {
+        message = data.detail;
+      }
+
+      if (typeof message === 'object') {
+        message = JSON.stringify(message);
+      }
+
+      setError(message);
+      return;
     }
   };
 
   return (
     <div className="login-form">
       <h2>login</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         {/* inputs */}
         <div className="input-group">
           <input
