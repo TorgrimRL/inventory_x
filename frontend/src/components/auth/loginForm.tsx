@@ -70,12 +70,11 @@ const Login: React.FC = () => {
       // Disply frontend error invalid email input if its exists else show the error msg from server.
       if (data?.email) {
         message = Array.isArray(data.email) ? data.email[0] : data.email;
-      }
-      else if (data?.detail) {
+      } else if (data?.detail) {
         message = data.detail;
       }
 
-      if (typeof message === 'object') {
+      if (typeof message === "object") {
         message = JSON.stringify(message);
       }
 
