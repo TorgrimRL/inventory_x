@@ -1,7 +1,6 @@
 import json
 
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from rest_framework.decorators import api_view
 
 from . import services
@@ -13,14 +12,9 @@ def inventory_list(request):
     return JsonResponse({"data": data})
 
 
-def is_authenticated(request):
-    # Minimal "auth": frontend må sende en header
-    return request.headers.get("X-Auth") == "1"
-
-
-@require_POST
+@api_view(["POST"])
 def adjust_stock_view(request, item_id):
-    if not is_authenticated(request):
+    if not request.user.is_authenticated:
         return JsonResponse({"error": "Authentication required"}, status=401)
 
     try:
