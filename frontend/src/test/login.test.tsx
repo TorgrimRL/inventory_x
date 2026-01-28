@@ -132,13 +132,11 @@ describe("Login Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
     expect(
-      await screen.findByText(/enter a valid email address/i)
+      await screen.findByText(/enter a valid email address/i),
     ).toBeInTheDocument();
 
     expect(axios.post).toHaveBeenCalled();
   });
-
-
 
   // TEST: Empty password.
   test("Empty password shows frontend validation error", async () => {
@@ -154,10 +152,7 @@ describe("Login Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
     expect(
-      await screen.findByText(/please enter password/i)
+      await screen.findByText(/please enter password/i),
     ).toBeInTheDocument();
   });
-
 });
-
-

@@ -69,11 +69,11 @@ const Login: React.FC = () => {
 
       // Unwrap server side error msg.
       if (data.detail.email) {
-        message = data.detail.email
+        message = data.detail.email;
       } else if (data.detail.password) {
-        message = data.detail.password
+        message = data.detail.password;
       } else {
-        message = data.detail
+        message = data.detail;
       }
 
       if (typeof message === "object") {
