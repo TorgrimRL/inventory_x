@@ -67,11 +67,13 @@ const Login: React.FC = () => {
       const data = err.response?.data;
       let message = "Login failed. Please check your credentials.";
 
-      // Disply frontend error invalid email input if its exists else show the error msg from server.
-      if (data?.email) {
-        message = Array.isArray(data.email) ? data.email[0] : data.email;
-      } else if (data?.detail) {
-        message = data.detail;
+      // Unwrap server side error msg.
+      if (data.detail.email) {
+        message = data.detail.email
+      } else if (data.detail.password) {
+        message = data.detail.password
+      } else {
+        message = data.detail
       }
 
       if (typeof message === "object") {
