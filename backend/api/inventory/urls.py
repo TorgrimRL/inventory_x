@@ -1,8 +1,10 @@
 from django.urls import path
 
-from .views import inventory_list, register_inventory_view
+from .views import RegisterInventoryView, inventory_list
 
 urlpatterns = [
     path("", inventory_list),
-    path("register/", register_inventory_view, name="inventory-register"),
+    path(
+        "register/", RegisterInventoryView.as_view(), name="inventory-register"
+    ),
 ]

@@ -1,4 +1,3 @@
-# api/inventory/serializers.py
 from rest_framework import serializers
 
 
@@ -21,5 +20,4 @@ class RegisterInventoryRequestSerializer(serializers.Serializer):
 
 class RegisterInventoryResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
-    inventory = serializers.DictField()
-    membership = serializers.DictField()
+    id = serializers.UUIDField()

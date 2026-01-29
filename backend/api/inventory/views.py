@@ -1,13 +1,14 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import status, views
+from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from . import services
 from .serializers import (
     RegisterInventoryRequestSerializer,
+    RegisterInventoryResponseSerializer,
 )
 
 
@@ -24,31 +25,42 @@ def _map_errors(errors: dict) -> dict:
     return errors
 
 
-@extend_schema(request=RegisterInventoryRequestSerializer)
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def register_inventory_view(request):
-    s = RegisterInventoryRequestSerializer(data=request.data)
-    s.is_valid(raise_exception=True)
+class RegisterInventoryView(views.APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterInventoryRequestSerializer
 
-    try:
-        inventory, _ = services.register_inventory(
-            user=request.user,
-            name=s.validated_data["name"],
-            org_number=s.validated_data["orgNumber"],
-        )
-    except services.InventoryAlreadyExistsError as e:
-        return Response(
-            {"errors": {"orgNumber": str(e)}},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    except DjangoValidationError as e:
-        errs = getattr(e, "message_dict", {"detail": e.messages})
-        return Response(
-            {"errors": _map_errors(errs)}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    return Response(
-        {"message": "Inventory registered", "id": str(inventory.id)},
-        status=status.HTTP_201_CREATED,
+    @extend_schema(
+        summary="Register inventory",
+        request=RegisterInventoryRequestSerializer,
+        responses={
+            201: RegisterInventoryResponseSerializer,
+            400: OpenApiResponse(description="Validation failed"),
+            401: OpenApiResponse(description="Not authenticated"),
+        },
     )
+    def post(self, request):
+        s = self.serializer_class(data=request.data)
+        s.is_valid(raise_exception=True)
+
+        try:
+            inventory, _ = services.register_inventory(
+                user=request.user,
+                name=s.validated_data["name"],
+                org_number=s.validated_data["orgNumber"],
+            )
+        except services.InventoryAlreadyExistsError as e:
+            return Response(
+                {"errors": {"orgNumber": str(e)}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except DjangoValidationError as e:
+            errs = getattr(e, "message_dict", {"detail": e.messages})
+            return Response(
+                {"errors": _map_errors(errs)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = RegisterInventoryResponseSerializer(
+            {"message": "Inventory registered", "id": inventory.id}
+        ).data
+        return Response(data, status=status.HTTP_201_CREATED)
