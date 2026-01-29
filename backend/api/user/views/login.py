@@ -5,46 +5,29 @@ from typing import cast
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AbstractBaseUser
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, views
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from api.user.contracts import LOGIN_RESPONSES
 from api.user.models import User as UserModel
 from api.user.serializers import (
-    ErrorResponseSerializer,
     LoginResponseSerializer,
     LoginSerializer,
-    ValidationErrorResponseSerializer,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class LoginView(views.APIView):
-    # load serializers isinstance.
     serializer_class = LoginSerializer
 
     @extend_schema(
         summary="User Login",
-        responses={
-            200: LoginResponseSerializer,
-            400: OpenApiResponse(
-                response=ValidationErrorResponseSerializer,
-                description="Validation failed",
-            ),
-            401: OpenApiResponse(
-                response=ErrorResponseSerializer,
-                description="Invalid credentials",
-            ),
-            500: OpenApiResponse(
-                response=ErrorResponseSerializer,
-                description="Internal server error",
-            ),
-        },
+        responses=LOGIN_RESPONSES,
     )
     def post(self, request: Request) -> Response:
-        # Parse Request payload.
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -62,14 +45,11 @@ class LoginView(views.APIView):
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
 
-        # Authenticate
-        ip = request.META.get("REMOTE_ADDR")
         user: AbstractBaseUser | None = authenticate(
             request._request, username=email, password=password
         )
 
         if user is None:
-            logger.warning(f"Failed login attempt from: {ip}")
             return Response(
                 {"detail": "Invalid credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -77,7 +57,6 @@ class LoginView(views.APIView):
 
         # Create Session
         login(request._request, cast(UserModel, user))
-        logger.info(f"User {user.get_username()} logged in from {ip}")
 
         response_data = LoginResponseSerializer({"username": str(user)}).data
 
