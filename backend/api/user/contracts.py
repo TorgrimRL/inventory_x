@@ -35,6 +35,7 @@ VERIFY_RESPONSES = {
 LOGOUT_RESPONSES = {
     200: LogoutResSerializer,
     403: OpenApiResponse(
+        response=ErrorResponseSerializer,
         description="Not a authenticated user",
     ),
 }
