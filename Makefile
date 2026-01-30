@@ -4,6 +4,12 @@ BACKEND_RUN = docker compose run --rm backend
 BACKEND_RUN_NODEPS = docker compose run --rm --no-deps backend
 FRONTEND_RUN = docker compose run --rm --no-deps frontend
 
+ARGS = $(filter-out test,$(MAKECMDGOALS))
+FIRST = $(word 1,$(ARGS))
+REST = $(wordlist 2,$(words $(ARGS)),$(ARGS))
+NEED_API_PREFIX = $(and $(REST),$(filter-out -% %::% api/%,$(firstword $(REST))))
+BACKEND_PATH = $(if $(NEED_API_PREFIX),api/$(REST),$(REST))
+
 up:
 	docker compose up --build -d
 
@@ -40,8 +46,23 @@ lint:
 	$(FRONTEND_RUN) npx eslint . --fix
 
 test:
+ifeq ($(strip $(ARGS)),)
 	$(BACKEND_RUN) uv run pytest -v -x
 	$(FRONTEND_RUN) npm test
+else ifeq ($(FIRST),backend)
+		$(BACKEND_RUN) uv run pytest -v -x $(BACKEND_PATH)
+else ifeq ($(FIRST),frontend)
+	$(FRONTEND_RUN) npm test -- $(REST)
+else
+	@echo "Usage:"
+	@echo "  make test                    # backend + frontend"
+	@echo "  make test backend [path..]   # backend only(can skip 'api/' prefix)"
+	@echo "  make test frontend [args..]  # frontend only"
+	@exit 2
+endif
+
+%:
+	@:
 
 type-check:
 	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/'
