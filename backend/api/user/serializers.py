@@ -43,3 +43,7 @@ class ValidationErrorResponseSerializer(serializers.Serializer):
 class VerifySessionResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
     username = serializers.CharField()
+
+
+class LogoutResSerializer(serializers.Serializer):
+    detail = serializers.CharField()
