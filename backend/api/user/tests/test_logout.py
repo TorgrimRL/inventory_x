@@ -29,4 +29,4 @@ class LogoutTests(BaseAPITestCase):
         Not auth user, should returns HTTP_403_FORBIDDEN.
         """
         res = self.client.post(self.logout_url)
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assert_contract(res, LOGOUT_RESPONSES, status.HTTP_403_FORBIDDEN)
