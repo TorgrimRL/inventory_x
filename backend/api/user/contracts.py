@@ -4,6 +4,7 @@ from api.user.serializers import (
     ErrorResponseSerializer,
     LoginResponseSerializer,
     LoginValidationErrorSerializer,
+    LogoutResSerializer,
     VerifySessionResponseSerializer,
 )
 
@@ -28,5 +29,12 @@ VERIFY_RESPONSES = {
     403: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Authentication credentials were not provided.",
+    ),
+}
+
+LOGOUT_RESPONSES = {
+    200: LogoutResSerializer,
+    403: OpenApiResponse(
+        description="Not a authenticated user",
     ),
 }

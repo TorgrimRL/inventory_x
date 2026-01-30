@@ -1,45 +1,32 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
-from api.user.serializers import LogoutResSerializer
+from api.tests.base import BaseAPITestCase
+from api.user.contracts import LOGOUT_RESPONSES
 
 User = get_user_model()
 
 
-class AuthTests(APITestCase):
+class LogoutTests(BaseAPITestCase):
     def setUp(self):
-        # Assuming you have a url named 'verify' mapped to VerifyView
-        self.verify_url = reverse("verify")
-
-        self.email = "user@test.com"
-        self.password = "k123m456"
-
-        self.login_url = reverse("login")
-        self.user = User.objects.create_user(
-            email=self.email,
-            password=self.password,
-        )
-
-    def _login(self, data):
-        """helper to reduce boilerplate for login requests."""
-        return self.client.post(
-            self.login_url,
-            data,
-            content_type="application/json",
-        )
+        self.logout_url = reverse("logout")
+        self.user = self.create_user(email="user@test.com", password="password")
 
     def test_logout_ok(self):
         """
         Ensure auth users sessions is closed, on logout.
         """
-        data = {"email": self.email, "password": self.password}
-        self._login(data)
 
-        res = self.client.post(self.verify_url)
-        serializer = LogoutResSerializer(data=res.json())
+        self.client.force_login(user=self.user)
 
-        self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data["detail"], "Sessions closed")
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        res = self.client.post(self.logout_url)
+        data = self.assert_contract(res, LOGOUT_RESPONSES, status.HTTP_200_OK)
+        self.assertEqual(data["detail"], "Session closed")
+
+    def test_logout_failed(self):
+        """
+        Not auth user, should returns HTTP_403_FORBIDDEN.
+        """
+        res = self.client.post(self.logout_url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
