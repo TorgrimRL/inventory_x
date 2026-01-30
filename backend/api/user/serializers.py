@@ -16,6 +16,17 @@ class LoginResponseSerializer(serializers.Serializer):
     username = serializers.CharField()
 
 
+class LoginErrorDetailSerializer(serializers.Serializer):
+    email = serializers.ListField(child=serializers.CharField(), required=False)
+    password = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+
+
+class LoginValidationErrorSerializer(serializers.Serializer):
+    detail = LoginErrorDetailSerializer()
+
+
 # --- Shared/Generic Serializers ---
 class ErrorResponseSerializer(serializers.Serializer):
     """Format for 401 and 500 errors (simple string message)"""
