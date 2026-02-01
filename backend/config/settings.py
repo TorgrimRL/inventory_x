@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",  # Required for AUTH_USER_MODEL
     "django.contrib.contenttypes",  # Required for permissions
     "django.contrib.sessions",  # Required for login state
+    "django.contrib.staticfiles",
     # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
@@ -36,6 +37,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
 ]
 
@@ -54,8 +56,14 @@ TEMPLATES = [
     },
 ]
 
+STATIC_URL = "static/"
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
@@ -90,19 +98,25 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# CORS Configuration
-CORS_ALLOW_CREDENTIALS = True  # Allows cookies to be sent/received
+# CORS CONFIG (Who can talk to the API)
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-# COOKIES SESSOIN
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Closing the browser kills the session
-SESSION_COOKIE_AGE = 60 * 60 * 2  # 2H
-SESSION_COOKIE_HTTPONLY = True  # Hides cookie from document.cookie
-SESSION_COOKIE_SECURE = not DEBUG  # Only sends cookie over https://
+# CSRF CONFIG (Form & POST security)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+]
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = False
 
-# LOGGING STREAM. USE TO DEBUG LIVE ACTIONS
+# SESSION CONFIG (Login state & cookies)
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_AGE = 60 * 60
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
