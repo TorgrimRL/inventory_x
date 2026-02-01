@@ -11,6 +11,12 @@ NEED_API_PREFIX = $(and $(REST),$(filter-out -% %::% api/%,$(firstword $(REST)))
 BACKEND_PATH = $(if $(NEED_API_PREFIX),api/$(REST),$(REST))
 JEST_ARGS ?= --ci
 
+
+ifneq ($(filter test,$(MAKECMDGOALS)),)
+  $(eval $(filter-out test,$(MAKECMDGOALS)):;@:)
+endif
+
+
 define norm_one_frontend_arg
 $(strip \
   $(if $(filter -% --%,$(1)),$(1),\
@@ -24,6 +30,8 @@ endef
 define norm_frontend_args
 $(foreach a,$(1),$(call norm_one_frontend_arg,$(patsubst frontend/%,%,$(a))))
 endef
+
+
 
 up:
 	docker compose up --build -d
@@ -80,8 +88,6 @@ else
 	@exit 2
 endif
 
-%:
-	@:
 
 type-check:
 	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/'
