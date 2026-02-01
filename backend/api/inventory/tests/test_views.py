@@ -1,87 +1,97 @@
-import json
+from django.urls import reverse
+from rest_framework import status
 
-import pytest
-from django.contrib.auth import get_user_model
-
+from api.inventory.contracts import ADJUST_STOCK_RESPONSES
 from api.inventory.models import InventoryItem
-
-User = get_user_model()
-
-
-@pytest.mark.django_db
-def test_inventory_list_view(client):
-    # Setup
-    InventoryItem.objects.create(name="Monitor", price=200, stock=1)
-
-    # Execute
-    response = client.get("/api/inventory/")
-
-    # Assert
-    assert response.status_code == 200
-    data = response.json()
-
-    assert "data" in data
-    assert data["data"][0]["name"] == "Monitor"
+from api.tests.base import BaseAPITestCase
 
 
-@pytest.mark.django_db
-def test_adjust_stock_view_increase(client):
-    User.objects.create_user(email="user@test.com", password="password123")
-    client.login(email="user@test.com", password="password123")
+class InventoryListViewTests(BaseAPITestCase):
+    def test_inventory_list_view(self):
+        # Setup
+        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
 
-    item = InventoryItem.objects.create(name="Milk", price=10, stock=10)
+        # Execute
+        response = self.client.get("/api/inventory/")
 
-    response = client.post(
-        f"/api/inventory/{item.id}/adjust-stock/",
-        data=json.dumps({"direction": "increase", "amount": 5}),
-        content_type="application/json",
-    )
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
 
-    assert response.status_code == 200
-    assert response.json()["stock"] == 15
-
-
-@pytest.mark.django_db
-def test_adjust_stock_view_decrease(client):
-    User.objects.create_user(email="user@test.com", password="password123")
-    client.login(email="user@test.com", password="password123")
-
-    item = InventoryItem.objects.create(name="Milk", price=20, stock=10)
-
-    response = client.post(
-        f"/api/inventory/{item.id}/adjust-stock/",
-        data=json.dumps({"direction": "decrease", "amount": 3}),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 200
-    assert response.json()["stock"] == 7
+        self.assertIn("data", data)
+        self.assertEqual(data["data"][0]["name"], "Monitor")
 
 
-@pytest.mark.django_db
-def test_adjust_stock_view_invalid_amount(client):
-    User.objects.create_user(email="user@test.com", password="password123")
-    client.login(email="user@test.com", password="password123")
+class AdjustStockViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
 
-    item = InventoryItem.objects.create(name="Milk", price=10, stock=10)
+        self.item = InventoryItem.objects.create(
+            name="Milk",
+            price=10,
+            stock=10,
+        )
 
-    response = client.post(
-        f"/api/inventory/{item.id}/adjust-stock/",
-        data=json.dumps({"direction": "increase", "amount": -1}),
-        content_type="application/json",
-    )
+        self.url = reverse(
+            "adjust-stock",
+            args=[self.item.id],
+        )
 
-    assert response.status_code == 400
+    def test_increase_stock_success(self):
+        response = self.client.post(
+            self.url,
+            {"direction": "increase", "amount": 5},
+        )
 
+        data = self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_200_OK,
+        )
 
-@pytest.mark.django_db
-def test_adjust_stock_requires_authenticator(client):
-    item = InventoryItem.objects.create(name="Milk", price=10, stock=10)
+        self.assertEqual(data["stock"], 15)
+        self.assertEqual(data["item_id"], self.item.id)
 
-    response = client.post(
-        f"/api/inventory/{item.id}/adjust-stock/",
-        data='{"direction":"increase","amount":5}',
-        content_type="application/json",
-    )
+    def test_decrease_stock_success(self):
+        response = self.client.post(
+            self.url,
+            {"direction": "decrease", "amount": 3},
+        )
 
-    assert response.status_code == 401
+        data = self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(data["stock"], 7)
+
+    def test_invalid_amount_returns_400(self):
+        response = self.client.post(
+            self.url,
+            {"direction": "increase", "amount": 0},
+        )
+
+        self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_requires_authentication(self):
+        self.client.logout()
+
+        response = self.client.post(
+            self.url,
+            {"direction": "increase", "amount": 5},
+        )
+
+        self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_401_UNAUTHORIZED,
+        )
