@@ -3,14 +3,14 @@ from drf_spectacular.utils import OpenApiResponse
 from api.user.serializers import (
     ErrorResponseSerializer,
     LoginResponseSerializer,
-    ValidationErrorResponseSerializer,
+    LoginValidationErrorSerializer,
     VerifySessionResponseSerializer,
 )
 
 LOGIN_RESPONSES = {
     200: LoginResponseSerializer,
     400: OpenApiResponse(
-        response=ValidationErrorResponseSerializer,
+        response=LoginValidationErrorSerializer,
         description="Validation failed",
     ),
     401: OpenApiResponse(
