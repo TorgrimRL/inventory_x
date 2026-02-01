@@ -109,10 +109,8 @@ describe("Register Inventory (Business) Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /register/i }));
 
-    // Vent på at suksessmeldingen faktisk rendres (promise/state)
     expect(await screen.findByText("Business registered")).toBeInTheDocument();
 
-    // Spol tiden fram så setTimeout navigasjon trigges
     await act(async () => {
       jest.advanceTimersByTime(1500);
     });
