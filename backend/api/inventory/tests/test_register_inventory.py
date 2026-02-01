@@ -109,6 +109,7 @@ class RegisterInventoryTests(BaseAPITestCase):
         )
 
         # Assert
+        self.assertFalse(Inventory.objects.filter(name="Another Company", org_number="123456789").exists())
         errors = data.get("detail", {})
         self.assertIn("orgNumber", errors)
         self.assertTrue(errors["orgNumber"])
