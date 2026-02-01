@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
-from api.user.contracts import VERIFY_RESPONSES
+from api.user.contracts.verify import VERIFY_RESPONSES
 
 
 class VerifyTests(BaseAPITestCase):
