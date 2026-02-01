@@ -16,7 +16,9 @@ class VerifyTests(BaseAPITestCase):
 
         response = self.client.get(self.verify_url)
 
-        data = self.assert_contract(response, VERIFY_RESPONSES)
+        data = self.assert_contract(
+            response, VERIFY_RESPONSES, status.HTTP_200_OK
+        )
 
         self.assertEqual(data["detail"], "Session is valid")
         self.assertEqual(data["username"], self.user.email)
@@ -27,5 +29,6 @@ class VerifyTests(BaseAPITestCase):
 
         response = self.client.get(self.verify_url)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assert_contract(response, VERIFY_RESPONSES)
+        self.assert_contract(
+            response, VERIFY_RESPONSES, status.HTTP_403_FORBIDDEN
+        )
