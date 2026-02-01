@@ -1,6 +1,6 @@
+import {Alert, Box, Button, Paper, Stack, TextField, Typography,} from "@mui/material";
 import React, {useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {Alert, Box, Button, Paper, Stack, TextField, Typography,} from "@mui/material";
 
 import axios from "../../services/apiClient";
 
@@ -73,7 +73,8 @@ export default function RegisterInventoryForm() {
 
             const msgs = extractBackendMessages(detail);
             if (msgs.length === 0) {
-                if (status === 401) msgs.push("Authentication credentials were not provided.");
+                if (status === 401)
+                    msgs.push("Authentication credentials were not provided.");
                 else if (status === 403) msgs.push("Forbidden.");
                 else msgs.push("Something went wrong. Please try again.");
             }
@@ -102,9 +103,21 @@ export default function RegisterInventoryForm() {
                         justifyContent: "center",
                     }}
                 >
-                    <Box sx={{width: 14, height: 14, bgcolor: "#7cfff0", borderRadius: 1, mb: 2}}/>
+                    <Box
+                        sx={{
+                            width: 14,
+                            height: 14,
+                            bgcolor: "#7cfff0",
+                            borderRadius: 1,
+                            mb: 2,
+                        }}
+                    />
 
-                    <Typography variant="h4" fontWeight={800} sx={{letterSpacing: -0.5}}>
+                    <Typography
+                        variant="h4"
+                        fontWeight={800}
+                        sx={{letterSpacing: -0.5}}
+                    >
                         Register
                     </Typography>
 
@@ -142,7 +155,7 @@ export default function RegisterInventoryForm() {
                                     label="Business name"
                                     placeholder="Business name" // beholder for testene
                                     value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                                     fullWidth
                                 />
 
@@ -150,9 +163,11 @@ export default function RegisterInventoryForm() {
                                     label="Org Number"
                                     placeholder="Org Number" // beholder for testene
                                     value={orgNumber}
-                                    onChange={(e) => setOrgNumber(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrgNumber(e.target.value)}
                                     fullWidth
-                                    inputProps={{inputMode: "numeric"}}
+                                    slotProps={{
+                                        htmlInput: {inputMode: "numeric", pattern: "[0-9]*"},
+                                    }}
                                 />
 
                                 <Button
