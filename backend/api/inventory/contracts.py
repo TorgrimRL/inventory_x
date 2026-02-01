@@ -14,7 +14,6 @@ REGISTER_INVENTORY_RESPONSES = {
     400: OpenApiResponse(
         description="Validation failed",
         response=RegisterInventoryValidationErrorSerializer,
-
     ),
     401: OpenApiResponse(
         description="Authentication credentials were not provided.",
@@ -28,5 +27,4 @@ REGISTER_INVENTORY_RESPONSES = {
         description="Inventory with the same name already exists",
         response=RegisterInventoryValidationErrorSerializer,
     ),
-
 }

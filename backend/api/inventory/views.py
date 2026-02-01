@@ -69,7 +69,7 @@ class RegisterInventoryView(views.APIView):
         return errors
 
     @staticmethod
-    def _ensure_list_values(self, errors: dict) -> dict:
+    def _ensure_list_values(errors: dict) -> dict:
         fixed = {}
         for key, value in (errors or {}).items():
             fixed[key] = value if isinstance(value, list) else [str(value)]

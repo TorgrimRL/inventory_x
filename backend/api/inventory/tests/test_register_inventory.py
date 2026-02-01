@@ -33,7 +33,7 @@ class RegisterInventoryTests(BaseAPITestCase):
         )
 
     def test_happy_path_creates_inventory_and_owner_membership(
-            self,
+        self,
     ):
         # Arrange
         self.client.force_authenticate(user=self.user)
@@ -67,7 +67,7 @@ class RegisterInventoryTests(BaseAPITestCase):
         )
 
     def test_missing_required_fields_returns_400_with_field_errors(
-            self,
+        self,
     ):
         # Arrange
         self.client.force_authenticate(user=self.user)
@@ -109,7 +109,11 @@ class RegisterInventoryTests(BaseAPITestCase):
         )
 
         # Assert
-        self.assertFalse(Inventory.objects.filter(name="Another Company", org_number="123456789").exists())
+        self.assertFalse(
+            Inventory.objects.filter(
+                name="Another Company", org_number="123456789"
+            ).exists()
+        )
         errors = data.get("detail", {})
         self.assertIn("orgNumber", errors)
         self.assertTrue(errors["orgNumber"])
@@ -118,7 +122,7 @@ class RegisterInventoryTests(BaseAPITestCase):
         )
 
     def test_allows_registering_multiple_businesses(
-            self,
+        self,
     ):
         # Arrange
         self.client.force_authenticate(user=self.user)
