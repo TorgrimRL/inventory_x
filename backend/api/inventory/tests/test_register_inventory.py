@@ -1,105 +1,158 @@
-import pytest
-from django.core.exceptions import ValidationError
-from rest_framework.test import APIClient
+from typing import Any
 
+from django.urls import reverse
+from rest_framework import status
+
+from api.inventory.contracts import REGISTER_INVENTORY_RESPONSES
 from api.inventory.models import Inventory, InventoryMembership
-from api.inventory.services import (
-    InventoryAlreadyExistsError,
-    register_inventory,
-)
-from api.user.models import User
+from api.tests.base import BaseAPITestCase
 
 
-@pytest.mark.django_db
-def test_register_inventory_happy_path_creates_inventory_and_owner_membership():
-    user = User.objects.create_user(email="afadsfasdfa@test.com", password="pw")
+class RegisterInventoryTests(BaseAPITestCase):
+    def setUp(self):
+        self.url = reverse("inventory-register")
+        self.user = self.create_user()
+        self.valid_payload = {"name": "Ola AS", "orgNumber": "123456789"}
 
-    inventory, membership = register_inventory(
-        user=user,
-        name="Ola AS",
-        org_number="123456789",
-    )
+    def test_requires_authentication(self):
+        # Arrange
+        payload = self.valid_payload
 
-    assert Inventory.objects.filter(id=inventory.id).exists()
-    assert membership.inventory_id == inventory.id
-    assert membership.user_id == user.id
-    assert membership.role == InventoryMembership.Role.OWNER
+        # Act
+        response = self.client.post(self.url, payload, format="json")
 
-
-@pytest.mark.django_db
-def test_register_inventory_fails_if_org_number_exists():
-    user1 = User.objects.create_user(email="a@test.com", password="pw")
-    user2 = User.objects.create_user(email="b@test.com", password="pw")
-
-    register_inventory(user=user1, name="Ola AS", org_number="123456789")
-
-    with pytest.raises(InventoryAlreadyExistsError):
-        register_inventory(
-            user=user2, name="Another Company", org_number="123456789"
+        # Assert
+        self.assertIn(
+            response.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+        self.assert_contract(
+            response,
+            REGISTER_INVENTORY_RESPONSES,
+            response.status_code,
         )
 
+    def test_happy_path_creates_inventory_and_owner_membership(
+            self,
+    ):
+        # Arrange
+        self.client.force_authenticate(user=self.user)
+        payload = self.valid_payload
 
-@pytest.mark.django_db
-def test_register_inventory_fails_when_required_fields_missing():
-    user = User.objects.create_user(email="a@test.com", password="pw")
+        # Act
+        response = self.client.post(self.url, payload, format="json")
+        data = self.assert_contract(
+            response,
+            REGISTER_INVENTORY_RESPONSES,
+            status.HTTP_201_CREATED,
+        )
 
-    with pytest.raises(ValidationError):
-        register_inventory(user=user, name="", org_number="")
+        # Assert
+        self.assertEqual(data["message"], "Inventory registered")
+        inv_id = data["id"]
 
+        self.assertTrue(
+            Inventory.objects.filter(
+                id=inv_id,
+                name="Ola AS",
+                org_number="123456789",
+            ).exists()
+        )
+        self.assertTrue(
+            InventoryMembership.objects.filter(
+                user=self.user,
+                inventory_id=inv_id,
+                role=InventoryMembership.Role.OWNER,
+            ).exists()
+        )
 
-@pytest.mark.django_db
-def test_register_inventory_requires_authentication():
-    client = APIClient()
+    def test_missing_required_fields_returns_400_with_field_errors(
+            self,
+    ):
+        # Arrange
+        self.client.force_authenticate(user=self.user)
 
-    res = client.post(
-        "/api/inventory/register/",
-        {"name": "Ola AS", "orgNumber": "123456789"},
-        format="json",
-    )
+        scenarios: list[tuple[dict[str, Any], list[str]]] = [
+            ({}, ["name", "orgNumber"]),
+            ({"name": "", "orgNumber": ""}, ["name", "orgNumber"]),
+            ({"name": "Ola AS"}, ["orgNumber"]),
+            ({"orgNumber": "123456789"}, ["name"]),
+        ]
 
-    # Kan være 401 eller 403 avhengig av auth/csrf-oppsett.
-    assert res.status_code in (401, 403)
+        for payload, expected_keys in scenarios:
+            with self.subTest(payload=payload):
+                # Act
+                response = self.client.post(self.url, payload, format="json")
+                data = self.assert_contract(
+                    response,
+                    REGISTER_INVENTORY_RESPONSES,
+                    status.HTTP_400_BAD_REQUEST,
+                )
 
+                # Assert
+                errors = data.get("detail", {})
+                for key in expected_keys:
+                    self.assertIn(key, errors)
 
-@pytest.mark.django_db
-def test_register_inventory_success_returns_201_and_creates_membership():
-    client = APIClient()
-    user = User.objects.create_user(email="a@test.com", password="pw")
-    client.force_authenticate(user=user)
+    def test_duplicate_org_number_returns_409(self):
+        # Arrange
+        Inventory.objects.create(name="Existing", org_number="123456789")
+        self.client.force_authenticate(user=self.user)
+        payload = {"name": "Another Company", "orgNumber": "123456789"}
 
-    res = client.post(
-        "/api/inventory/register/",
-        {"name": "Ola AS", "orgNumber": "123456789"},
-        format="json",
-    )
+        # Act
+        response = self.client.post(self.url, payload, format="json")
+        data = self.assert_contract(
+            response,
+            REGISTER_INVENTORY_RESPONSES,
+            status.HTTP_409_CONFLICT,
+        )
 
-    assert res.status_code == 201
-    body = res.json()
-    assert body["message"] == "Inventory registered"
-    assert "id" in body
+        # Assert
+        errors = data.get("detail", {})
+        self.assertIn("orgNumber", errors)
+        self.assertTrue(errors["orgNumber"])
+        self.assertIn(
+            "Organization number is already registered", errors["orgNumber"]
+        )
 
-    inv_id = body["id"]
-    assert Inventory.objects.filter(id=inv_id).exists()
-    assert InventoryMembership.objects.filter(
-        user=user, inventory_id=inv_id, role="owner"
-    ).exists()
+    def test_allows_registering_multiple_businesses(
+            self,
+    ):
+        # Arrange
+        self.client.force_authenticate(user=self.user)
+        payload_1 = {"name": "Ola AS", "orgNumber": "123456789"}
+        payload_2 = {"name": "Kari AS", "orgNumber": "987654321"}
 
+        # Act
+        res1 = self.client.post(self.url, payload_1, format="json")
+        data1 = self.assert_contract(
+            res1,
+            REGISTER_INVENTORY_RESPONSES,
+            status.HTTP_201_CREATED,
+        )
 
-@pytest.mark.django_db
-def test_register_inventory_duplicate_org_number_returns_400():
-    existing = Inventory.objects.create(name="Existing", org_number="123456789")
+        res2 = self.client.post(self.url, payload_2, format="json")
+        data2 = self.assert_contract(
+            res2,
+            REGISTER_INVENTORY_RESPONSES,
+            status.HTTP_201_CREATED,
+        )
 
-    client = APIClient()
-    user = User.objects.create_user(email="a@test.com", password="pw")
-    client.force_authenticate(user=user)
+        # Assert
+        self.assertNotEqual(data1["id"], data2["id"])
 
-    res = client.post(
-        "/api/inventory/register/",
-        {"name": "Another", "orgNumber": existing.org_number},
-        format="json",
-    )
-
-    assert res.status_code == 400
-    body = res.json()
-    assert "errors" in body
-    assert "orgNumber" in body["errors"]
+        self.assertTrue(
+            InventoryMembership.objects.filter(
+                user=self.user,
+                inventory_id=data1["id"],
+                role=InventoryMembership.Role.OWNER,
+            ).exists()
+        )
+        self.assertTrue(
+            InventoryMembership.objects.filter(
+                user=self.user,
+                inventory_id=data2["id"],
+                role=InventoryMembership.Role.OWNER,
+            ).exists()
+        )

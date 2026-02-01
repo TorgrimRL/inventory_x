@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 
 from .models import Inventory, InventoryItem, InventoryMembership
@@ -20,45 +19,33 @@ def get_all_items():
 
 
 class InventoryAlreadyExistsError(Exception):
-    pass
+    default_message = "Organization number is already registered"
+
+    def __init__(self, message: str | None = None):
+        super().__init__(message or self.default_message)
 
 
 @transaction.atomic
 def register_inventory(*, user, name: str, org_number: str):
-    if user is None or not user.is_authenticated:
-        raise PermissionError(
-            "Authenticated user is required to register an inventory."
-        )
-
     inventory = Inventory(
         name=(name or "").strip(),
         org_number=(org_number or "").strip(),
     )
 
-    try:
-        inventory.full_clean()
-    except DjangoValidationError as err:
-        if (
-            hasattr(err, "error_dict")
-            and "org_number" in err.error_dict
-            and any(e.code == "unique" for e in err.error_dict["org_number"])
-        ):
-            raise InventoryAlreadyExistsError(
-                "An inventory with the same organization number already exists."
-            ) from None
-        raise
+    inventory.full_clean(validate_unique=False)
+
+    if Inventory.objects.filter(org_number=inventory.org_number).exists():
+        raise InventoryAlreadyExistsError()
 
     try:
         inventory.save()
-        membership = InventoryMembership.objects.create(
-            inventory=inventory,
-            user=user,
-            role=InventoryMembership.Role.OWNER,
-        )
     except IntegrityError:
-        # race condition
-        raise InventoryAlreadyExistsError(
-            "Organization number is already registered"
-        ) from None
+        raise InventoryAlreadyExistsError() from None
+
+    membership = InventoryMembership.objects.create(
+        inventory=inventory,
+        user=user,
+        role=InventoryMembership.Role.OWNER,
+    )
 
     return inventory, membership
