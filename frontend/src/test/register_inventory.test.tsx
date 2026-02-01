@@ -1,6 +1,12 @@
 import "@testing-library/jest-dom";
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -82,6 +88,8 @@ describe("Register Inventory (Business) Component", () => {
   });
 
   test("201 success: shows 'Business registered' and navigates to business area (overview/inventory)", async () => {
+    jest.useFakeTimers();
+
     (axios.post as jest.Mock).mockResolvedValueOnce({
       status: 201,
       data: {
@@ -101,21 +109,17 @@ describe("Register Inventory (Business) Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /register/i }));
 
+    // Vent på at suksessmeldingen faktisk rendres (promise/state)
     expect(await screen.findByText("Business registered")).toBeInTheDocument();
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    // Spol tiden fram så setTimeout navigasjon trigges
+    await act(async () => {
+      jest.advanceTimersByTime(1500);
+    });
 
-    const navTo = (mockNavigate as jest.Mock).mock.calls[0][0];
+    expect(mockNavigate).toHaveBeenCalledWith("/inventories");
 
-    // Tillat noen vanlige varianter – dere velger endelig rute i implementasjonen.
-    expect(
-      [
-        "/overview",
-        "/inventories",
-        "/business/overview",
-        "/business/inventory",
-      ].includes(String(navTo)),
-    ).toBe(true);
+    jest.useRealTimers();
   });
 
   test("400 validation failed: renders nested field errors from backend detail", async () => {
