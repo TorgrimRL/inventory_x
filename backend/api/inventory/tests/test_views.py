@@ -95,3 +95,22 @@ class AdjustStockViewTests(BaseAPITestCase):
             ADJUST_STOCK_RESPONSES,
             status.HTTP_401_UNAUTHORIZED,
         )
+
+    def test_item_not_found_returns_404(self):
+        non_existent_item_id = self.item.id + 999
+
+        url = reverse(
+            "adjust-stock",
+            args=[non_existent_item_id],
+        )
+
+        response = self.client.post(
+            url,
+            {"direction": "increase", "amount": 5},
+        )
+
+        self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_404_NOT_FOUND,
+        )
