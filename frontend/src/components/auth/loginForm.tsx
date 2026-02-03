@@ -15,7 +15,7 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // Valite session, skip the login.
+  // Validate session, skip the login.
   useEffect(() => {
     const verifyUser = async () => {
       const isValid = await checkSession();
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
     verifyUser();
   }, [navigate]);
 
-  // show loading, while waiting for checkSession to complete.
+  // show loading while waiting for checkSession to complete.
   if (checkingAuth) {
     return <p className="text-gray-600 font-medium">Verifying session...</p>;
   }
@@ -39,7 +39,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError("");
 
-    // Check if email is missing '@' OR missing '.'
+    // Check if the email is missing '@' OR missing '.'
     if (!email.includes("@") || !email.includes(".")) {
       setError("Invalid email: Must contain '@' and '.'");
       return;
@@ -53,9 +53,6 @@ const Login: React.FC = () => {
     try {
       await axios.post("/api/user/login/", { email, password });
 
-      // console.log("Response Headers:", res.headers);
-      // console.log("Response Data:", res.data);
-      // console.log("Cookies visible to JS:", document.cookie);
       navigate("/dashboard");
     } catch (err: any) {
       const data = err.response?.data;
