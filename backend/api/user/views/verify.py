@@ -4,10 +4,8 @@ from rest_framework import status, views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.user.contracts.verify import VERIFY_RESPONSES
-from api.user.serializers.verify import (
-    VerifySessionResponseSerializer,
-)
+from api.user.contracts import VERIFY_RESPONSES
+from api.user.serializers import VerifySessionResponseSerializer
 
 
 class VerifyView(views.APIView):

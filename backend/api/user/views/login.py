@@ -10,9 +10,9 @@ from rest_framework import status, views
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from api.user.contracts.login import LOGIN_RESPONSES
+from api.user.contracts import LOGIN_RESPONSES
 from api.user.models import User as UserModel
-from api.user.serializers.login import (
+from api.user.serializers import (
     LoginResponseSerializer,
     LoginSerializer,
 )

@@ -59,18 +59,21 @@ class UserManager(BaseUserManager["User"]):
 class User(AbstractBaseUser):
     """Custom user: UUID primary key, email-based login."""
 
-    id: models.UUIDField[uuid.UUID] = models.UUIDField(
+    id: models.UUIDField[uuid.UUID, uuid.UUID] = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False
     )
-    email: models.EmailField[str] = models.EmailField(unique=True)
-    display_name: models.CharField[str] = models.CharField(
+    email: models.EmailField[str, str] = models.EmailField(unique=True)
+    display_name: models.CharField[str, str] = models.CharField(
         max_length=80, blank=True
     )
-    is_active: models.BooleanField[bool] = models.BooleanField(default=True)
+    is_active: models.BooleanField[bool, bool] = models.BooleanField(
+        default=True
+    )
 
     USERNAME_FIELD = "email"
+    REQUIRED_FIELDS: ClassVar[list[str]] = []
 
-    objects = UserManager()
+    objects: UserManager = UserManager()
 
     class Meta:
         ordering: ClassVar[list[str]] = ["email"]
