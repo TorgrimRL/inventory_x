@@ -7,17 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.inventory import services
-from api.inventory.contracts import ADJUST_STOCK_RESPONSES
-from api.inventory.serializers import AdjustStockSerializer
-
+from api.inventory.contracts import ADJUST_STOCK_RESPONSES, CREATE_ITEM_RESPONSES
+from api.inventory.serializers import AdjustStockSerializer, InventoryItemCreateSerializer
 logger = logging.getLogger(__name__)
-
-
-class InventoryItemCreateSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255)
-    price = serializers.IntegerField(min_value=0)
-    stock = serializers.IntegerField(min_value=0, required=False, default=0)
-
 
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
