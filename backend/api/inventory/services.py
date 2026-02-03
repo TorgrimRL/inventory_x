@@ -1,6 +1,6 @@
-from django.db import IntegrityError, transaction
+from django.db import transaction
 
-from .models import Inventory, InventoryItem, InventoryMembership
+from .models import Inventory, InventoryItem
 
 
 def get_all_items():
@@ -18,34 +18,42 @@ def get_all_items():
     return list(items)
 
 
-class InventoryAlreadyExistsError(Exception):
-    default_message = "Organization number is already registered"
+def adjust_stock(item_id: int, direction: str, amount: int):
+    """
+    Adjusts stock for an inventory item.
+    direction: "increase" or "decrease"
+    amount: integer > 0
+    """
 
-    def __init__(self, message: str | None = None):
-        super().__init__(message or self.default_message)
+    if amount <= 0:
+        raise ValueError("Amount must be a positive whole number")
 
-
-@transaction.atomic
-def register_inventory(*, user, name: str, org_number: str):
-    inventory = Inventory(
-        name=(name or "").strip(),
-        org_number=(org_number or "").strip(),
-    )
-
-    inventory.full_clean(validate_unique=False)
-
-    if Inventory.objects.filter(org_number=inventory.org_number).exists():
-        raise InventoryAlreadyExistsError()
+    if direction not in ["increase", "decrease"]:
+        raise ValueError("Invalid direction")
 
     try:
-        inventory.save()
-    except IntegrityError:
-        raise InventoryAlreadyExistsError() from None
+        with transaction.atomic():
+            item = InventoryItem.objects.select_for_update().get(id=item_id)
 
-    membership = InventoryMembership.objects.create(
-        inventory=inventory,
+            if direction == "increase":
+                new_stock = item.stock + amount
+            else:
+                new_stock = item.stock - amount
+
+            if new_stock < 0:
+                raise ValueError("Stock cannot be negative")
+
+            item.stock = new_stock
+            item.save()
+            return item
+
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err
+
+
+def register_inventory(*, user, name: str, org_number: str):
+    return Inventory.register_with_owner(
         user=user,
-        role=InventoryMembership.Role.OWNER,
+        name=name,
+        org_number=org_number,
     )
-
-    return inventory, membership
