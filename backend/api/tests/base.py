@@ -49,7 +49,8 @@ class BaseAPITestCase(APITestCase):
                 f"but got {response.status_code}."
             )
 
-        if response.status_code not in contract_map:
+        schema_entry = contract_map.get(response.status_code)
+        if not schema_entry:
             allowed = list(contract_map.keys())
             errors.append(
                 f"[Contract Missing] Status {response.status_code} is not "
@@ -59,8 +60,6 @@ class BaseAPITestCase(APITestCase):
             )
             # Cannot proceed to validate the body if no schema is defined.
             self.fail("\n\n".join(errors))
-
-        schema_entry = contract_map[response.status_code]
 
         if isinstance(schema_entry, OpenApiResponse):
             serializer_cls = schema_entry.response
@@ -89,6 +88,9 @@ class BaseAPITestCase(APITestCase):
                     f"   Schema Errors: {serializer.errors}\n"
                     f"   Received Data: {response.data}"
                 )
+
+        data = response.data
+        serializer = serializer_cls(data=data)
 
         if errors:
             self.fail(
