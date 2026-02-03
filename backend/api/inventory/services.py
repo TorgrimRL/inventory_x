@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from .models import InventoryItem
 
 
@@ -30,15 +32,20 @@ def adjust_stock(item_id: int, direction: str, amount: int):
         raise ValueError("Invalid direction")
 
     try:
-        item = InventoryItem.objects.get(id=item_id)
+        with transaction.atomic():
+            item = InventoryItem.objects.select_for_update().get(id=item_id)
+
+            if direction == "increase":
+                new_stock = item.stock + amount
+            else:
+                new_stock = item.stock - amount
+
+            if new_stock < 0:
+                raise ValueError("Stock cannot be negative")
+
+            item.stock = new_stock
+            item.save()
+            return item
+
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
-
-    if direction == "increase":
-        item.stock += amount
-    else:
-        item.stock -= amount
-
-    item.save()
-
-    return item
