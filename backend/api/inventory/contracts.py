@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse
 
 from api.inventory.serializers import AdjustStockResponseSerializer
-from api.user.serializers import (
+from api.user.serializers.common import (
     ErrorResponseSerializer,
     ValidationErrorResponseSerializer,
 )
