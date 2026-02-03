@@ -102,4 +102,57 @@ describe("Login Component", () => {
 
     expect(mockNavigate).toHaveBeenCalledWith("/registration");
   });
+
+  // TEST: Invalid Email.
+  test("Server nested email error is rendered as string", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    (axios.post as jest.Mock).mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          detail: {
+            email: ["Enter a valid email address."],
+          },
+        },
+      },
+    });
+
+    render(<Login />);
+    await screen.findByPlaceholderText(/info@inventoryx.no/i);
+
+    fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
+      target: { value: "test@test.c" },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+      target: { value: "secret123" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+
+    expect(
+      await screen.findByText(/enter a valid email address/i),
+    ).toBeInTheDocument();
+
+    expect(axios.post).toHaveBeenCalled();
+  });
+
+  // TEST: Empty password.
+  test("Empty password shows frontend validation error", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+    render(<Login />);
+
+    await screen.findByPlaceholderText(/info@inventoryx.no/i);
+
+    fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
+      target: { value: "test@test.com" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+
+    expect(
+      await screen.findByText(/please enter password/i),
+    ).toBeInTheDocument();
+  });
 });

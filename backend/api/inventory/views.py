@@ -1,10 +1,17 @@
 import logging
 
-from rest_framework import serializers, status, views
+from rest_framework import serializers
+from django.http import JsonResponse
+from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from . import services
+from api.inventory import services
+from api.inventory.contracts import ADJUST_STOCK_RESPONSES
+from api.inventory.serializers import AdjustStockSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +22,7 @@ class InventoryItemCreateSerializer(serializers.Serializer):
     stock = serializers.IntegerField(min_value=0, required=False, default=0)
 
 
-class InventoryView(views.APIView):
+class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
 
     def get(self, request: Request) -> Response:
@@ -63,3 +70,46 @@ class InventoryView(views.APIView):
                 {"detail": "Internal processing error."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+class AdjustStockView(APIView):
+    serializer_class = AdjustStockSerializer
+
+    @extend_schema(
+        summary="Adjust item stock",
+        responses=ADJUST_STOCK_RESPONSES,
+    )
+    def post(self, request: Request, item_id: int) -> Response:
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        serializer = self.serializer_class(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {"detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            item = services.adjust_stock(
+                item_id=item_id,
+                direction=serializer.validated_data["direction"],
+                amount=serializer.validated_data["amount"],
+            )
+        except LookupError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "item_id": item.id,
+                "stock": item.stock,
+                "message": "Stock updated",
+            },
+            status=status.HTTP_200_OK,
+        )

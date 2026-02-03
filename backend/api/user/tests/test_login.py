@@ -1,147 +1,79 @@
+from typing import Any
+
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
-from api.user.models import User
-from api.user.serializers import (
-    ErrorResponseSerializer,
-    LoginResponseSerializer,
-    ValidationErrorResponseSerializer,
-)
+from api.tests.base import BaseAPITestCase
+from api.user.contracts import LOGIN_RESPONSES
 
 
-class AuthTests(APITestCase):
+class LoginTests(BaseAPITestCase):
     def setUp(self):
         self.url = reverse("login")
-        self.email = "user@test.com"
-        self.password = "k123m456"
-
-        self.user = User.objects.create_user(
-            email=self.email,
-            password=self.password,
-        )
-
-    def _login(self, data):
-        """Helper to reduce boilerplate for login requests."""
-        return self.client.post(
-            self.url,
-            data,
-            content_type="application/json",
-        )
-
-    # --- Success Case ---
+        self.user = self.create_user(email="user@test.com", password="k123m456")
+        self.valid_payload = {"email": "user@test.com", "password": "k123m456"}
 
     def test_login_success(self):
-        """
-        Valid credentials should return 200 and match LoginResponseSerializer.
-        """
-        data = {"email": self.email, "password": self.password}
-        res = self._login(data)
+        """Login happy case"""
+        response = self.client.post(self.url, self.valid_payload)
 
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn("sessionid", res.cookies)
-
-        serializer = LoginResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data["username"], str(self.user))
-
-    # --- Validation Errors (400 Bad Request) ---
-
-    def test_login_empty_body(self):
-        """
-        Empty request body should return 400 and match
-        ValidationErrorResponseSerializer
-        """
-        res = self._login({})
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-        serializer = ValidationErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-
-    def test_login_missing_password(self):
-        """
-        Missing password field should match ValidationErrorResponseSerializer.
-        """
-        res = self._login({"email": self.email})
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-        serializer = ValidationErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-        self.assertIn("password", serializer.validated_data["detail"])
-
-    def test_login_missing_email(self):
-        """Missing email field should return 400."""
-        res = self._login({"email": self.email})
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-        serializer = ValidationErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-        self.assertIn("password", serializer.validated_data["detail"])
-
-    def test_login_invalid_email_format(self):
-        """
-        Invalid email format should match ValidationErrorResponseSerializer.
-        """
-        res = self._login({"email": "not-an-email", "password": "pass"})
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-        serializer = ValidationErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-        self.assertIn("email", serializer.validated_data["detail"])
-
-    # --- Authentication Failures (401 Unauthorized) ---
-
-    def test_auth_invalid_password(self):
-        """Wrong password should match ErrorResponseSerializer."""
-        data = {"email": self.email, "password": "wrongpassword"}
-        res = self._login(data)
-
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertNotIn("sessionid", res.cookies)
-
-        serializer = ErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-
-        self.assertEqual(
-            serializer.validated_data["detail"], "Invalid credentials"
+        data = self.assert_contract(
+            response, LOGIN_RESPONSES, status.HTTP_200_OK
         )
 
-    def test_auth_user_not_found(self):
-        """Non-existent user should return 401."""
-        data = {"email": "ghost@test.com", "password": self.password}
-        res = self._login(data)
+        self.assertIsNotNone(response.cookies.get("sessionid"))
+        self.assertEqual(data["username"], str(self.user))
 
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertNotIn("sessionid", res.cookies)
+    def test_login_bad_formatting(self):
+        scenarios: list[tuple[dict[str, Any], list[str]]] = [
+            # Empty Body
+            ({}, ["email", "password"]),
+            # Bad email
+            ({"email": "bad", "password": "x"}, ["email"]),
+            # Missing email
+            ({"password": "blank"}, ["email"]),
+            # Missing password
+            ({"email": self.valid_payload["email"]}, ["password"]),
+        ]
 
-        serializer = ErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
+        for payload, expected_keys in scenarios:
+            with self.subTest(payload=payload):
+                response = self.client.post(self.url, payload)
 
-        self.assertEqual(
-            serializer.validated_data["detail"], "Invalid credentials"
+                data = self.assert_contract(
+                    response, LOGIN_RESPONSES, status.HTTP_400_BAD_REQUEST
+                )
+
+                errors = data.get("detail", {})
+
+                for key in expected_keys:
+                    self.assertIn(
+                        key,
+                        errors,
+                        f"Expected error in '{key}' but got: "
+                        f"{list(errors.keys())}",
+                    )
+                self.assertIsNone(response.cookies.get("sessionid"))
+
+    def test_login_nonexistent_user(self):
+        payload = {"email": "fake@user.com", "password": "LetMeIn"}
+        response = self.client.post(self.url, payload)
+
+        self.assert_contract(
+            response, LOGIN_RESPONSES, status.HTTP_401_UNAUTHORIZED
         )
+        self.assertIsNone(response.cookies.get("sessionid"))
 
-    def test_auth_inactive_user(self):
+    def test_login_inactive_user(self):
         """
-        Inactive user should be denied login (401) and match
-        ErrorResponseSerializer.
+        Banned/Inactive users cannot obtain a session.
         """
         self.user.is_active = False
         self.user.save()
 
-        data = {"email": self.email, "password": self.password}
-        res = self._login(data)
+        response = self.client.post(self.url, self.valid_payload)
 
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertNotIn("sessionid", res.cookies)
-
-        serializer = ErrorResponseSerializer(data=res.json())
-        self.assertTrue(serializer.is_valid())
-
-        self.assertEqual(
-            serializer.validated_data["detail"], "Invalid credentials"
+        self.assert_contract(
+            response, LOGIN_RESPONSES, status.HTTP_401_UNAUTHORIZED
         )
+        self.assertIsNone(response.cookies.get("sessionid"))

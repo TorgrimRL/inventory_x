@@ -54,8 +54,8 @@ select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-# Tests intentionally use `assert` (S101) and dummy passwords (S105)(S106).
-"**/tests/**/*.py" = ["S101", "S105", "S106"]
+# Tests intentionally use `assert` (S101) and dummy passwords (S105)(S106)(S107)
+"**/tests/**/*.py" = ["S101", "S105", "S106", "S107"]
 
 # Ignore "Standard pseudo-random generators" in the seed scripts
 "**/management/commands/*.py" = ["S311"]
