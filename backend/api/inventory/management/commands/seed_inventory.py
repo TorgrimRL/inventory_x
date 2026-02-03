@@ -8,8 +8,10 @@ from api.inventory.models import Inventory, InventoryItem, InventoryMembership
 
 
 class Command(BaseCommand):
-    help = ("Seeds database with mock inventory data (items +"
-            " inventories + memberships)")
+    help = (
+        "Seeds database with mock inventory data (items +"
+        " inventories + memberships)"
+    )
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
