@@ -1,4 +1,5 @@
 import uuid
+from contextlib import suppress
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -7,9 +8,9 @@ from django.test import TestCase
 
 from api.inventory.models import (
     Inventory,
+    InventoryAlreadyExistsError,
     InventoryItem,
     InventoryMembership,
-    InventoryAlreadyExistsError,
 )
 
 
@@ -51,11 +52,20 @@ class InventoryModelTests(TestCase):
 
         # Related name works
         self.assertEqual(inventory.memberships.count(), 1)
-        self.assertEqual(inventory.memberships.get(user=self.user).role, "owner")
+        self.assertEqual(
+            inventory.memberships.get(user=self.user).role, "owner"
+        )
 
     def test_register_with_owner_rejects_invalid_org_number(self):
         """org_number must be exactly 9 digits."""
-        invalid_orgs = ["", "123", "12345678", "1234567890", "abcdefghi", "1234abc89"]
+        invalid_orgs = [
+            "",
+            "123",
+            "12345678",
+            "1234567890",
+            "abcdefghi",
+            "1234abc89",
+        ]
 
         for org in invalid_orgs:
             with self.subTest(org=org), self.assertRaises(ValidationError):
@@ -87,7 +97,9 @@ class InventoryModelTests(TestCase):
         self.assertEqual(Inventory.objects.count(), 1)
         self.assertEqual(InventoryMembership.objects.count(), 1)
 
-    def test_register_with_owner_is_atomic_no_membership_if_inventory_save_fails(self):
+    def test_register_with_owner_is_atomic(
+        self,
+    ):
         """
         The method is @transaction.atomic: if inventory save fails,
         it must not create any membership.
@@ -98,14 +110,12 @@ class InventoryModelTests(TestCase):
             org_number="123456789",
         )
 
-        try:
+        with suppress(InventoryAlreadyExistsError):
             Inventory.register_with_owner(
                 user=self.user,
                 name="Duplicate",
                 org_number="123456789",
             )
-        except InventoryAlreadyExistsError:
-            pass
 
         self.assertEqual(Inventory.objects.count(), 1)
         self.assertEqual(InventoryMembership.objects.count(), 1)
@@ -140,13 +150,12 @@ class InventoryMembershipModelTests(TestCase):
             role=InventoryMembership.Role.OWNER,
         )
 
-        with self.assertRaises(IntegrityError):
-            with transaction.atomic():
-                InventoryMembership.objects.create(
-                    inventory=self.inventory,
-                    user=self.user,
-                    role=InventoryMembership.Role.EMPLOYEE,
-                )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            InventoryMembership.objects.create(
+                inventory=self.inventory,
+                user=self.user,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
 
         self.assertEqual(
             InventoryMembership.objects.filter(
