@@ -1,6 +1,4 @@
-from django.db import IntegrityError, transaction
-
-from .models import Inventory, InventoryItem, InventoryMembership
+from .models import Inventory, InventoryItem
 
 
 def get_all_items():
@@ -18,34 +16,9 @@ def get_all_items():
     return list(items)
 
 
-class InventoryAlreadyExistsError(Exception):
-    default_message = "Organization number is already registered"
-
-    def __init__(self, message: str | None = None):
-        super().__init__(message or self.default_message)
-
-
-@transaction.atomic
 def register_inventory(*, user, name: str, org_number: str):
-    inventory = Inventory(
-        name=(name or "").strip(),
-        org_number=(org_number or "").strip(),
-    )
-
-    inventory.full_clean(validate_unique=False)
-
-    if Inventory.objects.filter(org_number=inventory.org_number).exists():
-        raise InventoryAlreadyExistsError()
-
-    try:
-        inventory.save()
-    except IntegrityError:
-        raise InventoryAlreadyExistsError() from None
-
-    membership = InventoryMembership.objects.create(
-        inventory=inventory,
+    return Inventory.register_with_owner(
         user=user,
-        role=InventoryMembership.Role.OWNER,
+        name=name,
+        org_number=org_number,
     )
-
-    return inventory, membership

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from . import services
 from .contracts import REGISTER_INVENTORY_RESPONSES
+from .models import InventoryAlreadyExistsError
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -43,7 +44,7 @@ class RegisterInventoryView(views.APIView):
                 name=data["name"],
                 org_number=data["orgNumber"],
             )
-        except services.InventoryAlreadyExistsError as e:
+        except InventoryAlreadyExistsError as e:
             return Response(
                 {"detail": {"orgNumber": [str(e)]}},
                 status=status.HTTP_409_CONFLICT,

@@ -29,7 +29,7 @@ class RegisterInventoryTests(BaseAPITestCase):
         self.assert_contract(
             response,
             REGISTER_INVENTORY_RESPONSES,
-            response.status_code,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_happy_path_creates_inventory_and_owner_membership(
