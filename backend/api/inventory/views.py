@@ -51,6 +51,12 @@ class AdjustStockView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        except ValueError as exc:
+            return Response(
+                {"detail": {"non_field_errors": [str(exc)]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         return Response(
             {
                 "item_id": item.id,

@@ -114,3 +114,24 @@ class AdjustStockViewTests(BaseAPITestCase):
             ADJUST_STOCK_RESPONSES,
             status.HTTP_404_NOT_FOUND,
         )
+
+    def test_decrease_stock_below_zero_returns_400_and_stock_unchanged(self):
+        response = self.client.post(
+            self.url,
+            {"direction": "decrease", "amount": 999},
+        )
+
+        self.assert_contract(
+            response,
+            ADJUST_STOCK_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        body = response.json()
+        self.assertEqual(
+            body["detail"]["non_field_errors"][0],
+            "Stock cannot be negative",
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.stock, 10)
