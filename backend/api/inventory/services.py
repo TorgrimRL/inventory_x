@@ -23,7 +23,6 @@ def create_item(name, price, stock):
         if InventoryItem.objects.filter(name=name).exists():
             raise ValueError(f"Item with name '{name}' already exists.")
 
-        # Create the item and return the details as a dictionary
         item = InventoryItem.objects.create(name=name, price=price, stock=stock)
         return {
             "id": item.id,
@@ -32,11 +31,9 @@ def create_item(name, price, stock):
             "stock": item.stock,
         }
     except ValueError as ve:
-        raise ve  # Propagate the business validation error
+        raise ve
     except Exception as e:
         raise Exception("Error creating inventory item") from e
-    # Force conversion to a standard Python list
-    return list(items)
 
 
 def adjust_stock(item_id: int, direction: str, amount: int):
@@ -45,7 +42,6 @@ def adjust_stock(item_id: int, direction: str, amount: int):
     direction: "increase" or "decrease"
     amount: integer > 0
     """
-
     if amount <= 0:
         raise ValueError("Amount must be a positive whole number")
 
@@ -63,5 +59,4 @@ def adjust_stock(item_id: int, direction: str, amount: int):
         item.stock -= amount
 
     item.save()
-
     return item
