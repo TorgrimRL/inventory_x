@@ -8,7 +8,18 @@ WORKDIR /app
 RUN set -eux; \
     rm -f /etc/apt/sources.list.d/debian.sources || true; \
     rm -f /etc/apt/sources.list || true; \
+    printf "%s\n" \
+      "deb https://deb.debian.org/debian bookworm main" \
+      "deb https://deb.debian.org/debian bookworm-updates main" \
+      "deb https://security.debian.org/debian-security bookworm-security main" \
       > /etc/apt/sources.list.d/99-https.list; \
+    printf "%s\n" \
+      'Acquire::Retries "5";' \
+      'Acquire::By-Hash "yes";' \
+      'Acquire::PDiffs "false";' \
+      'Acquire::https::No-Cache "true";' \
+      'Acquire::http::No-Cache "true";' \
+      'Acquire::http::Pipeline-Depth "0";' \
       > /etc/apt/apt.conf.d/99-hardening; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \

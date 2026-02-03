@@ -1,154 +1,378 @@
-import "../App.css"; // Assuming you want to keep styles in your CSS file
-
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import {
+  Alert,
+  AppBar,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Link,
+  Paper,
+  Snackbar,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-// Import the updated logo
 import XLogo from "/logo1.png";
 
-function App() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-  const [showModal, setShowModal] = useState<boolean>(false); // State to control modal visibility
-  const [name, setName] = useState<string>("");
-  const [price, setPrice] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
+type InventoryItem = {
+  id: number | string;
+  name: string;
+  stock: number;
+  price: number;
+  order_id?: string;
+};
 
-  useEffect(() => {
-    fetch("/api/inventory/")
-      .then((res) => res.json())
-      .then((data) => {
-        setItems(data.data || data); // Update items state
-        setLoading(false); // Set loading to false
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Failed to load items.");
-        setLoading(false); // Set loading to false even in case of error
-      });
-  }, []);
+function extractBackendMessage(err: any): string {
+  const data = err?.response?.data;
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      await axios.post("/api/inventory/", { name, price, stock });
-      setShowModal(false); // Close modal on successful submit
-      setItems((prevItems) => [
-        ...prevItems,
-        {
-          name,
-          price,
-          stock,
-          order_id: Math.random().toString(),
-          id: Date.now(),
-        },
-      ]); // Add new item to the list
-      setName(""); // Reset fields
-      setPrice(0);
-      setStock(0);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to add item.");
+  if (!data) return "Failed to add item.";
+
+  if (typeof data === "string") return data;
+
+  if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.message === "string") return data.message;
+
+  if (typeof data === "object") {
+    const parts: string[] = [];
+
+    for (const [key, value] of Object.entries(data)) {
+      if (Array.isArray(value)) {
+        parts.push(`${key}: ${value.join(" ")}`);
+      } else if (typeof value === "string") {
+        parts.push(`${key}: ${value}`);
+      } else if (value && typeof value === "object") {
+        parts.push(`${key}: ${JSON.stringify(value)}`);
+      }
     }
-  };
 
-  return (
-    <>
-      <div>
-        {/* Logo and link */}
-        <a
-          href="https://inventoryx.td.-uit.no"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src={XLogo} className="logo" alt="Inventory X logo" />
-        </a>
-      </div>
+    if (parts.length > 0) return parts.join(" | ");
+  }
 
-      <h1>Inventory X</h1>
-
-      <button onClick={() => setShowModal(true)} className="add-item-button">
-        Add Item
-      </button>
-
-      <div className="card">
-        <h2>Items in Stock:</h2>
-        {loading && <p>Loading items...</p>} {/* Show loading state */}
-        {error && <p className="error">{error}</p>} {/* Show error message */}
-        {!loading && !error && items.length === 0 && (
-          <p>No items found.</p>
-        )}{" "}
-        {/* Empty state */}
-        {/* Table to display inventory items */}
-        <table className="inventory-table">
-          <thead>
-            <tr>
-              <th>Product name</th>
-              <th>Stock</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.stock}</td>
-                <td>${item.price}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal for adding item */}
-      {showModal && (
-        <div className="overlay">
-          <div className="modal">
-            <h2>Add New Item</h2>
-            <form onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="name">Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="price">Price</label>
-                <input
-                  id="price"
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="stock">Stock</label>
-                <input
-                  id="stock"
-                  type="number"
-                  value={stock}
-                  onChange={(e) => setStock(Number(e.target.value))}
-                  required
-                />
-              </div>
-
-              <button type="submit">Add Item</button>
-              <button type="button" onClick={() => setShowModal(false)}>
-                Close
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return "Failed to add item.";
 }
 
-export default App;
+export default function ItemPage() {
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const [open, setOpen] = useState(false);
+
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<string>("0");
+  const [stock, setStock] = useState<string>("0");
+
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMessage, setSnackMessage] = useState("Item added");
+
+  async function loadItems() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get("/api/inventory/");
+      const data = res.data;
+      setItems((data.data || data) as InventoryItem[]);
+    } catch (e) {
+      console.error(e);
+      setError("Failed to load items.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  function openDialog() {
+    setError(null);
+    setOpen(true);
+  }
+
+  function closeDialog() {
+    if (!saving) setOpen(false);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+
+    const payload = {
+      name: name.trim(),
+      price: Number(price),
+      stock: Number(stock),
+    };
+
+    try {
+      await axios.post("/api/inventory/", payload);
+
+      setItems((prev) => [
+        ...prev,
+        {
+          ...payload,
+          id: Date.now(),
+          order_id: Math.random().toString(),
+        },
+      ]);
+
+      setSnackMessage("Item added");
+      setSnackOpen(true);
+
+      setOpen(false);
+      setName("");
+      setPrice("0");
+      setStock("0");
+    } catch (err) {
+      console.error(err);
+      setError(extractBackendMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const showClientHint =
+    !saving &&
+    (name.trim().length === 0 ||
+      !Number.isFinite(Number(price)) ||
+      !Number.isFinite(Number(stock)));
+
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Toolbar sx={{ py: 0.75 }}>
+          <Container
+            maxWidth="lg"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Link
+              href="https://inventoryx.td.-uit.no"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="none"
+              sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}
+            >
+              <Box
+                component="img"
+                src={XLogo}
+                alt="Inventory X logo"
+                sx={{
+                  width: 64,
+                  height: 64,
+                  display: "block",
+                }}
+              />
+              <Typography
+                variant="h4"
+                color="text.primary"
+                sx={{ lineHeight: 1 }}
+              >
+                Inventory X
+              </Typography>
+            </Link>
+          </Container>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack spacing={2.5}>
+          {error && <Alert severity="error">{error}</Alert>}
+
+          <Paper sx={{ p: 2.5 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ gap: 2 }}
+            >
+              <Box>
+                <Typography variant="h5">Items</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {items.length} item{items.length === 1 ? "" : "s"}
+                </Typography>
+              </Box>
+
+              <IconButton
+                aria-label="Refresh"
+                onClick={loadItems}
+                disabled={loading}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Stack>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openDialog}
+              >
+                Add item
+              </Button>
+            </Stack>
+
+            {loading ? (
+              <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
+                <CircularProgress />
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 2 }}
+                >
+                  Loading items…
+                </Typography>
+              </Stack>
+            ) : items.length === 0 ? (
+              <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
+                <Typography variant="body1">No items found.</Typography>
+              </Stack>
+            ) : (
+              <TableContainer component={Box} sx={{ overflowX: "auto" }}>
+                <Table size="medium" sx={{ minWidth: 720 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        Product name
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        Stock
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        Price
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {items.map((item) => (
+                      <TableRow key={item.id} hover>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell align="right">{item.stock}</TableCell>
+                        <TableCell align="right">
+                          {new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                          }).format(Number(item.price))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Paper>
+        </Stack>
+      </Container>
+
+      <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
+        <Box component="form" onSubmit={handleSubmit}>
+          <DialogTitle>Add new item</DialogTitle>
+
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                label="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                required
+                fullWidth
+                disabled={saving}
+              />
+
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <TextField
+                  label="Price"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  type="number"
+                  inputProps={{ step: "0.01" }}
+                  required
+                  fullWidth
+                  disabled={saving}
+                />
+
+                <TextField
+                  label="Initial stock"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  type="number"
+                  inputProps={{ step: "1" }}
+                  required
+                  fullWidth
+                  disabled={saving}
+                />
+              </Stack>
+
+              {showClientHint && (
+                <Alert severity="info">
+                  Name must be set. Price/stock must be numbers (backend will
+                  validate).
+                </Alert>
+              )}
+            </Stack>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={closeDialog} color="inherit" disabled={saving}>
+              Cancel
+            </Button>
+
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? "Saving…" : "Add item"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={2500}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackOpen(false)}
+          severity="success"
+          variant="filled"
+        >
+          {snackMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
