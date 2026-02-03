@@ -5,11 +5,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# For postgres driver (psycopg/psycopg2)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-  && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    rm -f /etc/apt/sources.list.d/debian.sources || true; \
+    rm -f /etc/apt/sources.list || true; \
+      > /etc/apt/sources.list.d/99-https.list; \
+      > /etc/apt/apt.conf.d/99-hardening; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends build-essential libpq-dev; \
+    rm -rf /var/lib/apt/lists/*
 
 # uv
 RUN pip install --no-cache-dir uv
