@@ -5,8 +5,8 @@ from rest_framework import status, views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.user.contracts import LOGOUT_RESPONSES
-from api.user.serializers import LogoutResSerializer
+from api.user.contracts.logout import LOGOUT_RESPONSES
+from api.user.serializers.logout import LogoutResSerializer
 
 
 class LogoutView(views.APIView):

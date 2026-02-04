@@ -1,5 +1,3 @@
-
-
 // Browser drops cookies on cross-origin requests.
 import axios from "axios";
 axios.defaults.withCredentials = true;

@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
-from api.user.contracts import LOGOUT_RESPONSES
+from api.user.contracts.logout import LOGOUT_RESPONSES
 
 User = get_user_model()
 
