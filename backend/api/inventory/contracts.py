@@ -3,6 +3,7 @@ from drf_spectacular.utils import OpenApiResponse
 from api.inventory.serializers import (
     AdjustStockResponseSerializer,
     InventoryItemCreateSerializer,
+    InventoryListSerializer,
     RegisterInventoryResponseSerializer,
     RegisterInventoryValidationErrorSerializer,
 )
@@ -51,6 +52,10 @@ ADJUST_STOCK_RESPONSES = {
 }
 
 CREATE_ITEM_RESPONSES = {
+    200: OpenApiResponse(
+        response=InventoryListSerializer,
+        description="OK",
+    ),
     201: OpenApiResponse(
         response=InventoryItemCreateSerializer,
         description="Item created",

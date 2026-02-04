@@ -80,7 +80,12 @@ export default function ItemPage() {
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState<string>("0");
+  const priceNumber = Number(price);
+  const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+
   const [stock, setStock] = useState<string>("0");
+  const stockNumber = Number(stock);
+  const stockIsInvalid = !Number.isFinite(stockNumber) || stockNumber < 0;
 
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
@@ -116,12 +121,19 @@ export default function ItemPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const s = Number(stock);
+    if (!Number.isFinite(s) || s < 0) {
+      setError("Stock cannot be negative.");
+      return;
+    }
+
     setSaving(true);
 
     const payload = {
       name: name.trim(),
       price: Number(price),
-      stock: Number(stock),
+      stock: s,
     };
 
     try {
@@ -320,10 +332,12 @@ export default function ItemPage() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   type="number"
-                  inputProps={{ step: "0.01" }}
+                  inputProps={{ step: "0.01", min: 0 }}
                   required
                   fullWidth
                   disabled={saving}
+                  error={priceIsInvalid}
+                  helperText={priceIsInvalid ? "Price cannot be negative" : " "}
                 />
 
                 <TextField
@@ -331,17 +345,18 @@ export default function ItemPage() {
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                   type="number"
-                  inputProps={{ step: "1" }}
+                  inputProps={{ step: "1", min: 0 }}
                   required
                   fullWidth
                   disabled={saving}
+                  error={stockIsInvalid}
+                  helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
               </Stack>
 
               {showClientHint && (
                 <Alert severity="info">
-                  Name must be set. Price/stock must be numbers (backend will
-                  validate).
+                  Name must be set. Price/stock must be positive.
                 </Alert>
               )}
             </Stack>
@@ -352,7 +367,11 @@ export default function ItemPage() {
               Cancel
             </Button>
 
-            <Button type="submit" variant="contained" disabled={saving}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving || stockIsInvalid}
+            >
               {saving ? "Saving…" : "Add item"}
             </Button>
           </DialogActions>

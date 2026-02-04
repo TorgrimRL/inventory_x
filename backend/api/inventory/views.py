@@ -57,10 +57,8 @@ class InventoryView(APIView):
 
             # Attempt to create the item
             created = services.create_item(name=name, price=price, stock=stock)
-            return Response(
-                {"data": created},
-                status=status.HTTP_201_CREATED,
-            )
+            return Response(created, status=status.HTTP_201_CREATED)
+
         except ValueError as e:
             # Specific business validation error (e.g., duplicate item name)
             logger.warning(f"Business validation failed: {e!s}")
