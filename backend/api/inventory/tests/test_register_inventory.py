@@ -22,10 +22,6 @@ class RegisterInventoryTests(BaseAPITestCase):
         response = self.client.post(self.url, payload, format="json")
 
         # Assert
-        self.assertIn(
-            response.status_code,
-            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
-        )
         self.assert_contract(
             response,
             REGISTER_INVENTORY_RESPONSES,

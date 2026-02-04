@@ -1,5 +1,5 @@
 import uuid
-from contextlib import suppress
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -97,28 +97,31 @@ class InventoryModelTests(TestCase):
         self.assertEqual(Inventory.objects.count(), 1)
         self.assertEqual(InventoryMembership.objects.count(), 1)
 
-    def test_register_with_owner_is_atomic(
-        self,
-    ):
+    def test_register_owner_atomic_rollback(self):
         """
-        The method is @transaction.atomic: if inventory save fails,
-        it must not create any membership.
+        If the Inventory is saved but membership creation fails,
+        the whole transaction must roll back (no Inventory persisted).
         """
-        Inventory.register_with_owner(
-            user=self.user,
-            name="First",
-            org_number="123456789",
-        )
+        org_number = "999888777"
 
-        with suppress(InventoryAlreadyExistsError):
+        with (
+            patch(
+                "api.inventory.models.InventoryMembership.objects.create",
+                side_effect=IntegrityError("Simulated DB failure"),
+            ),
+            self.assertRaises(IntegrityError),
+        ):
             Inventory.register_with_owner(
                 user=self.user,
-                name="Duplicate",
-                org_number="123456789",
+                name="Atomic Inventory",
+                org_number=org_number,
             )
 
-        self.assertEqual(Inventory.objects.count(), 1)
-        self.assertEqual(InventoryMembership.objects.count(), 1)
+        # Inventory should not exist (rolled back)
+        self.assertFalse(
+            Inventory.objects.filter(org_number=org_number).exists()
+        )
+        self.assertEqual(InventoryMembership.objects.count(), 0)
 
     # ----------------------------------------------------------------------
     # Model Instance Tests

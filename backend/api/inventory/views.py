@@ -13,7 +13,7 @@ from api.inventory.serializers import AdjustStockSerializer
 
 from . import services
 from .contracts import REGISTER_INVENTORY_RESPONSES
-from .models import InventoryAlreadyExistsError
+from .models import Inventory, InventoryAlreadyExistsError
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -94,7 +94,7 @@ class RegisterInventoryView(views.APIView):
         data = serializer.validated_data
 
         try:
-            inventory, _ = services.register_inventory(
+            inventory, _ = Inventory.register_with_owner(
                 user=request.user,
                 name=data["name"],
                 org_number=data["orgNumber"],
