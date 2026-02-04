@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
-from api.user.contracts import LOGIN_RESPONSES
+from api.user.contracts.login import LOGIN_RESPONSES
 
 
 class LoginTests(BaseAPITestCase):
