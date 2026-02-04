@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from .models import InventoryItem
+from .models import Inventory, InventoryItem
 
 
 def get_all_items():
@@ -49,3 +49,11 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
+
+
+def register_inventory(*, user, name: str, org_number: str):
+    return Inventory.register_with_owner(
+        user=user,
+        name=name,
+        org_number=org_number,
+    )

@@ -82,7 +82,7 @@ make seed
 Follow logs:
 
 ```bash
-make seed
+make logs
 ```
 
 Follow logs for a single service:
