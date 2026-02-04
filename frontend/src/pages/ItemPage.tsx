@@ -30,8 +30,6 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-import XLogo from "/logo1.png";
-
 type InventoryItem = {
   id: number | string;
   name: string;
@@ -196,16 +194,6 @@ export default function ItemPage() {
               underline="none"
               sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}
             >
-              <Box
-                component="img"
-                src={XLogo}
-                alt="Inventory X logo"
-                sx={{
-                  width: 64,
-                  height: 64,
-                  display: "block",
-                }}
-              />
               <Typography
                 variant="h4"
                 color="text.primary"
@@ -370,7 +358,12 @@ export default function ItemPage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={saving || stockIsInvalid}
+              disabled={
+                saving ||
+                stockIsInvalid ||
+                priceIsInvalid ||
+                name.trim().length === 0
+              }
             >
               {saving ? "Saving…" : "Add item"}
             </Button>

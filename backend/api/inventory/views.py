@@ -17,7 +17,11 @@ from api.inventory.serializers import (
     InventoryItemCreateSerializer,
 )
 
-from .contracts import REGISTER_INVENTORY_RESPONSES
+from .contracts import (
+    CREATE_ITEM_RESPONSES,
+    LIST_ITEMS_RESPONSES,
+    REGISTER_INVENTORY_RESPONSES,
+)
 from .models import Inventory, InventoryAlreadyExistsError
 from .serializers import (
     RegisterInventoryRequestSerializer,
@@ -30,6 +34,7 @@ logger = logging.getLogger(__name__)
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
 
+    @extend_schema(responses=LIST_ITEMS_RESPONSES)
     def get(self, request: Request) -> Response:
         try:
             data = services.get_all_items()
@@ -41,6 +46,9 @@ class InventoryView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @extend_schema(
+        responses=CREATE_ITEM_RESPONSES,
+    )
     def post(self, request: Request) -> Response:
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():

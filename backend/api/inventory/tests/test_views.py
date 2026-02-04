@@ -4,6 +4,7 @@ from rest_framework import status
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
+    LIST_ITEMS_RESPONSES,
 )
 from api.inventory.models import InventoryItem
 from api.tests.base import BaseAPITestCase
@@ -14,9 +15,7 @@ class InventoryListViewTests(BaseAPITestCase):
         InventoryItem.objects.create(name="Monitor", price=200, stock=1)
 
         response = self.client.get("/api/inventory/")
-        self.assert_contract(
-            response, CREATE_ITEM_RESPONSES, status.HTTP_200_OK
-        )
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
         data = response.json()
 
         self.assertIn("data", data)
@@ -28,9 +27,7 @@ class InventoryListViewTests(BaseAPITestCase):
 
         response = self.client.get("/api/inventory/")
 
-        self.assert_contract(
-            response, CREATE_ITEM_RESPONSES, status.HTTP_200_OK
-        )
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
         data = response.json()
 
         self.assertIn("data", data)
@@ -41,9 +38,7 @@ class InventoryListViewTests(BaseAPITestCase):
     def test_inventory_list_empty(self):
         response = self.client.get("/api/inventory/")
 
-        self.assert_contract(
-            response, CREATE_ITEM_RESPONSES, status.HTTP_200_OK
-        )
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
         data = response.json()
 
         self.assertIn("data", data)

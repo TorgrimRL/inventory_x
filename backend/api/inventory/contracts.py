@@ -69,3 +69,18 @@ CREATE_ITEM_RESPONSES = {
         description="Authentication required",
     ),
 }
+
+LIST_ITEMS_RESPONSES = {
+    200: OpenApiResponse(
+        response=InventoryListSerializer,
+        description="OK",
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication required",
+    ),
+    500: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Internal processing error",
+    ),
+}
