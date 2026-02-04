@@ -1,5 +1,5 @@
 import uuid
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from django.conf import settings
 from django.core.validators import RegexValidator
@@ -27,6 +27,10 @@ class Inventory(models.Model):
         validators=[org_number_validator],
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # NOTE: Type hint for dynamic reverse relationship
+    if TYPE_CHECKING:
+        memberships: models.Manager["InventoryMembership"]
 
     @classmethod
     @transaction.atomic
@@ -57,6 +61,7 @@ class Inventory(models.Model):
 
 
 class InventoryItem(models.Model):
+    id: int
     name = models.CharField(max_length=255)
     price = models.IntegerField()
     stock = models.IntegerField(default=0)
