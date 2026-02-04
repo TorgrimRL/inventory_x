@@ -1,13 +1,13 @@
 import axios from "axios";
 import type React from "react";
-import { useNavigate } from "react-router-dom";
-import { checkSession } from "../../services/authService";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { checkSession } from "../../services/authService";
 
 const LogoutButton: React.FC = () => {
-
   const navigate = useNavigate();
-  const [isValid, setlsValid] = useState<Boolean>(false);
+  const [isValid, setlsValid] = useState<boolean>(false);
 
   useEffect(() => {
     const verify = async () => {
@@ -24,9 +24,11 @@ const LogoutButton: React.FC = () => {
   const logoutHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await axios.post("/api/user/logout/", { withCredentials: true });
+    const res = await axios.post("/api/user/logout/", {
+      withCredentials: true,
+    });
     if (res.status == 200) {
-      localStorage.clear();// clear session storage. 
+      localStorage.clear(); // clear session storage.
       navigate("/");
     }
   };
@@ -37,14 +39,11 @@ const LogoutButton: React.FC = () => {
   }
 
   return (
-    <button
-      onClick={logoutHandler}
-      type="button"
-      className="submit-button"
-    > logout
+    <button onClick={logoutHandler} type="button" className="submit-button">
+      {" "}
+      logout
     </button>
-  )
-}
+  );
+};
 
 export default LogoutButton;
-
