@@ -26,14 +26,14 @@ const LogoutButton: React.FC = () => {
 
     const res = await axios.post("/api/user/logout/", { withCredentials: true });
     if (res.status == 200) {
+      localStorage.clear();// clear session storage. 
       navigate("/");
     }
   };
 
   // Logout button render only for authorized users.
   if (!isValid) {
-    localStorage.clear() // clear session storage. 
-    navigate("/")
+    navigate("/");
   }
 
   return (
