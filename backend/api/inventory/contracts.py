@@ -7,7 +7,7 @@ from api.inventory.serializers import (
     RegisterInventoryResponseSerializer,
     RegisterInventoryValidationErrorSerializer,
 )
-from api.user.serializers import (
+from api.user.serializers.common import (
     ErrorResponseSerializer,
     ValidationErrorResponseSerializer,
 )
