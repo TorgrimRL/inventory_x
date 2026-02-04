@@ -11,6 +11,7 @@ class AdjustStockResponseSerializer(serializers.Serializer):
     stock = serializers.IntegerField()
     message = serializers.CharField()
 
+
 class InventoryItemCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     price = serializers.IntegerField(min_value=0)

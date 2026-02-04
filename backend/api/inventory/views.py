@@ -1,15 +1,22 @@
 import logging
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.inventory import services
-from api.inventory.contracts import ADJUST_STOCK_RESPONSES, CREATE_ITEM_RESPONSES
-from api.inventory.serializers import AdjustStockSerializer, InventoryItemCreateSerializer
+from api.inventory.contracts import (
+    ADJUST_STOCK_RESPONSES,
+)
+from api.inventory.serializers import (
+    AdjustStockSerializer,
+    InventoryItemCreateSerializer,
+)
+
 logger = logging.getLogger(__name__)
+
 
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
