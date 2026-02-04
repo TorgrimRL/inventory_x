@@ -1,11 +1,11 @@
 from drf_spectacular.utils import OpenApiResponse
 
-from api.user.serializers import (
+from api.user.serializers.common import (
     ErrorResponseSerializer,
+)
+from api.user.serializers.login import (
     LoginResponseSerializer,
     LoginValidationErrorSerializer,
-    LogoutResSerializer,
-    VerifySessionResponseSerializer,
 )
 
 LOGIN_RESPONSES = {
@@ -21,21 +21,5 @@ LOGIN_RESPONSES = {
     500: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Internal server error",
-    ),
-}
-
-VERIFY_RESPONSES = {
-    200: VerifySessionResponseSerializer,
-    403: OpenApiResponse(
-        response=ErrorResponseSerializer,
-        description="Authentication credentials were not provided.",
-    ),
-}
-
-LOGOUT_RESPONSES = {
-    200: LogoutResSerializer,
-    403: OpenApiResponse(
-        response=ErrorResponseSerializer,
-        description="Not a authenticated user",
     ),
 }

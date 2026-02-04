@@ -50,11 +50,16 @@ Auto-format everything:
 make fmt
 ```
 
-Run tests:
+Testing
 
 ```bash
 make test
 ```
+
+`make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional path after that (you may omit the `api/` and `src/` prefixes).
+Example:
+`
+make test frontend src/math.test.tsx` # or: `make test frontend math.test.tsx`
 
 Stop containers:
 
@@ -77,7 +82,7 @@ make seed
 Follow logs:
 
 ```bash
-make seed
+make logs
 ```
 
 Follow logs for a single service:

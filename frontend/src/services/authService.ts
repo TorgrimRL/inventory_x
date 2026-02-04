@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "./apiClient";
 
 export const checkSession = async () => {
   try {
