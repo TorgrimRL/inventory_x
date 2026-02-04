@@ -1,0 +1,190 @@
+import uuid
+from contextlib import suppress
+
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from django.test import TestCase
+
+from api.inventory.models import (
+    Inventory,
+    InventoryAlreadyExistsError,
+    InventoryItem,
+    InventoryMembership,
+)
+
+
+class InventoryModelTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            email="owner@example.com",
+            password="pass123",
+        )
+
+    # ----------------------------------------------------------------------
+    # Classmethod / Factory Tests
+    # ----------------------------------------------------------------------
+
+    def test_register_with_owner_happy_path(self):
+        """register_with_owner should create inventory + owner membership."""
+        inventory, membership = Inventory.register_with_owner(
+            user=self.user,
+            name="My Inventory",
+            org_number="123456789",
+        )
+
+        # Persistence
+        self.assertIsNotNone(inventory.pk)
+        self.assertIsInstance(inventory.id, uuid.UUID)
+
+        # Fields
+        self.assertEqual(inventory.name, "My Inventory")
+        self.assertEqual(inventory.org_number, "123456789")
+        self.assertIsNotNone(inventory.created_at)
+
+        # Membership created correctly
+        self.assertIsNotNone(membership.pk)
+        self.assertEqual(membership.inventory, inventory)
+        self.assertEqual(membership.user, self.user)
+        self.assertEqual(membership.role, InventoryMembership.Role.OWNER)
+        self.assertIsNotNone(membership.created_at)
+
+        # Related name works
+        self.assertEqual(inventory.memberships.count(), 1)
+        self.assertEqual(
+            inventory.memberships.get(user=self.user).role, "owner"
+        )
+
+    def test_register_with_owner_rejects_invalid_org_number(self):
+        """org_number must be exactly 9 digits."""
+        invalid_orgs = [
+            "",
+            "123",
+            "12345678",
+            "1234567890",
+            "abcdefghi",
+            "1234abc89",
+        ]
+
+        for org in invalid_orgs:
+            with self.subTest(org=org), self.assertRaises(ValidationError):
+                Inventory.register_with_owner(
+                    user=self.user,
+                    name="Bad Inventory",
+                    org_number=org,
+                )
+
+        self.assertEqual(Inventory.objects.count(), 0)
+        self.assertEqual(InventoryMembership.objects.count(), 0)
+
+    def test_register_with_owner_duplicate_org_number_raises_custom_error(self):
+        """Duplicate org_number should raise InventoryAlreadyExistsError."""
+        Inventory.register_with_owner(
+            user=self.user,
+            name="First",
+            org_number="123456789",
+        )
+
+        with self.assertRaises(InventoryAlreadyExistsError):
+            Inventory.register_with_owner(
+                user=self.user,
+                name="Second",
+                org_number="123456789",
+            )
+
+        # Still only one inventory + one membership
+        self.assertEqual(Inventory.objects.count(), 1)
+        self.assertEqual(InventoryMembership.objects.count(), 1)
+
+    def test_register_with_owner_is_atomic(
+        self,
+    ):
+        """
+        The method is @transaction.atomic: if inventory save fails,
+        it must not create any membership.
+        """
+        Inventory.register_with_owner(
+            user=self.user,
+            name="First",
+            org_number="123456789",
+        )
+
+        with suppress(InventoryAlreadyExistsError):
+            Inventory.register_with_owner(
+                user=self.user,
+                name="Duplicate",
+                org_number="123456789",
+            )
+
+        self.assertEqual(Inventory.objects.count(), 1)
+        self.assertEqual(InventoryMembership.objects.count(), 1)
+
+    # ----------------------------------------------------------------------
+    # Model Instance Tests
+    # ----------------------------------------------------------------------
+
+    def test_str_method_behavior(self):
+        """__str__ should be 'Name (org_number)'."""
+        inv = Inventory.objects.create(name="Store A", org_number="987654321")
+        self.assertEqual(str(inv), "Store A (987654321)")
+
+
+class InventoryMembershipModelTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            email="u@example.com",
+            password="pass123",
+        )
+        self.inventory = Inventory.objects.create(
+            name="Inv",
+            org_number="111222333",
+        )
+
+    def test_unique_inventory_membership_constraint(self):
+        """Same user cannot have duplicate membership for same inventory."""
+        InventoryMembership.objects.create(
+            inventory=self.inventory,
+            user=self.user,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            InventoryMembership.objects.create(
+                inventory=self.inventory,
+                user=self.user,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
+
+        self.assertEqual(
+            InventoryMembership.objects.filter(
+                inventory=self.inventory,
+                user=self.user,
+            ).count(),
+            1,
+        )
+
+    def test_str_method_behavior(self):
+        """__str__ should contain the expected parts."""
+        m = InventoryMembership.objects.create(
+            inventory=self.inventory,
+            user=self.user,
+            role=InventoryMembership.Role.EMPLOYEE,
+        )
+        # Only check that it contains expected parts (User.__str__ can vary)
+        s = str(m)
+        self.assertIn("->", s)
+        self.assertIn("as employee", s)
+
+
+class InventoryItemModelTests(TestCase):
+    def test_str_method_behavior(self):
+        """__str__ should return the item name."""
+        item = InventoryItem.objects.create(name="Widget", price=100, stock=5)
+        self.assertEqual(str(item), "Widget")
+
+    def test_defaults(self):
+        """Default stock should be 0."""
+        item = InventoryItem.objects.create(name="Widget", price=100)
+        self.assertEqual(item.stock, 0)
