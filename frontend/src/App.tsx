@@ -9,6 +9,7 @@ import Registration from "./components/auth/registrationForm";
 import RegisterInventoryForm from "./components/inventory/registerInventoryForm.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
+import ItemPage from "./pages/ItemPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/registration" element={<Registration />} />
       <Route path="/inventories" element={<InventoriesPage />} />
       <Route path="/inventories/new" element={<RegisterInventoryForm />} />
+      <Route path="/add_item" element={<ItemPage />} />
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );

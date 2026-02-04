@@ -1,7 +1,6 @@
 import uuid
 from unittest.mock import patch
 
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -12,11 +11,11 @@ from api.inventory.models import (
     InventoryItem,
     InventoryMembership,
 )
+from api.user.models import User
 
 
 class InventoryModelTests(TestCase):
     def setUp(self):
-        User = get_user_model()
         self.user = User.objects.create_user(
             email="owner@example.com",
             password="pass123",
@@ -135,7 +134,6 @@ class InventoryModelTests(TestCase):
 
 class InventoryMembershipModelTests(TestCase):
     def setUp(self):
-        User = get_user_model()
         self.user = User.objects.create_user(
             email="u@example.com",
             password="pass123",
