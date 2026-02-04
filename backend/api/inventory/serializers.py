@@ -51,4 +51,4 @@ class InventoryItemCreateSerializer(serializers.Serializer):
 
 
 class InventoryListSerializer(serializers.Serializer):
-    data = InventoryItemCreateSerializer(many=True)  # type: ignore[assignment]
+    data = InventoryItemCreateSerializer(many=True)
