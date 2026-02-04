@@ -32,6 +32,7 @@ const LogoutButton: React.FC = () => {
 
   // Logout button render only for authorized users.
   if (!isValid) {
+    localStorage.clear() // clear session storage. 
     navigate("/")
   }
 
