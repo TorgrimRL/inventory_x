@@ -19,7 +19,6 @@ DEBUG = env.bool("DEBUG", default=True)
 # TODO: For prod double check all `DEBUG` and env settings
 ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
 
-
 # Application definition
 INSTALLED_APPS = [
     "corsheaders",
@@ -78,6 +77,10 @@ if DEBUG:
 SPECTACULAR_SETTINGS = {
     "TITLE": "Inventory API",
     "VERSION": "1.0.0",
+    "SWAGGER_UI_SETTINGS": {
+        "tryItOutEnabled": True,
+        "persistAuthorization": True,
+    },
 }
 
 ROOT_URLCONF = "config.urls"

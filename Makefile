@@ -37,10 +37,10 @@ up:
 	docker compose up --build -d
 
 down:
-	docker compose down
+	docker compose down --remove-orphans
 
 reset:
-	docker compose down -v 
+	docker compose down -v --remove-orphans
 	docker compose up --build -d
 
 seed:
@@ -112,5 +112,5 @@ swagger:
 	python3 -u backend/scripts/open_swagger.py http://localhost:8000/api/docs/ || true
 
 init:
-	make reset
-	make seed
+	$(MAKE) reset
+	$(MAKE) seed
