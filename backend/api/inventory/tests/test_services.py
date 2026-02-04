@@ -44,3 +44,16 @@ class InventoryServicesTests(TestCase):
                 direction="increase",
                 amount=1,
             )
+
+    def test_adjust_stock_rejects_negative_and_does_not_change_db(self):
+        with self.assertRaises(ValueError) as ctx:
+            adjust_stock(
+                item_id=self.item_2.id,
+                direction="decrease",
+                amount=999,
+            )
+
+        self.assertEqual(str(ctx.exception), "Stock cannot be negative")
+
+        self.item_2.refresh_from_db()
+        self.assertEqual(self.item_2.stock, 5)

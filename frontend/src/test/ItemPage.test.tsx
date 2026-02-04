@@ -12,8 +12,8 @@ describe("ItemPage - minimal user story tests", () => {
     jest.clearAllMocks();
   });
 
-  test("kan legge til item og ser 'Item added'", async () => {
-    mockedAxios.get.mockResolvedValueOnce({ data: { data: [] } } as any);
+  test("add item and see 'Item added'", async () => {
+    mockedAxios.get.mockResolvedValue({ data: { data: [] } } as any);
 
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
@@ -22,6 +22,8 @@ describe("ItemPage - minimal user story tests", () => {
 
     const user = userEvent.setup();
     render(<ItemPage />);
+
+    await screen.findByText(/no items found/i);
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
