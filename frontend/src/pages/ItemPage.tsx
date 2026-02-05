@@ -139,6 +139,9 @@ export default function ItemPage() {
         item.id === selectedItem.id ? { ...item, stock: newStock } : item,
       ),
     );
+
+    setSnackMessage("Stock updated");
+    setSnackOpen(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
