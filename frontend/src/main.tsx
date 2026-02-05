@@ -1,4 +1,4 @@
-// Browser drops cookies on cross-origin requests.
+// Axios config
 import axios from "axios";
 axios.defaults.withCredentials = true;
 axios.defaults.xsrfCookieName = "csrftoken";
