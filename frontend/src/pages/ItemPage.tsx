@@ -30,6 +30,8 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 
+import AdjustStockModal from "../components/inventory/adjustStockModal";
+
 type InventoryItem = {
   id: number | string;
   name: string;
@@ -88,6 +90,9 @@ export default function ItemPage() {
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
 
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
   async function loadItems() {
     setLoading(true);
     setError(null);
@@ -114,6 +119,29 @@ export default function ItemPage() {
 
   function closeDialog() {
     if (!saving) setOpen(false);
+  }
+
+  function openAdjustStock(item: InventoryItem) {
+    setSelectedItem(item);
+    setAdjustOpen(true);
+  }
+
+  function closeAdjustStock() {
+    setAdjustOpen(false);
+    setSelectedItem(null);
+  }
+
+  function handleStockUpdated(newStock: number) {
+    if (!selectedItem) return;
+
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === selectedItem.id ? { ...item, stock: newStock } : item,
+      ),
+    );
+
+    setSnackMessage("Stock updated");
+    setSnackOpen(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -274,6 +302,9 @@ export default function ItemPage() {
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Price
                       </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        Actions
+                      </TableCell>
                     </TableRow>
                   </TableHead>
 
@@ -287,6 +318,15 @@ export default function ItemPage() {
                             style: "currency",
                             currency: "USD",
                           }).format(Number(item.price))}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => openAdjustStock(item)}
+                          >
+                            Edit
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -370,6 +410,17 @@ export default function ItemPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      {selectedItem && (
+        <AdjustStockModal
+          open={adjustOpen}
+          itemId={selectedItem.id}
+          itemName={selectedItem.name}
+          currentStock={selectedItem.stock}
+          onClose={closeAdjustStock}
+          onStockUpdated={handleStockUpdated}
+        />
+      )}
 
       <Snackbar
         open={snackOpen}
