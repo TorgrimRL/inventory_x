@@ -1,25 +1,127 @@
 from django.urls import reverse
 from rest_framework import status
 
-from api.inventory.contracts import ADJUST_STOCK_RESPONSES
+from api.inventory.contracts import (
+    ADJUST_STOCK_RESPONSES,
+    CREATE_ITEM_RESPONSES,
+    LIST_ITEMS_RESPONSES,
+)
 from api.inventory.models import InventoryItem
 from api.tests.base import BaseAPITestCase
 
 
 class InventoryListViewTests(BaseAPITestCase):
     def test_inventory_list_view(self):
-        # Setup
         InventoryItem.objects.create(name="Monitor", price=200, stock=1)
 
-        # Execute
         response = self.client.get("/api/inventory/")
-
-        # Assert
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
         data = response.json()
 
         self.assertIn("data", data)
         self.assertEqual(data["data"][0]["name"], "Monitor")
+
+    def test_inventory_list_multiple_items(self):
+        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
+        InventoryItem.objects.create(name="Keyboard", price=100, stock=5)
+
+        response = self.client.get("/api/inventory/")
+
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
+        data = response.json()
+
+        self.assertIn("data", data)
+        self.assertEqual(len(data["data"]), 2)
+        self.assertEqual(data["data"][0]["name"], "Monitor")
+        self.assertEqual(data["data"][1]["name"], "Keyboard")
+
+    def test_inventory_list_empty(self):
+        response = self.client.get("/api/inventory/")
+
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
+        data = response.json()
+
+        self.assertIn("data", data)
+        self.assertEqual(data["data"], [])
+
+    def test_inventory_item_empty_name(self):
+        response = self.client.post(
+            "/api/inventory/",
+            {"name": "", "price": 100, "stock": 5},
+            format="json",
+        )
+
+        self.assert_contract(
+            response, CREATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        data = response.json()
+        # Ikke anta eksakt format.
+        # Vi sjekker bare at feilen gjelder "name".
+        self.assertTrue(
+            ("name" in data)
+            or ("detail" in data and "name" in str(data["detail"]).lower())
+        )
+
+    def test_inventory_item_created(self):
+        payload = {"name": "Test Item", "price": 100, "stock": 5}
+
+        response = self.client.post("/api/inventory/", payload, format="json")
+
+        self.assert_contract(
+            response, CREATE_ITEM_RESPONSES, status.HTTP_201_CREATED
+        )
+        data = response.json()
+
+        self.assertTrue(
+            ("name" in data)
+            or (
+                "data" in data
+                and isinstance(data["data"], dict)
+                and "name" in data["data"]
+            )
+            or ("id" in data)
+            or (
+                "data" in data
+                and isinstance(data["data"], dict)
+                and "id" in data["data"]
+            )
+            or ("detail" in data and "name" in str(data["detail"]).lower())
+        )
+
+    def test_inventory_item_negative_stock(self):
+        response = self.client.post(
+            "/api/inventory/",
+            {"name": "Test Item", "price": 100, "stock": -5},
+            format="json",
+        )
+
+        self.assert_contract(
+            response, CREATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        data = response.json()
+        self.assertTrue(
+            ("stock" in data)
+            or ("detail" in data and "stock" in str(data["detail"]).lower())
+        )
+
+    def test_inventory_item_negative_price(self):
+        response = self.client.post(
+            "/api/inventory/",
+            {"name": "Test Item", "price": -5, "stock": 5},
+            format="json",
+        )
+
+        self.assert_contract(
+            response, CREATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        data = response.json()
+        self.assertTrue(
+            ("price" in data)
+            or ("detail" in data and "price" in str(data["detail"]).lower())
+        )
 
 
 class AdjustStockViewTests(BaseAPITestCase):
@@ -45,6 +147,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         response = self.client.post(
             self.url,
             {"direction": "increase", "amount": 5},
+            format="json",
         )
 
         data = self.assert_contract(
@@ -60,6 +163,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         response = self.client.post(
             self.url,
             {"direction": "decrease", "amount": 3},
+            format="json",
         )
 
         data = self.assert_contract(
@@ -74,6 +178,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         response = self.client.post(
             self.url,
             {"direction": "increase", "amount": 0},
+            format="json",
         )
 
         self.assert_contract(
@@ -88,6 +193,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         response = self.client.post(
             self.url,
             {"direction": "increase", "amount": 5},
+            format="json",
         )
 
         self.assert_contract(
@@ -107,6 +213,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         response = self.client.post(
             url,
             {"direction": "increase", "amount": 5},
+            format="json",
         )
 
         self.assert_contract(

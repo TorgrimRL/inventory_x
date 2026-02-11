@@ -19,7 +19,6 @@ DEBUG = env.bool("DEBUG", default=True)
 # TODO: For prod double check all `DEBUG` and env settings
 ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
 
-
 # Application definition
 INSTALLED_APPS = [
     "corsheaders",
@@ -78,6 +77,10 @@ if DEBUG:
 SPECTACULAR_SETTINGS = {
     "TITLE": "Inventory API",
     "VERSION": "1.0.0",
+    "SWAGGER_UI_SETTINGS": {
+        "tryItOutEnabled": True,
+        "persistAuthorization": True,
+    },
 }
 
 ROOT_URLCONF = "config.urls"
@@ -101,11 +104,13 @@ USE_TZ = True
 # CORS CONFIG (Who can talk to the API)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",
     "http://localhost:5173",
 ]
 
-# CSRF CONFIG (Form & POST security)
+# CSRF CONFIG
 CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:5173",
     "http://localhost:5173",
 ]
 CSRF_COOKIE_HTTPONLY = False

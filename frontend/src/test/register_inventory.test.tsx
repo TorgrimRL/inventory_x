@@ -7,23 +7,34 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import axios from "axios";
+
+import axios from "../services/apiClient";
+
+jest.mock("../services/apiClient", () => ({
+  __esModule: true,
+  default: {
+    post: jest.fn(),
+  },
+}));
+
 import { useNavigate } from "react-router-dom";
 
 import RegisterInventoryForm from "../components/inventory/registerInventoryForm.tsx";
 
 // MOCK DEPENDENCIES
-jest.mock("axios");
 jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
 }));
 
 describe("Register Inventory (Business) Component", () => {
-  const mockNavigate = jest.fn();
+  let mockNavigate: jest.Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockNavigate = jest.fn();
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+
+    jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   test("renders form inputs (name, orgNumber) and submit button", () => {

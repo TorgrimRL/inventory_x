@@ -6,8 +6,8 @@
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
+  height: 12em;
+  padding: 3em;
   will-change: filter;
   transition: filter 300ms;
 }
@@ -39,4 +39,114 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.add-item-button {
+  background-color: #646cff;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 20px; /* Space it a bit from the logo */
+}
+
+.add-item-button:hover {
+  background-color: #535bf2;
+  transition: background-color 0.3s ease;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.inventory-table th {
+  background-color: #4caf50; /* Endre til ønsket farge */
+  color: #000000; /* Sett tekstfargen til hvit for kontrast */
+}
+.inventory-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid 242424;
+}
+
+.inventory-table th {
+  background-color: #ddd;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.inventory-table th,
+.inventory-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid 242424;
+}
+
+.inventory-table th {
+  background-color: 242424;
+}
+
+.add-item-button {
+  background-color: #4caf50;
+  color: 242424;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background-color: #242424;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+  text-align: center;
+}
+
+.modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #242424;
+}
+
+.modal button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.modal button[type="submit"] {
+  background-color: #4caf50;
+  color: black;
+}
+
+.modal button[type="button"] {
+  background-color: #f44336;
+  color: #242424;
+  margin-left: 10px;
 }
