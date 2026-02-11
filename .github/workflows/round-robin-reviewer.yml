@@ -2,7 +2,7 @@ name: Round-robin PR reviewer
 
 on:
   pull_request:
-    types: [ opened, reopened, ready_for_review ]
+    types: [ opened, reopened, ready_for_review, synchronize ]
 
 concurrency:
   group: round-robin-reviewer
