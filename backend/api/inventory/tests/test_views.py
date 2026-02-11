@@ -5,6 +5,7 @@ from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
     LIST_ITEMS_RESPONSES,
+    UPDATE_ITEM_RESPONSES,
 )
 from api.inventory.models import InventoryItem
 from api.tests.base import BaseAPITestCase
@@ -242,3 +243,118 @@ class AdjustStockViewTests(BaseAPITestCase):
 
         self.item.refresh_from_db()
         self.assertEqual(self.item.stock, 10)
+
+
+class UpdateItemViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
+
+        self.item = InventoryItem.objects.create(
+            name="Milk",
+            price=25,
+            stock=10,
+        )
+
+        self.url = reverse(
+            "update-item",
+            args=[self.item.id],
+        )
+
+    def test_update_item_success(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Skim Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, "Skim Milk")
+        self.assertEqual(self.item.price, 30)
+        self.assertEqual(self.item.stock, 10)  # stock unchanged
+
+    def test_update_item_blank_name_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_update_item_negative_price_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": -5},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        # Ensure item not updated
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.price, 25)
+
+    def test_update_item_non_numeric_price_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": "abc"},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        # Ensure item not updated
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.price, 25)
+
+    def test_update_item_not_found_returns_404(self):
+        url = reverse("update-item", args=[9999])
+
+        response = self.client.patch(
+            url,
+            {"name": "Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_requires_authentication(self):
+        self.client.logout()
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_403_FORBIDDEN,
+        )

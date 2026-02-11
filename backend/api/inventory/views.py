@@ -11,10 +11,12 @@ from rest_framework.views import APIView
 from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
+    UPDATE_ITEM_RESPONSES,
 )
 from api.inventory.serializers import (
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
+    InventoryItemUpdateSerializer,
 )
 
 from .contracts import (
@@ -187,3 +189,44 @@ class RegisterInventoryView(views.APIView):
         for key, value in (errors or {}).items():
             fixed[key] = value if isinstance(value, list) else [str(value)]
         return fixed
+
+
+class UpdateItemView(views.APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = InventoryItemUpdateSerializer
+
+    @extend_schema(
+        summary="Update item details",
+        responses=UPDATE_ITEM_RESPONSES,
+    )
+    def patch(self, request: Request, item_id: int) -> Response:
+        serializer = self.serializer_class(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {"detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            item = services.update_item(
+                item_id=item_id,
+                name=serializer.validated_data["name"],
+                price=serializer.validated_data["price"],
+            )
+        except LookupError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "message": "Item updated",
+            },
+            status=status.HTTP_200_OK,
+        )

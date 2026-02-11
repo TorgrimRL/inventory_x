@@ -84,3 +84,26 @@ LIST_ITEMS_RESPONSES = {
         description="Internal processing error",
     ),
 }
+
+UPDATE_ITEM_RESPONSES = {
+    200: OpenApiResponse(
+        response=InventoryItemCreateSerializer,
+        description="Item updated successfully",
+    ),
+    400: OpenApiResponse(
+        response=ValidationErrorResponseSerializer,
+        description="Validation failed",
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication credentials were not provided.",
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Forbidden.",
+    ),
+    404: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Item not found",
+    ),
+}

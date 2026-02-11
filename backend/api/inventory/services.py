@@ -68,3 +68,16 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
+
+
+def update_item(item_id: int, name: str, price: int):
+    try:
+        item = InventoryItem.objects.get(id=item_id)
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err
+
+    item.name = name
+    item.price = price
+    item.save()
+
+    return item
