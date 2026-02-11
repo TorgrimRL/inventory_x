@@ -1,0 +1,115 @@
+name: Round-robin PR reviewer
+
+on:
+  pull_request:
+    types: [ opened, reopened, ready_for_review ]
+
+concurrency:
+  group: round-robin-reviewer
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick next reviewer and request review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reviewers = [
+            "TorgrimRL",
+            "blackh-t",
+            "Daniel-De-Dev",
+            "Vargren11",
+            "lottehenriksen",
+            "Ann-Hilde"
+            ];
+
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+
+            // Ikke auto-assign på draft PRs
+            if (pr.draft) {
+            core.info("PR is draft; skipping.");
+            return;
+            }
+
+            // Hvis noen allerede er forespurt som reviewer, ikke overstyr
+            if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
+            core.info("PR already has requested reviewers; skipping.");
+            return;
+            }
+
+            const author = pr.user.login;
+            const stateIssueTitle = "reviewer-rotation-state";
+
+            // Finn (eller lag) issue som lagrer pekeren
+            const search = await github.rest.search.issuesAndPullRequests({
+            q: `repo:${owner}/${repo} is:issue in:title "${stateIssueTitle}"`,
+            });
+
+            let issueNumber, pointer = 0;
+
+            if (search.data.items.length > 0) {
+            const issue = search.data.items[0];
+            issueNumber = issue.number;
+            
+            // search-resultat kan ha truncated body, så les issue for å være sikker
+            const full = await github.rest.issues.get({ owner, repo, issue_number: issueNumber });
+            const body = (full.data.body || "0").trim();
+            const parsed = parseInt(body, 10);
+            pointer = Number.isNaN(parsed) ? 0 : parsed;
+            } else {
+            const created = await github.rest.issues.create({
+            owner,
+            repo,
+            title: stateIssueTitle,
+            body: "0",
+            });
+            issueNumber = created.data.number;
+            pointer = 0;
+            }
+
+            // Velg neste reviewer i round-robin, men hopp over PR-forfatter
+            let pickIndex = null;
+            for (let i = 0; i < reviewers.length; i++) {
+            const idx = (pointer + i) % reviewers.length;
+            const candidate = reviewers[idx];
+            if (candidate.toLowerCase() !== author.toLowerCase()) {
+            pickIndex = idx;
+            break;
+            }
+            }
+
+            if (pickIndex === null) {
+            core.info("No eligible reviewer found (is everyone the author?).");
+            return;
+            }
+
+            const chosen = reviewers[pickIndex];
+            const nextPointer = (pickIndex + 1) % reviewers.length;
+
+            // Be om review på PR-en
+            await github.rest.pulls.requestReviewers({
+            owner,
+            repo,
+            pull_number: pr.number,
+            reviewers: [chosen],
+            });
+
+            // Oppdater pekeren i state-issue
+            await github.rest.issues.update({
+            owner,
+            repo,
+            issue_number: issueNumber,
+            body: String(nextPointer),
+            });
+
+            core.info(`Requested review from ${chosen}. Next pointer: ${nextPointer}`);
