@@ -71,13 +71,24 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
 
 def update_item(item_id: int, name: str, price: int):
+    """
+    Updates item fields (name, price) only. Stock is not changed here.
+    """
     try:
-        item = InventoryItem.objects.get(id=item_id)
+        with transaction.atomic():
+            item = InventoryItem.objects.select_for_update().get(id=item_id)
+
+            if (
+                InventoryItem.objects.filter(name=name)
+                .exclude(id=item.id)
+                .exists()
+            ):
+                raise ValueError(f"Item with name '{name}' already exists.")
+
+            item.name = name
+            item.price = price
+            item.save(update_fields=["name", "price"])
+            return item
+
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
-
-    item.name = name
-    item.price = price
-    item.save()
-
-    return item
