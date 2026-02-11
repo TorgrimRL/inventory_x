@@ -5,7 +5,9 @@ from api.inventory.serializers import (
     InventoryItemCreateSerializer,
     InventoryListSerializer,
     RegisterInventoryResponseSerializer,
-    RegisterInventoryValidationErrorSerializer, UserInventoryListSerializer, )
+    RegisterInventoryValidationErrorSerializer,
+    UserInventoryListSerializer,
+)
 from api.user.serializers.common import (
     ErrorResponseSerializer,
     ValidationErrorResponseSerializer,

@@ -4,11 +4,10 @@ from rest_framework import status
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
     LIST_ITEMS_RESPONSES,
 )
-from api.inventory.contracts import LIST_INVENTORIES_RESPONSES
-from api.inventory.models import Inventory, InventoryMembership
-from api.inventory.models import InventoryItem
+from api.inventory.models import Inventory, InventoryItem, InventoryMembership
 from api.tests.base import BaseAPITestCase
 
 
@@ -78,15 +77,15 @@ class InventoryListViewTests(BaseAPITestCase):
         self.assertTrue(
             ("name" in data)
             or (
-                    "data" in data
-                    and isinstance(data["data"], dict)
-                    and "name" in data["data"]
+                "data" in data
+                and isinstance(data["data"], dict)
+                and "name" in data["data"]
             )
             or ("id" in data)
             or (
-                    "data" in data
-                    and isinstance(data["data"], dict)
-                    and "id" in data["data"]
+                "data" in data
+                and isinstance(data["data"], dict)
+                and "id" in data["data"]
             )
             or ("detail" in data and "name" in str(data["detail"]).lower())
         )
@@ -249,8 +248,12 @@ class AdjustStockViewTests(BaseAPITestCase):
 class ListInventoriesViewTests(BaseAPITestCase):
     def setUp(self):
         self.url = reverse("inventories-list")
-        self.user = self.create_user(email="user@test.com", password="password123")
-        self.other_user = self.create_user(email="other@test.com", password="password123")
+        self.user = self.create_user(
+            email="user@test.com", password="password123"
+        )
+        self.other_user = self.create_user(
+            email="other@test.com", password="password123"
+        )
 
     def test_requires_authentication(self):
         response = self.client.get(self.url)
@@ -263,7 +266,9 @@ class ListInventoriesViewTests(BaseAPITestCase):
             status.HTTP_403_FORBIDDEN,
         )
 
-    def test_happy_path_lists_two_inventories_with_role_and_orders_by_name(self):
+    def test_happy_path_lists_two_inventories_with_role_and_orders_by_name(
+        self,
+    ):
         self.client.force_authenticate(user=self.user)
         inv_b = Inventory.objects.create(name="Beta AS", org_number="987654321")
         inv_a = Inventory.objects.create(name="Acme AS", org_number="123456789")
@@ -280,7 +285,7 @@ class ListInventoriesViewTests(BaseAPITestCase):
         )
 
         response = self.client.get(self.url)
-        data = self.assert_contract(
+        self.assert_contract(
             response,
             LIST_INVENTORIES_RESPONSES,
             status.HTTP_200_OK,
@@ -319,7 +324,9 @@ class ListInventoriesViewTests(BaseAPITestCase):
     def test_user_cannot_see_other_users_inventories(self):
         self.client.force_authenticate(user=self.user)
 
-        inv_other = Inventory.objects.create(name="Other Co", org_number="111222333")
+        inv_other = Inventory.objects.create(
+            name="Other Co", org_number="111222333"
+        )
         InventoryMembership.objects.create(
             user=self.other_user,
             inventory=inv_other,

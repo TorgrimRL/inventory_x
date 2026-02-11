@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.inventory.models import org_number_validator, InventoryMembership
+from api.inventory.models import InventoryMembership, org_number_validator
 
 
 class RegisterInventoryRequestSerializer(serializers.Serializer):
@@ -57,7 +57,9 @@ class InventoryListSerializer(serializers.Serializer):
 class UserInventoryListItemSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="inventory.id", read_only=True)
     name = serializers.CharField(source="inventory.name", read_only=True)
-    orgNumber = serializers.CharField(source="inventory.org_number", read_only=True)
+    orgNumber = serializers.CharField(
+        source="inventory.org_number", read_only=True
+    )
 
     class Meta:
         model = InventoryMembership

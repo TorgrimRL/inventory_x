@@ -10,12 +10,15 @@ from rest_framework.views import APIView
 
 from api.inventory import services
 from api.inventory.contracts import (
-    ADJUST_STOCK_RESPONSES, LIST_INVENTORIES_RESPONSES,
+    ADJUST_STOCK_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
 )
 from api.inventory.serializers import (
     AdjustStockSerializer,
-    InventoryItemCreateSerializer, UserInventoryListItemSerializer,
+    InventoryItemCreateSerializer,
+    UserInventoryListItemSerializer,
 )
+
 from .contracts import (
     CREATE_ITEM_RESPONSES,
     LIST_ITEMS_RESPONSES,
@@ -194,8 +197,7 @@ class ListInventoriesView(APIView):
     @extend_schema(responses=LIST_INVENTORIES_RESPONSES)
     def get(self, request: Request) -> Response:
         qs = (
-            InventoryMembership.objects
-            .filter(user=request.user)
+            InventoryMembership.objects.filter(user=request.user)
             .select_related("inventory")
             .order_by("inventory__name")
         )
