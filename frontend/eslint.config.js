@@ -43,6 +43,18 @@ export default defineConfig([
       ],
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='to'] > Literal",
+          message: "Do not hardcode URLs. Use the PATHS constant instead.",
+        },
+        {
+          selector: "CallExpression[callee.name='navigate'] > Literal",
+          message:
+            "Do not hardcode URLs in navigate(). Use the PATHS constant instead.",
+        },
+      ],
     },
   },
   prettier,

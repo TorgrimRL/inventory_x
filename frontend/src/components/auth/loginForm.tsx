@@ -3,9 +3,9 @@ import "./login.css";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../../App.tsx";
 import axios from "../../services/apiClient";
 import { checkSession } from "../../services/authService.ts";
-import { PATHS } from "../../App.tsx";
 
 const Login: React.FC = () => {
   // init app state.
@@ -109,7 +109,7 @@ const Login: React.FC = () => {
           Login
         </button>
         <button
-          onClick={() => navigate("/registration")}
+          onClick={() => navigate(PATHS.REGISTRATION)}
           type="button"
           className="submit-button"
         >
