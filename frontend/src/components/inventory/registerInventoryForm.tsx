@@ -11,13 +11,14 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import axios from "../../services/apiClient";
+import { PATHS } from "../../App";
 
 type BackendDetail =
   | string
   | {
-      name?: string[];
-      orgNumber?: string[];
-    };
+    name?: string[];
+    orgNumber?: string[];
+  };
 
 function extractBackendMessages(detail: BackendDetail | undefined): string[] {
   if (!detail) return [];
@@ -71,7 +72,7 @@ export default function RegisterInventoryForm() {
         setFrontendErrors([]);
         setBackendErrors([]);
         setSuccess("Business registered");
-        setTimeout(() => navigate("/inventories"), 1500);
+        setTimeout(() => navigate(PATHS.INVENTORIES), 1500);
       } else {
         setBackendErrors(["Unexpected response from server."]);
       }

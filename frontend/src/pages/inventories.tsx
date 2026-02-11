@@ -64,7 +64,7 @@ export default function InventoriesPage() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate(PATHS.INVENTORY.CREATE)}
+                onClick={() => navigate(PATHS.INVENTORIES_NEW)}
                 sx={{
                   height: 54,
                   borderRadius: 3,

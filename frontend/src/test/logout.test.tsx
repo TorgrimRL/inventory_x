@@ -3,6 +3,7 @@ import axios from "axios";
 
 import Dashboard from "../pages/dashboard";
 import { checkSession } from "../services/authService";
+import { PATHS } from "../App";
 
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();
@@ -35,6 +36,6 @@ describe("Logout Test", () => {
     await waitFor(() => {
       expect(document.cookie).toBe("");
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
   });
 });

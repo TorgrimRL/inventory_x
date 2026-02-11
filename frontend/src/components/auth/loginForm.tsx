@@ -22,7 +22,7 @@ const Login: React.FC = () => {
       const isValid = await checkSession();
 
       if (isValid) {
-        navigate(PATHS.INVENTORY.LIST); // Redirect if logged in
+        navigate(PATHS.INVENTORIES); // Redirect if logged in
       } else {
         setCheckingAuth(false); // show form
       }
@@ -54,7 +54,7 @@ const Login: React.FC = () => {
     try {
       await axios.post("/api/user/login/", { email, password });
 
-      navigate(PATHS.INVENTORY.LIST);
+      navigate(PATHS.INVENTORIES);
     } catch (err: any) {
       const data = err.response?.data;
       let message = "Login failed. Please check your credentials.";

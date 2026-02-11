@@ -16,13 +16,9 @@ export const PATHS = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
   REGISTRATION: '/registration',
-  INVENTORY: {
-    LIST: '/inventories',
-    CREATE: '/inventories/new',
-  },
-  ITEMS: {
-    ADD: '/add_item',
-  },
+  INVENTORIES: '/inventories',
+  INVENTORIES_NEW: '/inventories/new',
+  ADD_ITEM: "/add_item"
 } as const;
 
 
@@ -32,11 +28,9 @@ function App() {
       <Route path={PATHS.LOGIN} element={<Login />} />
       <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
       <Route path={PATHS.REGISTRATION} element={<Registration />} />
-      <Route path={PATHS.INVENTORY.LIST} element={<InventoriesPage />} />
-      <Route path={PATHS.INVENTORY.CREATE} element={<RegisterInventoryForm />} />
-      <Route path={PATHS.ITEMS.ADD} element={<ItemPage />} />
-
-      {/* Catch-all for 404s */}
+      <Route path={PATHS.INVENTORIES} element={<InventoriesPage />} />
+      <Route path={PATHS.INVENTORIES_NEW} element={<RegisterInventoryForm />} />
+      <Route path={PATHS.ADD_ITEM} element={<ItemPage />} />
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );

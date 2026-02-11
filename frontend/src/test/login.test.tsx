@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import Login from "../components/auth/loginForm";
 import { checkSession } from "../services/authService";
+import { PATHS } from "../App";
 
 //  MOCK DEPENDENCIES
 jest.mock("axios");
@@ -36,7 +37,7 @@ describe("Login Component", () => {
 
     // Wait for the redirect to happen
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
     });
   });
 
@@ -85,7 +86,7 @@ describe("Login Component", () => {
 
     // Assert redirect happened
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
     });
   });
 
@@ -100,7 +101,7 @@ describe("Login Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Create Account/i }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/registration");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.REGISTRATION);
   });
 
   // TEST: Invalid Email.
