@@ -10,8 +10,8 @@ import {
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import axios from "../../services/apiClient";
 import { PATHS } from "../../App";
+import axios from "../../services/apiClient";
 
 type BackendDetail =
   | string

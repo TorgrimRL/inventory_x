@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
 import { PATHS } from "../App";
 
 export default function InventoriesPage() {

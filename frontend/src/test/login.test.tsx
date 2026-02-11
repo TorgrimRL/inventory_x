@@ -4,9 +4,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App";
 import Login from "../components/auth/loginForm";
 import { checkSession } from "../services/authService";
-import { PATHS } from "../App";
 
 //  MOCK DEPENDENCIES
 jest.mock("axios");

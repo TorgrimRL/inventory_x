@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axios from "axios";
 
+import { PATHS } from "../App";
 import Dashboard from "../pages/dashboard";
 import { checkSession } from "../services/authService";
-import { PATHS } from "../App";
 
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();

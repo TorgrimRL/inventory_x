@@ -3,8 +3,8 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { checkSession } from "../../services/authService";
 import { PATHS } from "../../App";
+import { checkSession } from "../../services/authService";
 
 const LogoutButton: React.FC = () => {
   const navigate = useNavigate();
