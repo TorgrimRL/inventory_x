@@ -5,8 +5,7 @@ from api.inventory.serializers import (
     InventoryItemCreateSerializer,
     InventoryListSerializer,
     RegisterInventoryResponseSerializer,
-    RegisterInventoryValidationErrorSerializer,
-)
+    RegisterInventoryValidationErrorSerializer, UserInventoryListSerializer, )
 from api.user.serializers.common import (
     ErrorResponseSerializer,
     ValidationErrorResponseSerializer,
@@ -82,5 +81,19 @@ LIST_ITEMS_RESPONSES = {
     500: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Internal processing error",
+    ),
+}
+LIST_INVENTORIES_RESPONSES = {
+    200: OpenApiResponse(
+        response=UserInventoryListSerializer,
+        description="OK",
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication required",
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Forbidden.",
     ),
 }
