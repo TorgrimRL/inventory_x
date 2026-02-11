@@ -12,15 +12,14 @@ import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
 
 export const PATHS = {
-  HOME: '/',
-  LOGIN: '/login',
-  DASHBOARD: '/dashboard',
-  REGISTRATION: '/registration',
-  INVENTORIES: '/inventories',
-  INVENTORIES_NEW: '/inventories/new',
-  ADD_ITEM: "/add_item"
+  HOME: "/",
+  LOGIN: "/login",
+  DASHBOARD: "/dashboard",
+  REGISTRATION: "/registration",
+  INVENTORIES: "/inventories",
+  INVENTORIES_NEW: "/inventories/new",
+  ADD_ITEM: "/add_item",
 } as const;
-
 
 function App() {
   return (

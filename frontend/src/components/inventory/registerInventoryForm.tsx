@@ -16,9 +16,9 @@ import { PATHS } from "../../App";
 type BackendDetail =
   | string
   | {
-    name?: string[];
-    orgNumber?: string[];
-  };
+      name?: string[];
+      orgNumber?: string[];
+    };
 
 function extractBackendMessages(detail: BackendDetail | undefined): string[] {
   if (!detail) return [];
