@@ -131,7 +131,7 @@ describe("Registration Component", () => {
       jest.advanceTimersByTime(2000);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(mockNavigate).toHaveBeenCalledWith("/login");
   });
 
   test("displays backend email error with prefix", async () => {

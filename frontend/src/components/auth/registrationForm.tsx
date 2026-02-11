@@ -48,7 +48,7 @@ const Registration: React.FC = () => {
       setSuccess(true);
 
       setTimeout(() => {
-        navigate("/");
+        navigate("/login");
       }, 2000);
     } catch (err: any) {
       const data = err.response?.data;
