@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { PATHS } from "../App";
 
 export default function InventoriesPage() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export default function InventoriesPage() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate("/inventories/new")}
+                onClick={() => navigate(PATHS.INVENTORY.CREATE)}
                 sx={{
                   height: 54,
                   borderRadius: 3,
@@ -78,7 +79,7 @@ export default function InventoriesPage() {
               <Button
                 variant="outlined"
                 size="large"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate(PATHS.DASHBOARD)}
                 sx={{
                   height: 54,
                   borderRadius: 3,

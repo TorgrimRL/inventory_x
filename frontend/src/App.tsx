@@ -11,15 +11,32 @@ import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
 
+export const PATHS = {
+  HOME: '/',
+  LOGIN: '/login',
+  DASHBOARD: '/dashboard',
+  REGISTRATION: '/registration',
+  INVENTORY: {
+    LIST: '/inventories',
+    CREATE: '/inventories/new',
+  },
+  ITEMS: {
+    ADD: '/add_item',
+  },
+} as const;
+
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/registration" element={<Registration />} />
-      <Route path="/inventories" element={<InventoriesPage />} />
-      <Route path="/inventories/new" element={<RegisterInventoryForm />} />
-      <Route path="/add_item" element={<ItemPage />} />
+      <Route path={PATHS.LOGIN} element={<Login />} />
+      <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
+      <Route path={PATHS.REGISTRATION} element={<Registration />} />
+      <Route path={PATHS.INVENTORY.LIST} element={<InventoriesPage />} />
+      <Route path={PATHS.INVENTORY.CREATE} element={<RegisterInventoryForm />} />
+      <Route path={PATHS.ITEMS.ADD} element={<ItemPage />} />
+
+      {/* Catch-all for 404s */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );

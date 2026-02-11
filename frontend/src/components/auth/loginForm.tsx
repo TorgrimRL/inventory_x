@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import axios from "../../services/apiClient";
 import { checkSession } from "../../services/authService.ts";
+import { PATHS } from "../../App.tsx";
 
 const Login: React.FC = () => {
   // init app state.
@@ -21,7 +22,7 @@ const Login: React.FC = () => {
       const isValid = await checkSession();
 
       if (isValid) {
-        navigate("/dashboard"); // Redirect if logged in
+        navigate(PATHS.INVENTORY.LIST); // Redirect if logged in
       } else {
         setCheckingAuth(false); // show form
       }
@@ -53,7 +54,7 @@ const Login: React.FC = () => {
     try {
       await axios.post("/api/user/login/", { email, password });
 
-      navigate("/dashboard");
+      navigate(PATHS.INVENTORY.LIST);
     } catch (err: any) {
       const data = err.response?.data;
       let message = "Login failed. Please check your credentials.";
