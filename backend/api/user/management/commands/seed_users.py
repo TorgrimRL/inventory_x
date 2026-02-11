@@ -28,11 +28,9 @@ class Command(BaseCommand):
             )
 
         mock_data: list[tuple[str, str, str]] = [
-            ("admin@example.com", "System Admin", "adminpass123"),
             ("alice@example.com", "", "alicepass456"),
             ("bob@example.com", "Bob Builder", "bobpass789"),
         ]
-
         try:
             with transaction.atomic():
                 self.stdout.write("Wiping existing users...")
@@ -46,9 +44,17 @@ class Command(BaseCommand):
                         display_name=name,
                     )
 
+                User.objects.create_superuser(
+                    email="admin@example.com",
+                    password="adminpass123",  # noqa: S106
+                    display_name="System Admin",
+                )
+
         except Exception as e:
             raise CommandError(f"Seeding Failed: {e}") from e
 
         self.stdout.write(
-            self.style.SUCCESS(f"Successfully seeded {len(mock_data)} users.")
+            self.style.SUCCESS(
+                f"Successfully seeded {len(mock_data)} users.\nAnd 1 Super User"
+            ),
         )
