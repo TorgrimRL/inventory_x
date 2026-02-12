@@ -4,6 +4,16 @@
 > root (`../README.md`). This README is mainly for running the backend outside
 > Docker.
 
+## Admin Interface
+
+The Django Admin panel is enabled for data inspection and management.
+
+- **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+- **Default Superuser:**
+  - **Email:** `admin@example.com`
+  - **Password:** `adminpass123` _(Available after running
+    `python manage.py seed_users` or `make seed`)_
+
 ## Commands
 
 **Installation**

@@ -20,16 +20,12 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-explicit_package_bases = true
-mypy_path = ["."]
+allow_redefinition = true
 
 [tool.pylsp-mypy]
 enabled = true
 live_mode = false
 dmypy = true
-
-[tool.django-stubs]
-django_settings_module = "config.settings"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
