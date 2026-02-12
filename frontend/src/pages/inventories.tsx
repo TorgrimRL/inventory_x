@@ -106,12 +106,23 @@ export default function InventoriesPage() {
 
             {/* ERROR (incl unauthorized) */}
             {!loading && error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                <Stack spacing={1}>
-                  <div>{error}</div>
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                  "& .MuiAlert-message": { width: "100%" }, // viktig!
+                }}
+              >
+                <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
+                  <Typography>{error}</Typography>
 
                   {isUnauthorized && (
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      justifyContent="center"
+                    >
                       <Button
                         variant="contained"
                         size="small"
@@ -124,10 +135,10 @@ export default function InventoriesPage() {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => navigate("/dashboard")}
+                        onClick={() => navigate(-1)}
                         sx={{ textTransform: "none", fontWeight: 800 }}
                       >
-                        Back to dashboard
+                        Go back
                       </Button>
                     </Stack>
                   )}
