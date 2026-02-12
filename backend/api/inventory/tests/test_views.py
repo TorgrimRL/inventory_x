@@ -328,6 +328,30 @@ class UpdateItemViewTests(BaseAPITestCase):
         # Ensure item not updated
         self.item.refresh_from_db()
         self.assertEqual(self.item.price, 25)
+    
+    def test_update_item_duplicate_name_returns_400(self):
+        # Create another item with a different name
+        InventoryItem.objects.create(
+            name="Bread",
+            price=50,
+            stock=5,
+        )
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Bread", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        # Ensure original item not updated
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, "Milk")
 
     def test_update_item_not_found_returns_404(self):
         url = reverse("update-item", args=[9999])
