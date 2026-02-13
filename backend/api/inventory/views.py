@@ -12,11 +12,13 @@ from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     UPDATE_ITEM_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
 )
 from api.inventory.serializers import (
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
     InventoryItemUpdateSerializer,
+    UserInventoryListItemSerializer,
 )
 
 from .contracts import (
@@ -24,7 +26,7 @@ from .contracts import (
     LIST_ITEMS_RESPONSES,
     REGISTER_INVENTORY_RESPONSES,
 )
-from .models import Inventory, InventoryAlreadyExistsError
+from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -235,3 +237,15 @@ class UpdateItemView(views.APIView):
             },
             status=status.HTTP_200_OK,
         )
+class ListInventoriesView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @extend_schema(responses=LIST_INVENTORIES_RESPONSES)
+    def get(self, request: Request) -> Response:
+        qs = (
+            InventoryMembership.objects.filter(user=request.user)
+            .select_related("inventory")
+            .order_by("inventory__name")
+        )
+        data = UserInventoryListItemSerializer(qs, many=True).data
+        return Response(data, status=status.HTTP_200_OK)

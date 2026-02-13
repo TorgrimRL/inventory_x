@@ -5,6 +5,8 @@ from .views import (
     InventoryView,
     RegisterInventoryView,
     UpdateItemView,
+    ListInventoriesView,
+    RegisterInventoryView,
 )
 
 urlpatterns = [
@@ -21,5 +23,8 @@ urlpatterns = [
     ),
     path(
         "register/", RegisterInventoryView.as_view(), name="inventory-register"
+    ),
+    path(
+        "inventories/", ListInventoriesView.as_view(), name="inventories-list"
     ),
 ]
