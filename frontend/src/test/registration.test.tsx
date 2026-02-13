@@ -11,6 +11,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import Registration from "../components/auth/registrationForm";
+import { PATHS } from "../App";
 
 jest.mock("axios");
 jest.mock("react-router-dom", () => ({
@@ -131,7 +132,7 @@ describe("Registration Component", () => {
       jest.advanceTimersByTime(2000);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
   });
 
   test("displays backend email error with prefix", async () => {
@@ -199,6 +200,6 @@ describe("Registration Component", () => {
 
     fireEvent.click(screen.getByText("Login here"));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
   });
 });
