@@ -46,13 +46,14 @@ export default defineConfig([
       "no-restricted-syntax": [
         "error",
         {
-          selector: "JSXAttribute[name.name='to'] > Literal",
-          message: "Do not hardcode URLs. Use the PATHS constant instead.",
+          selector:
+            "CallExpression[callee.property.name='toHaveBeenCalledWith'] > Literal",
+          message: "Do not hardcode URLs. Use the centralized router wrapper",
         },
         {
           selector: "CallExpression[callee.name='navigate'] > Literal",
           message:
-            "Do not hardcode URLs in navigate(). Use the PATHS constant instead.",
+            "Do not hardcode URLs in navigate(). Use the centralized router wrapper.",
         },
       ],
     },
