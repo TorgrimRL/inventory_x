@@ -47,7 +47,7 @@ export default defineConfig([
         "error",
         {
           selector:
-            "CallExpression[callee.property.name='toHaveBeenCalledWith'] > Literal",
+            "CallExpression[callee.property.name = 'toHaveBeenCalledWith'] > Literal[value = /^\\/(?!api)/]",
           message: "Do not hardcode URLs. Use the centralized router wrapper",
         },
         {
