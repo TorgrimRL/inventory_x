@@ -10,8 +10,8 @@ import {
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-import Registration from "../components/auth/registrationForm";
 import { PATHS } from "../App";
+import Registration from "../components/auth/registrationForm";
 
 jest.mock("axios");
 jest.mock("react-router-dom", () => ({
