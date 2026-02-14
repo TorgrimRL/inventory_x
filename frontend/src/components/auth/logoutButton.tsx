@@ -3,6 +3,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../../App";
 import { checkSession } from "../../services/authService";
 
 const LogoutButton: React.FC = () => {
@@ -29,13 +30,13 @@ const LogoutButton: React.FC = () => {
     });
     if (res.status == 200) {
       localStorage.clear(); // clear session storage.
-      navigate("/");
+      navigate(PATHS.LOGIN);
     }
   };
 
   // Logout button render only for authorized users.
   if (!isValid) {
-    navigate("/");
+    navigate(PATHS.LOGIN);
   }
 
   return (

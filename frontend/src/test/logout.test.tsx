@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axios from "axios";
 
+import { PATHS } from "../App";
 import Dashboard from "../pages/dashboard";
 import { checkSession } from "../services/authService";
 
@@ -35,6 +36,6 @@ describe("Logout Test", () => {
     await waitFor(() => {
       expect(document.cookie).toBe("");
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
   });
 });

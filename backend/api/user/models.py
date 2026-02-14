@@ -4,6 +4,7 @@ import uuid
 from typing import Any, ClassVar
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 
 
@@ -55,8 +56,22 @@ class UserManager(BaseUserManager["User"]):
         user.save(using=self._db)
         return user
 
+    def create_superuser(
+        self, email: str, password: str, **extra_fields: Any
+    ) -> User:
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_superuser", True)
 
-class User(AbstractBaseUser):
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     """Custom user: UUID primary key, email-based login."""
 
     id: models.UUIDField[uuid.UUID] = models.UUIDField(
@@ -66,6 +81,7 @@ class User(AbstractBaseUser):
     display_name: models.CharField[str] = models.CharField(
         max_length=80, blank=True
     )
+    is_staff: models.BooleanField[bool] = models.BooleanField(default=False)
     is_active: models.BooleanField[bool] = models.BooleanField(default=True)
 
     USERNAME_FIELD = "email"

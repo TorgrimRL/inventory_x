@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",  # Required for permissions
     "django.contrib.sessions",  # Required for login state
     "django.contrib.staticfiles",
+    "django.contrib.admin",
+    "django.contrib.messages",
+    "config",
     # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
@@ -36,6 +39,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
+    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
 ]
@@ -50,6 +54,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },

@@ -3,6 +3,7 @@ import "./login.css";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../../App.tsx";
 import axios from "../../services/apiClient";
 import { checkSession } from "../../services/authService.ts";
 
@@ -21,7 +22,7 @@ const Login: React.FC = () => {
       const isValid = await checkSession();
 
       if (isValid) {
-        navigate("/dashboard"); // Redirect if logged in
+        navigate(PATHS.INVENTORIES); // Redirect if logged in
       } else {
         setCheckingAuth(false); // show form
       }
@@ -53,7 +54,7 @@ const Login: React.FC = () => {
     try {
       await axios.post("/api/user/login/", { email, password });
 
-      navigate("/dashboard");
+      navigate(PATHS.INVENTORIES);
     } catch (err: any) {
       const data = err.response?.data;
       let message = "Login failed. Please check your credentials.";
@@ -108,7 +109,7 @@ const Login: React.FC = () => {
           Login
         </button>
         <button
-          onClick={() => navigate("/registration")}
+          onClick={() => navigate(PATHS.REGISTRATION)}
           type="button"
           className="submit-button"
         >

@@ -3,6 +3,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App";
 import InventoriesPage from "../pages/inventories";
 import { listInventories } from "../services/inventoryService";
 
@@ -48,10 +49,10 @@ describe("InventoriesPage", () => {
     });
 
     fireEvent.click(registerNew);
-    expect(mockNavigate).toHaveBeenCalledWith("/inventories/new");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES_NEW);
 
     fireEvent.click(backToDashboard);
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.DASHBOARD);
   });
 
   test("empty list shows empty state message + CTAs", async () => {
@@ -87,6 +88,6 @@ describe("InventoriesPage", () => {
     const goToLogin = screen.getByRole("button", { name: /go to login/i });
     fireEvent.click(goToLogin);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.HOME);
   });
 });
