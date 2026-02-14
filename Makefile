@@ -31,7 +31,8 @@ define norm_frontend_args
 $(foreach a,$(1),$(call norm_one_frontend_arg,$(patsubst frontend/%,%,$(a))))
 endef
 
-
+BP# Run tests in pararell: with async the speed will be optimazed, else better performance.
+	cd backend/ && uv run pytest -s -x -n auto --dist=loadscope  && cd ..
 
 up:
 	docker compose up --build -d
@@ -40,12 +41,13 @@ down:
 	docker compose down --remove-orphans
 
 reset:
-	docker compose down -v --remove-orphans
+	# -t 0 kills containers instantly instead of waiting 10s| Got more 10s CPU Time!
+	docker compose down -v --remove-orphans -t 0
 	docker compose up --build -d
 
-seed:
-	$(BACKEND_RUN) uv run python manage.py seed_users
-	$(BACKEND_RUN) uv run python manage.py seed_inventory
+seed: # seeders are totally independent == valid in pararell.
+	$(BACKEND_RUN) uv run python manage.py seed_users & \
+	$(BACKEND_RUN) uv run python manage.py seed_inventory & wait
 
 logs:
 	docker compose logs -f
