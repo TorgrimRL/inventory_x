@@ -2,6 +2,7 @@ import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App.tsx";
 import {
   type Inventory,
   listInventories,
@@ -126,7 +127,7 @@ export default function InventoriesPage() {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate(PATHS.HOME)}
                         sx={{ textTransform: "none", fontWeight: 800 }}
                       >
                         Go to login
@@ -186,7 +187,7 @@ export default function InventoriesPage() {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => navigate("/inventories/new")}
+                  onClick={() => navigate(PATHS.INVENTORIES_NEW)}
                   sx={{
                     height: 54,
                     borderRadius: 3,
@@ -201,7 +202,7 @@ export default function InventoriesPage() {
                 <Button
                   variant="outlined"
                   size="large"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate(PATHS.DASHBOARD)}
                   sx={{
                     height: 54,
                     borderRadius: 3,

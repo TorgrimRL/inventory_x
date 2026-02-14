@@ -10,6 +10,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
 
 type BackendDetail =
@@ -71,7 +72,7 @@ export default function RegisterInventoryForm() {
         setFrontendErrors([]);
         setBackendErrors([]);
         setSuccess("Business registered");
-        setTimeout(() => navigate("/inventories"), 1500);
+        setTimeout(() => navigate(PATHS.INVENTORIES), 1500);
       } else {
         setBackendErrors(["Unexpected response from server."]);
       }

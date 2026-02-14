@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App";
 import Login from "../components/auth/loginForm";
 import { checkSession } from "../services/authService";
 
@@ -36,7 +37,7 @@ describe("Login Component", () => {
 
     // Wait for the redirect to happen
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
     });
   });
 
@@ -85,7 +86,7 @@ describe("Login Component", () => {
 
     // Assert redirect happened
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
     });
   });
 
@@ -100,7 +101,7 @@ describe("Login Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Create Account/i }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/registration");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.REGISTRATION);
   });
 
   // TEST: Invalid Email.

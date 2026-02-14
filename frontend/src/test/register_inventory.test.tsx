@@ -19,6 +19,7 @@ jest.mock("../services/apiClient", () => ({
 
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App.tsx";
 import RegisterInventoryForm from "../components/inventory/registerInventoryForm.tsx";
 
 // MOCK DEPENDENCIES
@@ -126,7 +127,7 @@ describe("Register Inventory (Business) Component", () => {
       jest.advanceTimersByTime(1500);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith("/inventories");
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
 
     jest.useRealTimers();
   });

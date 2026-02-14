@@ -43,6 +43,19 @@ export default defineConfig([
       ],
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.property.name = 'toHaveBeenCalledWith'] > Literal[value = /^\\/(?!api)/]",
+          message: "Do not hardcode URLs. Use the centralized router wrapper",
+        },
+        {
+          selector: "CallExpression[callee.name='navigate'] > Literal",
+          message:
+            "Do not hardcode URLs in navigate(). Use the centralized router wrapper.",
+        },
+      ],
     },
   },
   prettier,
