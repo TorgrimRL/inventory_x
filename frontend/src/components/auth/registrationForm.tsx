@@ -3,6 +3,7 @@ import "./login.css";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
 
 const Registration: React.FC = () => {
@@ -48,7 +49,7 @@ const Registration: React.FC = () => {
       setSuccess(true);
 
       setTimeout(() => {
-        navigate("/login");
+        navigate(PATHS.LOGIN);
       }, 2000);
     } catch (err: any) {
       const data = err.response?.data;
@@ -82,7 +83,7 @@ const Registration: React.FC = () => {
           <h3>Account created successfully.</h3>
           <p>Redirecting to login...</p>
         </div>
-        <button onClick={() => navigate("/login")} className="submit-button">
+        <button onClick={() => navigate(PATHS.LOGIN)} className="submit-button">
           Go to Login
         </button>
       </div>
@@ -153,7 +154,7 @@ const Registration: React.FC = () => {
             Already have an account?{" "}
           </span>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate(PATHS.LOGIN)}
             type="button"
             style={{
               background: "none",

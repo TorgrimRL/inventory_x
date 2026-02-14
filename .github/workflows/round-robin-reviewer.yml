@@ -17,80 +17,129 @@ jobs:
   assign:
     runs-on: ubuntu-latest
     steps:
-      - name: Pick next reviewer and request review
+      - name: Velg neste reviewer og be om review
         uses: actions/github-script@v7
         with:
           script: |
             const reviewers = [
-            "TorgrimRL",
-            "blackh-t",
-            "Daniel-De-Dev",
-            "Vargren11",
-            "lottehenriksen",
-            "Ann-Hilde"
+              "TorgrimRL",
+              "blackh-t",
+              "Daniel-De-Dev",
+              "Vargren11",
+              "lottehenriksen",
+              "Ann-Hilde"
             ];
-
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const pr = context.payload.pull_request;
+
+            // Pull request-nummeret vi jobber med
+            const prNumber = context.payload.pull_request.number;
+
+            // Label som "låser" PR-en slik at synchronize-events ikke reassigner
+            const assignedLabel = "rr-assigned";
+
+            // Issue som brukes til å lagre "peker" (hvem som er neste i rotasjonen)
+            const stateIssueTitle = "reviewer-rotation-state";
+
+            // Hent full PR fra API (payload kan være ufullstendig / utdatert)
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
 
             // Ikke auto-assign på draft PRs
             if (pr.draft) {
-            core.info("PR is draft; skipping.");
-            return;
+              core.info("PR er draft; skipper.");
+              return;
+            }
+
+            // Hvis PR allerede er merket som rr-assigned, ikke reassign på synchronize
+            const alreadyAssigned = (pr.labels || []).some((l) => l.name === assignedLabel);
+            if (alreadyAssigned) {
+              core.info(`PR er allerede merket '${assignedLabel}'; skipper reassign.`);
+              return;
             }
 
             // Hvis noen allerede er forespurt som reviewer, ikke overstyr
-            if (pr.requested_reviewers && pr.requested_reviewers.length > 0) {
-            core.info("PR already has requested reviewers; skipping.");
-            return;
+            if ((pr.requested_reviewers?.length ?? 0) > 0) {
+              core.info("PR har allerede requested reviewers; skipper.");
+              return;
             }
 
             const author = pr.user.login;
-            const stateIssueTitle = "reviewer-rotation-state";
+
+            // Ekstra "safety":
+            // Hvis PR allerede har fått en review (Approved/Changes requested/Comment),
+            // så skal vi IKKE be om en ny reviewer ved senere synchronize-events.
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner,
+              repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const hasReview = reviews.some((r) => {
+              const login = r.user?.login?.toLowerCase();
+              return (
+                login &&
+                login !== author.toLowerCase() &&
+                r.state !== "DISMISSED"
+              );
+            });
+
+            if (hasReview) {
+              core.info("PR har allerede minst én review; skipper reassign.");
+              return;
+            }
 
             // Finn (eller lag) issue som lagrer pekeren
             const search = await github.rest.search.issuesAndPullRequests({
-            q: `repo:${owner}/${repo} is:issue in:title "${stateIssueTitle}"`,
+              q: `repo:${owner}/${repo} is:issue in:title "${stateIssueTitle}"`,
             });
 
             let issueNumber, pointer = 0;
 
             if (search.data.items.length > 0) {
-            const issue = search.data.items[0];
-            issueNumber = issue.number;
-            
-            // search-resultat kan ha truncated body, så les issue for å være sikker
-            const full = await github.rest.issues.get({ owner, repo, issue_number: issueNumber });
-            const body = (full.data.body || "0").trim();
-            const parsed = parseInt(body, 10);
-            pointer = Number.isNaN(parsed) ? 0 : parsed;
+              const issue = search.data.items[0];
+              issueNumber = issue.number;
+
+              // search-resultat kan ha truncated body, så les issue for å være sikker
+              const full = await github.rest.issues.get({
+                owner,
+                repo,
+                issue_number: issueNumber,
+              });
+
+              const body = (full.data.body || "0").trim();
+              const parsed = parseInt(body, 10);
+              pointer = Number.isNaN(parsed) ? 0 : parsed;
             } else {
-            const created = await github.rest.issues.create({
-            owner,
-            repo,
-            title: stateIssueTitle,
-            body: "0",
-            });
-            issueNumber = created.data.number;
-            pointer = 0;
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title: stateIssueTitle,
+                body: "0",
+              });
+              issueNumber = created.data.number;
+              pointer = 0;
             }
 
             // Velg neste reviewer i round-robin, men hopp over PR-forfatter
             let pickIndex = null;
             for (let i = 0; i < reviewers.length; i++) {
-            const idx = (pointer + i) % reviewers.length;
-            const candidate = reviewers[idx];
-            if (candidate.toLowerCase() !== author.toLowerCase()) {
-            pickIndex = idx;
-            break;
-            }
+              const idx = (pointer + i) % reviewers.length;
+              const candidate = reviewers[idx];
+              if (candidate.toLowerCase() !== author.toLowerCase()) {
+                pickIndex = idx;
+                break;
+              }
             }
 
             if (pickIndex === null) {
-            core.info("No eligible reviewer found (is everyone the author?).");
-            return;
+              core.info("Fant ingen eligible reviewer (er alle forfatteren?).");
+              return;
             }
 
             const chosen = reviewers[pickIndex];
@@ -98,18 +147,26 @@ jobs:
 
             // Be om review på PR-en
             await github.rest.pulls.requestReviewers({
-            owner,
-            repo,
-            pull_number: pr.number,
-            reviewers: [chosen],
+              owner,
+              repo,
+              pull_number: prNumber,
+              reviewers: [chosen],
+            });
+
+            // Merk PR med rr-assigned så synchronize ikke reassigner senere
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: prNumber,
+              labels: [assignedLabel],
             });
 
             // Oppdater pekeren i state-issue
             await github.rest.issues.update({
-            owner,
-            repo,
-            issue_number: issueNumber,
-            body: String(nextPointer),
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: String(nextPointer),
             });
 
-            core.info(`Requested review from ${chosen}. Next pointer: ${nextPointer}`);
+            core.info(`Requested review fra ${chosen}. Neste pointer: ${nextPointer}`);
