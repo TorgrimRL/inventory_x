@@ -11,10 +11,12 @@ from rest_framework.views import APIView
 from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
 )
 from api.inventory.serializers import (
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
+    UserInventoryListItemSerializer,
 )
 
 from .contracts import (
@@ -22,7 +24,7 @@ from .contracts import (
     LIST_ITEMS_RESPONSES,
     REGISTER_INVENTORY_RESPONSES,
 )
-from .models import Inventory, InventoryAlreadyExistsError
+from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -187,3 +189,17 @@ class RegisterInventoryView(views.APIView):
         for key, value in (errors or {}).items():
             fixed[key] = value if isinstance(value, list) else [str(value)]
         return fixed
+
+
+class ListInventoriesView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @extend_schema(responses=LIST_INVENTORIES_RESPONSES)
+    def get(self, request: Request) -> Response:
+        qs = (
+            InventoryMembership.objects.filter(user=request.user)
+            .select_related("inventory")
+            .order_by("inventory__name")
+        )
+        data = UserInventoryListItemSerializer(qs, many=True).data
+        return Response(data, status=status.HTTP_200_OK)

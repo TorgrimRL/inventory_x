@@ -4,9 +4,10 @@ from rest_framework import status
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
     LIST_ITEMS_RESPONSES,
 )
-from api.inventory.models import InventoryItem
+from api.inventory.models import Inventory, InventoryItem, InventoryMembership
 from api.tests.base import BaseAPITestCase
 
 
@@ -242,3 +243,101 @@ class AdjustStockViewTests(BaseAPITestCase):
 
         self.item.refresh_from_db()
         self.assertEqual(self.item.stock, 10)
+
+
+class ListInventoriesViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.url = reverse("inventories-list")
+        self.user = self.create_user(
+            email="user@test.com", password="password123"
+        )
+        self.other_user = self.create_user(
+            email="other@test.com", password="password123"
+        )
+
+    def test_requires_authentication(self):
+        response = self.client.get(self.url)
+
+        # Med BasicAuthentication i DEFAULT_AUTHENTICATION_CLASSES
+        # pleier GET uten creds å bli 401.
+        self.assert_contract(
+            response,
+            LIST_INVENTORIES_RESPONSES,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_happy_path_lists_two_inventories_with_role_and_orders_by_name(
+        self,
+    ):
+        self.client.force_authenticate(user=self.user)
+        inv_b = Inventory.objects.create(name="Beta AS", org_number="987654321")
+        inv_a = Inventory.objects.create(name="Acme AS", org_number="123456789")
+
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv_a,
+            role=InventoryMembership.Role.OWNER,
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv_b,
+            role=InventoryMembership.Role.EMPLOYEE,
+        )
+
+        response = self.client.get(self.url)
+        self.assert_contract(
+            response,
+            LIST_INVENTORIES_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        body = response.json()
+        self.assertIsInstance(body, list)
+        self.assertEqual(len(body), 2)
+
+        for row in body:
+            self.assertIn("id", row)
+            self.assertIn("name", row)
+            self.assertIn("orgNumber", row)
+            self.assertIn("role", row)
+
+        self.assertEqual(body[0]["name"], "Acme AS")
+        self.assertEqual(body[0]["orgNumber"], "123456789")
+        self.assertEqual(body[0]["role"], "owner")
+
+        self.assertEqual(body[1]["name"], "Beta AS")
+        self.assertEqual(body[1]["orgNumber"], "987654321")
+        self.assertEqual(body[1]["role"], "employee")
+
+    def test_empty_state_returns_empty_list(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(self.url)
+        data = self.assert_contract(
+            response,
+            LIST_INVENTORIES_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(data, [])
+
+    def test_user_cannot_see_other_users_inventories(self):
+        self.client.force_authenticate(user=self.user)
+
+        inv_other = Inventory.objects.create(
+            name="Other Co", org_number="111222333"
+        )
+        InventoryMembership.objects.create(
+            user=self.other_user,
+            inventory=inv_other,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        response = self.client.get(self.url)
+        data = self.assert_contract(
+            response,
+            LIST_INVENTORIES_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(data, [])

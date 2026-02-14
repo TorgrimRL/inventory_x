@@ -57,6 +57,9 @@ class Command(BaseCommand):
             inv_specs = [
                 ("Ola AS", "123456789"),
                 ("Kari AS", "987654321"),
+                ("Nordic Tools AS", "111222333"),
+                ("Fjord Supply AS", "222333444"),
+                ("Oslo Retail AS", "333444555"),
             ]
 
             inventories: list[Inventory] = []
@@ -71,18 +74,37 @@ class Command(BaseCommand):
             alice = users["alice@example.com"]
             bob = users["bob@example.com"]
 
-            InventoryMembership.objects.create(
-                inventory=inventories[0],
-                user=admin,
-                role=InventoryMembership.Role.OWNER,
+            # Admin is owner of all
+            InventoryMembership.objects.bulk_create(
+                [
+                    InventoryMembership(
+                        inventory=inv,
+                        user=admin,
+                        role=InventoryMembership.Role.OWNER,
+                    )
+                    for inv in inventories
+                ]
             )
-            InventoryMembership.objects.create(
-                inventory=inventories[0],
-                user=alice,
-                role=InventoryMembership.Role.EMPLOYEE,
+
+            # Alice is an employee in two
+            InventoryMembership.objects.bulk_create(
+                [
+                    InventoryMembership(
+                        inventory=inventories[0],
+                        user=alice,
+                        role=InventoryMembership.Role.EMPLOYEE,
+                    ),
+                    InventoryMembership(
+                        inventory=inventories[1],
+                        user=alice,
+                        role=InventoryMembership.Role.EMPLOYEE,
+                    ),
+                ]
             )
+
+            # Bob is owner in one
             InventoryMembership.objects.create(
-                inventory=inventories[1],
+                inventory=inventories[-1],
                 user=bob,
                 role=InventoryMembership.Role.OWNER,
             )
