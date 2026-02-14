@@ -3,10 +3,9 @@ from django.urls import path
 from .views import (
     AdjustStockView,
     InventoryView,
-    RegisterInventoryView,
-    UpdateItemView,
     ListInventoriesView,
     RegisterInventoryView,
+    UpdateItemView,
 )
 
 urlpatterns = [

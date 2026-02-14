@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
-    UPDATE_ITEM_RESPONSES,
     LIST_INVENTORIES_RESPONSES,
+    UPDATE_ITEM_RESPONSES,
 )
 from api.inventory.serializers import (
     AdjustStockSerializer,
@@ -221,11 +221,6 @@ class UpdateItemView(views.APIView):
                 {"detail": str(exc)},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except ValueError as exc:
-            return Response(
-                {"detail": {"name": [str(exc)]}}, 
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         return Response(
             {
@@ -237,6 +232,8 @@ class UpdateItemView(views.APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
 class ListInventoriesView(APIView):
     permission_classes = (IsAuthenticated,)
 
