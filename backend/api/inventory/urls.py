@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     AdjustStockView,
     InventoryView,
+    InviteUserView,
     ListInventoriesView,
     RegisterInventoryView,
 )
@@ -19,5 +20,10 @@ urlpatterns = [
     ),
     path(
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
+    ),
+    path(
+        "inventories/<uuid:inventory_id>/invite/",
+        InviteUserView.as_view(),
+        name="inventory-invite",
     ),
 ]
