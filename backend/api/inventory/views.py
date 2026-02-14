@@ -212,7 +212,7 @@ class UpdateItemView(views.APIView):
                 {"detail": "Only the owner can edit name and price."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-            
+
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():

@@ -265,7 +265,24 @@ class UpdateItemViewTests(BaseAPITestCase):
             args=[self.item.id],
         )
 
+        self._owner_ready = False
+
+    def make_owner(self):
+        if self._owner_ready:
+            return
+
+        inv = Inventory.objects.create(name="Test AS", org_number="123123123")
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        self._owner_ready = True
+
     def test_update_item_success(self):
+        self.make_owner()
+
         response = self.client.patch(
             self.url,
             {"name": "Skim Milk", "price": 30},
@@ -281,9 +298,11 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.item.refresh_from_db()
         self.assertEqual(self.item.name, "Skim Milk")
         self.assertEqual(self.item.price, 30)
-        self.assertEqual(self.item.stock, 10)  # stock unchanged
+        self.assertEqual(self.item.stock, 10)
 
     def test_update_item_blank_name_returns_400(self):
+        self.make_owner()
+
         response = self.client.patch(
             self.url,
             {"name": "", "price": 30},
@@ -297,6 +316,8 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
     def test_update_item_negative_price_returns_400(self):
+        self.make_owner()
+
         response = self.client.patch(
             self.url,
             {"name": "Milk", "price": -5},
@@ -309,11 +330,12 @@ class UpdateItemViewTests(BaseAPITestCase):
             status.HTTP_400_BAD_REQUEST,
         )
 
-        # Ensure item not updated
         self.item.refresh_from_db()
         self.assertEqual(self.item.price, 25)
 
     def test_update_item_non_numeric_price_returns_400(self):
+        self.make_owner()
+
         response = self.client.patch(
             self.url,
             {"name": "Milk", "price": "abc"},
@@ -326,11 +348,12 @@ class UpdateItemViewTests(BaseAPITestCase):
             status.HTTP_400_BAD_REQUEST,
         )
 
-        # Ensure item not updated
         self.item.refresh_from_db()
         self.assertEqual(self.item.price, 25)
 
     def test_update_item_not_found_returns_404(self):
+        self.make_owner()
+
         url = reverse("update-item", args=[9999])
 
         response = self.client.patch(
@@ -359,6 +382,31 @@ class UpdateItemViewTests(BaseAPITestCase):
             UPDATE_ITEM_RESPONSES,
             status.HTTP_403_FORBIDDEN,
         )
+
+    def test_only_owner_can_update_name_and_price(self):
+        inv = Inventory.objects.create(name="Test AS", org_number="123123123")
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv,
+            role=InventoryMembership.Role.EMPLOYEE,
+        )
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Skim Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, "Milk")
+        self.assertEqual(self.item.price, 25)
+        self.assertEqual(self.item.stock, 10)
 
 
 class ListInventoriesViewTests(BaseAPITestCase):
