@@ -1,12 +1,13 @@
 from drf_spectacular.utils import OpenApiResponse
 
 from api.inventory.serializers import (
+    ActiveInventoryResponseSerializer,
     AdjustStockResponseSerializer,
     InventoryItemCreateSerializer,
     InventoryListSerializer,
     RegisterInventoryResponseSerializer,
     RegisterInventoryValidationErrorSerializer,
-    UserInventoryListSerializer, ActiveInventoryResponseSerializer,
+    UserInventoryListSerializer,
 )
 from api.user.serializers.common import (
     ErrorResponseSerializer,
@@ -108,7 +109,6 @@ GET_ACTIVE_INVENTORY_RESPONSES = {
     204: OpenApiResponse(
         response=None,
         description="No active inventory found",
-
     ),
     401: OpenApiResponse(
         response=ErrorResponseSerializer,
@@ -135,5 +135,5 @@ SET_ACTIVE_INVENTORY_RESPONSES = {
     403: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="User is not a member of this inventory.",
-    )
+    ),
 }

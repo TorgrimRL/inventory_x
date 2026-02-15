@@ -11,13 +11,18 @@ from rest_framework.views import APIView
 from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
-    LIST_INVENTORIES_RESPONSES, GET_ACTIVE_INVENTORY_RESPONSES, SET_ACTIVE_INVENTORY_RESPONSES,
+    GET_ACTIVE_INVENTORY_RESPONSES,
+    LIST_INVENTORIES_RESPONSES,
+    SET_ACTIVE_INVENTORY_RESPONSES,
 )
 from api.inventory.serializers import (
+    ActiveInventoryResponseSerializer,
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
-    UserInventoryListItemSerializer, ActiveInventoryResponseSerializer, SetActiveInventoryRequestSerializer,
+    SetActiveInventoryRequestSerializer,
+    UserInventoryListItemSerializer,
 )
+
 from .context import SESSION_ACTIVE_INVENTORY_KEY
 from .contracts import (
     CREATE_ITEM_RESPONSES,

@@ -1,10 +1,11 @@
 from django.urls import path
 
 from .views import (
+    ActiveInventoryView,
     AdjustStockView,
     InventoryView,
     ListInventoriesView,
-    RegisterInventoryView, ActiveInventoryView,
+    RegisterInventoryView,
 )
 
 urlpatterns = [
@@ -20,5 +21,5 @@ urlpatterns = [
     path(
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
     ),
-    path("active/", ActiveInventoryView.as_view(), name="inventory-active")
+    path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
 ]
