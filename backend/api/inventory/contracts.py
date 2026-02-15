@@ -6,7 +6,7 @@ from api.inventory.serializers import (
     InventoryListSerializer,
     RegisterInventoryResponseSerializer,
     RegisterInventoryValidationErrorSerializer,
-    UserInventoryListSerializer,
+    UserInventoryListSerializer, ActiveInventoryResponseSerializer,
 )
 from api.user.serializers.common import (
     ErrorResponseSerializer,
@@ -98,4 +98,38 @@ LIST_INVENTORIES_RESPONSES = {
         response=ErrorResponseSerializer,
         description="Forbidden.",
     ),
+}
+
+GET_ACTIVE_INVENTORY_RESPONSES = {
+    200: OpenApiResponse(
+        response=InventoryItemCreateSerializer,
+        description="OK",
+    ),
+    204: OpenApiResponse(
+        response=None,
+        description="No active inventory found",
+
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication required",
+    )
+}
+SET_ACTIVE_INVENTORY_RESPONSES = {
+    200: OpenApiResponse(
+        response=ActiveInventoryResponseSerializer,
+        description="Active inventory set",
+    ),
+    400: OpenApiResponse(
+        response=ValidationErrorResponseSerializer,
+        description="Validation failed",
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication required",
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="User is not a member of this inventory.",
+    )
 }

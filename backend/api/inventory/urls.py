@@ -4,7 +4,7 @@ from .views import (
     AdjustStockView,
     InventoryView,
     ListInventoriesView,
-    RegisterInventoryView,
+    RegisterInventoryView, ActiveInventoryView,
 )
 
 urlpatterns = [
@@ -20,4 +20,5 @@ urlpatterns = [
     path(
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
     ),
+    path("active/", ActiveInventoryView.as_view(), name="inventory-active")
 ]
