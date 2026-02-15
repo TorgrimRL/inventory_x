@@ -102,7 +102,7 @@ LIST_INVENTORIES_RESPONSES = {
 
 GET_ACTIVE_INVENTORY_RESPONSES = {
     200: OpenApiResponse(
-        response=InventoryItemCreateSerializer,
+        response=ActiveInventoryResponseSerializer,
         description="OK",
     ),
     204: OpenApiResponse(
@@ -113,7 +113,11 @@ GET_ACTIVE_INVENTORY_RESPONSES = {
     401: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Authentication required",
-    )
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Forbidden",
+    ),
 }
 SET_ACTIVE_INVENTORY_RESPONSES = {
     200: OpenApiResponse(
