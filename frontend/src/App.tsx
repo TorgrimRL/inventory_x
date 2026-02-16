@@ -7,6 +7,7 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./components/auth/loginForm";
 import Registration from "./components/auth/registrationForm";
 import RegisterInventoryForm from "./components/inventory/registerInventoryForm.tsx";
+import RequireActiveInventory from "./components/inventory/requireActiveInventory.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
@@ -25,11 +26,25 @@ function App() {
   return (
     <Routes>
       <Route path={PATHS.LOGIN} element={<Login />} />
-      <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
+      <Route
+        path={PATHS.DASHBOARD}
+        element={
+          <RequireActiveInventory>
+            <Dashboard />
+          </RequireActiveInventory>
+        }
+      />
       <Route path={PATHS.REGISTRATION} element={<Registration />} />
       <Route path={PATHS.INVENTORIES} element={<InventoriesPage />} />
       <Route path={PATHS.INVENTORIES_NEW} element={<RegisterInventoryForm />} />
-      <Route path={PATHS.ADD_ITEM} element={<ItemPage />} />
+      <Route
+        path={PATHS.ADD_ITEM}
+        element={
+          <RequireActiveInventory>
+            <ItemPage />
+          </RequireActiveInventory>
+        }
+      />
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
   );
