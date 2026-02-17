@@ -70,6 +70,10 @@ class UserInventoryListSerializer(serializers.ListSerializer):
     child = UserInventoryListItemSerializer()
 
 
+class InviteUserRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
 class SetActiveInventoryRequestSerializer(serializers.Serializer):
     inventory_id = serializers.UUIDField()
 
