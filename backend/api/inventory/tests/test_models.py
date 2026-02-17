@@ -189,3 +189,51 @@ class InventoryItemModelTests(TestCase):
         """Default stock should be 0."""
         item = InventoryItem.objects.create(name="Widget", price=100)
         self.assertEqual(item.stock, 0)
+
+
+class InventoryRoleTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create(
+            email="owner@example.com", password="pw"
+        )
+        self.employee = User.objects.create(
+            email="employee@example.com", password="pw"
+        )
+        self.stranger = User.objects.create(
+            email="stranger@example.com", password="pw"
+        )
+
+        self.inventory, _ = Inventory.register_with_owner(
+            user=self.owner, name="Test Corp", org_number="123456789"
+        )
+
+        InventoryMembership.objects.create(
+            inventory=self.inventory,
+            user=self.employee,
+            role=InventoryMembership.Role.EMPLOYEE,
+        )
+
+    def test_is_owner(self):
+        self.assertTrue(self.inventory.is_owner(self.owner))
+        self.assertFalse(self.inventory.is_owner(self.employee))
+        self.assertFalse(self.inventory.is_owner(self.stranger))
+
+    def test_is_employee(self):
+        self.assertFalse(self.inventory.is_employee(self.owner))
+        self.assertTrue(self.inventory.is_employee(self.employee))
+        self.assertFalse(self.inventory.is_employee(self.stranger))
+
+    def test_is_member(self):
+        self.assertTrue(self.inventory.is_member(self.owner))
+        self.assertTrue(self.inventory.is_member(self.employee))
+        self.assertFalse(self.inventory.is_member(self.stranger))
+
+    def test_checks_handle_unauthenticated_user(self):
+        """Ensure methods don't crash if passed an AnonymousUser"""
+        from django.contrib.auth.models import AnonymousUser
+
+        anon = AnonymousUser()
+
+        self.assertFalse(self.inventory.is_owner(anon))
+        self.assertFalse(self.inventory.is_member(anon))
+        self.assertFalse(self.inventory.is_employee(anon))

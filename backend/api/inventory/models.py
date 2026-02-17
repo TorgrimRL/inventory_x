@@ -56,6 +56,28 @@ class Inventory(models.Model):
         )
         return inventory, membership
 
+    def is_owner(self, user) -> bool:
+        if not user.is_authenticated:
+            return False
+
+        return self.memberships.filter(
+            user=user, role=InventoryMembership.Role.OWNER
+        ).exists()
+
+    def is_employee(self, user) -> bool:
+        if not user.is_authenticated:
+            return False
+
+        return self.memberships.filter(
+            user=user, role=InventoryMembership.Role.EMPLOYEE
+        ).exists()
+
+    def is_member(self, user) -> bool:
+        if not user.is_authenticated:
+            return False
+
+        return self.memberships.filter(user=user).exists()
+
     def __str__(self):
         return f"{self.name} ({self.org_number})"
 

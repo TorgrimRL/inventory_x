@@ -68,3 +68,7 @@ class UserInventoryListItemSerializer(serializers.ModelSerializer):
 
 class UserInventoryListSerializer(serializers.ListSerializer):
     child = UserInventoryListItemSerializer()
+
+
+class InviteUserRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
