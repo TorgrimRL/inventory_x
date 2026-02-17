@@ -1,7 +1,8 @@
 from django.test import TestCase
 
-from api.inventory.models import InventoryItem
-from api.inventory.services import adjust_stock, get_all_items
+from api.inventory.models import Inventory, InventoryItem, InventoryMembership
+from api.inventory.services import adjust_stock, get_all_items, invite_user
+from api.user.models import User
 
 
 class InventoryServicesTests(TestCase):
@@ -57,3 +58,56 @@ class InventoryServicesTests(TestCase):
 
         self.item_2.refresh_from_db()
         self.assertEqual(self.item_2.stock, 5)
+
+
+class InviteUserServicesTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create(
+            email="owner@example.com", password="password"
+        )
+        self.inventory, _ = Inventory.register_with_owner(
+            user=self.owner, name="Test Corp", org_number="123456789"
+        )
+        self.target_user = User.objects.create(
+            email="target@example.com", password="password"
+        )
+
+    def test_invite_user_success(self):
+        """Owner can invite a user, who becomes an employee."""
+        invite_user(self.owner, str(self.inventory.id), self.target_user.email)
+
+        membership = InventoryMembership.objects.get(
+            inventory=self.inventory, user=self.target_user
+        )
+        self.assertEqual(membership.role, InventoryMembership.Role.EMPLOYEE)
+
+    def test_invite_user_not_owner_raises_permission_error(self):
+        """Non-owners cannot invite users."""
+        stranger = User.objects.create(
+            email="stranger@example.com", password="password"
+        )
+
+        with self.assertRaises(PermissionError) as ctx:
+            invite_user(
+                stranger, str(self.inventory.id), self.target_user.email
+            )
+
+        self.assertIn("Only the inventory owner", str(ctx.exception))
+
+    def test_invite_user_target_does_not_exist(self):
+        """Inviting a non-existent email raises ValueError."""
+        with self.assertRaises(ValueError) as ctx:
+            invite_user(self.owner, str(self.inventory.id), "ghost@example.com")
+
+        self.assertIn("does not exist", str(ctx.exception))
+
+    def test_invite_user_already_member(self):
+        """Inviting an existing member raises ValueError."""
+        invite_user(self.owner, str(self.inventory.id), self.target_user.email)
+
+        with self.assertRaises(ValueError) as ctx:
+            invite_user(
+                self.owner, str(self.inventory.id), self.target_user.email
+            )
+
+        self.assertIn("already a member", str(ctx.exception))

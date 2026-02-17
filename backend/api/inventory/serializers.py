@@ -73,3 +73,6 @@ class UserInventoryListSerializer(serializers.ListSerializer):
 class InventoryItemUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, trim_whitespace=True)
     price = serializers.IntegerField(min_value=0)
+    
+class InviteUserRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()

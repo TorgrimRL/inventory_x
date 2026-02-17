@@ -121,5 +121,20 @@ UPDATE_ITEM_RESPONSES = {
     404: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Item not found",
+    )
+}
+    
+INVITE_USER_RESPONSES = {
+    200: OpenApiResponse(
+        response=None,
+    ),
+    400: OpenApiResponse(
+        response=ValidationErrorResponseSerializer,
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+    ),
+    404: OpenApiResponse(
+        response=ErrorResponseSerializer,
     ),
 }

@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from api.inventory import services
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
+    INVITE_USER_RESPONSES,
     LIST_INVENTORIES_RESPONSES,
     UPDATE_ITEM_RESPONSES,
 )
@@ -18,6 +19,7 @@ from api.inventory.serializers import (
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
     InventoryItemUpdateSerializer,
+    InviteUserRequestSerializer,
     UserInventoryListItemSerializer,
 )
 
@@ -27,6 +29,7 @@ from .contracts import (
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
+from .permissions import IsInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -257,3 +260,42 @@ class ListInventoriesView(APIView):
         )
         data = UserInventoryListItemSerializer(qs, many=True).data
         return Response(data, status=status.HTTP_200_OK)
+
+
+class InviteUserView(APIView):
+    permission_classes = (
+        IsAuthenticated,
+        IsInventoryOwner,
+    )
+    serializer_class = InviteUserRequestSerializer
+
+    @extend_schema(
+        summary="Invite user to inventory",
+        responses=INVITE_USER_RESPONSES,
+    )
+    def post(self, request: Request, inventory_id: str) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            services.invite_user(
+                requestor=request.user,
+                inventory_id=inventory_id,
+                target_email=serializer.validated_data["email"],
+            )
+            return Response(status=status.HTTP_200_OK)
+
+        except PermissionError as e:
+            return Response(
+                {"detail": str(e)}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        except ValueError as e:
+            return Response(
+                {"detail": {"non_field_errors": [str(e)]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
