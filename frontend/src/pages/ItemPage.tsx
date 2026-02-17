@@ -315,7 +315,7 @@ export default function ItemPage() {
                         <TableCell>{item.name}</TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
                         <TableCell align="right">
-                          {new Intl.NumberFormat("en-US", {
+                          {new Intl.NumberFormat("nb-NO", {
                             style: "currency",
                             currency: "NOK",
                           }).format(Number(item.price))}
