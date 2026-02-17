@@ -4,6 +4,7 @@ from .views import (
     ActiveInventoryView,
     AdjustStockView,
     InventoryView,
+    InviteUserView,
     ListInventoriesView,
     RegisterInventoryView,
 )
@@ -20,6 +21,11 @@ urlpatterns = [
     ),
     path(
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
+    ),
+    path(
+        "inventories/<uuid:inventory_id>/invite/",
+        InviteUserView.as_view(),
+        name="inventory-invite",
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
 ]

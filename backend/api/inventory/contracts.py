@@ -86,6 +86,7 @@ LIST_ITEMS_RESPONSES = {
         description="Internal processing error",
     ),
 }
+
 LIST_INVENTORIES_RESPONSES = {
     200: OpenApiResponse(
         response=UserInventoryListSerializer,
@@ -98,6 +99,21 @@ LIST_INVENTORIES_RESPONSES = {
     403: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Forbidden.",
+    ),
+}
+
+INVITE_USER_RESPONSES = {
+    200: OpenApiResponse(
+        response=None,
+    ),
+    400: OpenApiResponse(
+        response=ValidationErrorResponseSerializer,
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+    ),
+    404: OpenApiResponse(
+        response=ErrorResponseSerializer,
     ),
 }
 
