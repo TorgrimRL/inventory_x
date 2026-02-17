@@ -86,8 +86,8 @@ def update_item(item_id: int, name: str, price: int):
 
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
-    
-    
+
+
 def invite_user(requestor, inventory_id: str, target_email: str):
     inventory = get_object_or_404(Inventory, id=inventory_id)
 
