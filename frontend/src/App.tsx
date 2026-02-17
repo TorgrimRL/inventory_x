@@ -10,6 +10,7 @@ import RegisterInventoryForm from "./components/inventory/registerInventoryForm.
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
+import LandingPage from "./pages/landingPage";
 import AuthGuardLayout from "./services/authguard.tsx";
 
 export const PATHS = {
@@ -27,6 +28,7 @@ function App() {
     <div>
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
+        <Route path={PATHS.HOME} element={<LandingPage />} />
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
         <Route path="*" element={<div>404 - Page Not Found</div>} />
