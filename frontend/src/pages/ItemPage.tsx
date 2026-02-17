@@ -163,14 +163,15 @@ export default function ItemPage() {
     };
 
     try {
-      await axios.post("/api/inventory/", payload);
+      const res = await axios.post("/api/inventory/", payload);
+
+      const created = res.data as InventoryItem;
 
       setItems((prev) => [
         ...prev,
         {
-          ...payload,
-          id: Date.now(),
-          order_id: Math.random().toString(),
+          ...created,
+          order_id: Math.random().toString(), // valgfritt, kan beholdes
         },
       ]);
 
@@ -316,7 +317,7 @@ export default function ItemPage() {
                         <TableCell align="right">
                           {new Intl.NumberFormat("en-US", {
                             style: "currency",
-                            currency: "USD",
+                            currency: "NOK",
                           }).format(Number(item.price))}
                         </TableCell>
                         <TableCell align="right">
