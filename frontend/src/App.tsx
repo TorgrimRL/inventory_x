@@ -34,22 +34,27 @@ function App() {
 
         {/* --- PROTECTED ROUTES --- */}
         <Route element={<AuthGuardLayout />}>
-          <Route path={PATHS.DASHBOARD}element={
-          <RequireActiveInventory>
-            <Dashboard />
-          </RequireActiveInventory>
-        }
-      />
+          <Route
+            path={PATHS.DASHBOARD}
+            element={
+              <RequireActiveInventory>
+                <Dashboard />
+              </RequireActiveInventory>
+            }
+          />
           <Route path={PATHS.INVENTORIES} element={<InventoriesPage />} />
           <Route
             path={PATHS.INVENTORIES_NEW}
             element={<RegisterInventoryForm />}
           />
-          <Route path={PATHS.ADD_ITEM}        element={
-          <RequireActiveInventory>
-            <ItemPage />
-          </RequireActiveInventory>
-        } />
+          <Route
+            path={PATHS.ADD_ITEM}
+            element={
+              <RequireActiveInventory>
+                <ItemPage />
+              </RequireActiveInventory>
+            }
+          />
         </Route>
       </Routes>
     </div>
