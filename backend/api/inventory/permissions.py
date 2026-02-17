@@ -1,5 +1,5 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import permissions
+from rest_framework.exceptions import NotFound
 
 from .models import Inventory
 
@@ -19,6 +19,11 @@ class IsInventoryOwner(permissions.BasePermission):
         if not inventory_id:
             return False
 
-        inventory = get_object_or_404(Inventory, id=inventory_id)
+        try:
+            inventory = Inventory.objects.get(id=inventory_id)
+        except Inventory.DoesNotExist:
+            raise NotFound(
+                "Permission denied: Inventory was not found."
+            ) from None
 
         return inventory.is_owner(request.user)
