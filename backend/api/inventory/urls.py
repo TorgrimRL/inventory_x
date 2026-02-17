@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    ActiveInventoryView,
     AdjustStockView,
     InventoryView,
     InviteUserView,
@@ -32,4 +33,5 @@ urlpatterns = [
         InviteUserView.as_view(),
         name="inventory-invite",
     ),
+    path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
 ]
