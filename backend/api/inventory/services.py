@@ -2,24 +2,23 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from api.user.models import User
-
 from .models import Inventory, InventoryItem, InventoryMembership
 
 
-def get_all_items():
+def get_all_items(inventory_id):
     """
     Fetches all inventory items from the database.
     Returns them as a list of dictionaries.
+
+    Args:
+        inventory_id:
     """
-    try:
-        queryset = InventoryItem.objects.all()
-        items = queryset.values("id", "name", "price", "stock")
-        return list(items)
-    except Exception as e:
-        raise Exception("Failed to fetch items") from e
+    queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by("id")
+    items = queryset.values("id", "name", "price", "stock")
+    return list(items)
 
 
-def create_item(name, price, stock):
+def create_item(inventory_id, name, price, stock):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
@@ -28,7 +27,7 @@ def create_item(name, price, stock):
         if InventoryItem.objects.filter(name=name).exists():
             raise ValueError(f"Item with name '{name}' already exists.")
 
-        item = InventoryItem.objects.create(name=name, price=price, stock=stock)
+        item = InventoryItem.objects.create(inventory=inventory_id, name=name, price=price, stock=stock)
         return {
             "id": item.id,
             "name": item.name,

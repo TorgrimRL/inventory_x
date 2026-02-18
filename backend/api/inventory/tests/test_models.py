@@ -182,12 +182,18 @@ class InventoryMembershipModelTests(TestCase):
 class InventoryItemModelTests(TestCase):
     def test_str_method_behavior(self):
         """__str__ should return the item name."""
-        item = InventoryItem.objects.create(name="Widget", price=100, stock=5)
+        inv = Inventory.objects.create(name="Test Inventory", org_number="999999999")
+        item = InventoryItem.objects.create(inventory=inv, name="Widget", price=100, stock=5)
         self.assertEqual(str(item), "Widget")
 
     def test_defaults(self):
         """Default stock should be 0."""
-        item = InventoryItem.objects.create(name="Widget", price=100)
+        inv = Inventory.objects.create(name="Test Inventory", org_number="999999999")
+        item = InventoryItem.objects.create(
+            inventory=inv,
+            name="Widget",
+            price=100,
+        )
         self.assertEqual(item.stock, 0)
 
 

@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase
 
 from api.inventory.models import Inventory, InventoryItem, InventoryMembership
@@ -7,15 +9,27 @@ from api.user.models import User
 
 class InventoryServicesTests(TestCase):
     def setUp(self):
+        org = str(uuid.uuid4().int)[:9]
+        self.inventory = Inventory.objects.create(
+            name="Test Inventory",
+            org_number=org,
+        )
+
         self.item_1 = InventoryItem.objects.create(
-            name="Mouse", price=50, stock=10
+            inventory=self.inventory,
+            name="Mouse",
+            price=50,
+            stock=10,
         )
         self.item_2 = InventoryItem.objects.create(
-            name="Keyboard", price=100, stock=5
+            inventory=self.inventory,
+            name="Keyboard",
+            price=100,
+            stock=5,
         )
 
     def test_get_all_items_returns_correct_data(self):
-        results = get_all_items()
+        results = get_all_items(inventory_id=self.inventory.id)
 
         # Assert
         self.assertEqual(len(results), 2)

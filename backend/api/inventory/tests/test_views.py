@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 
+from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
@@ -12,8 +13,30 @@ from api.tests.base import BaseAPITestCase
 
 
 class InventoryListViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
+
+        # Create an inventory + membership and set it active in session
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Make the session select active inventory
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
     def test_inventory_list_view(self):
-        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
+        InventoryItem.objects.create(inventory=self.inventory, name="Monitor", price=200, stock=1)
 
         response = self.client.get("/api/inventory/")
         self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
@@ -23,8 +46,8 @@ class InventoryListViewTests(BaseAPITestCase):
         self.assertEqual(data["data"][0]["name"], "Monitor")
 
     def test_inventory_list_multiple_items(self):
-        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
-        InventoryItem.objects.create(name="Keyboard", price=100, stock=5)
+        InventoryItem.objects.create(inventory=self.inventory, name="Monitor", price=200, stock=1)
+        InventoryItem.objects.create(inventory=self.inventory, name="Keyboard", price=100, stock=5)
 
         response = self.client.get("/api/inventory/")
 
@@ -77,15 +100,15 @@ class InventoryListViewTests(BaseAPITestCase):
         self.assertTrue(
             ("name" in data)
             or (
-                "data" in data
-                and isinstance(data["data"], dict)
-                and "name" in data["data"]
+                    "data" in data
+                    and isinstance(data["data"], dict)
+                    and "name" in data["data"]
             )
             or ("id" in data)
             or (
-                "data" in data
-                and isinstance(data["data"], dict)
-                and "id" in data["data"]
+                    "data" in data
+                    and isinstance(data["data"], dict)
+                    and "id" in data["data"]
             )
             or ("detail" in data and "name" in str(data["detail"]).lower())
         )
@@ -132,8 +155,24 @@ class AdjustStockViewTests(BaseAPITestCase):
             password="password123",
         )
         self.client.force_authenticate(self.user)
+        
+        # Create an inventory + membership and set it active in session
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Make the session select active inventory
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
 
         self.item = InventoryItem.objects.create(
+            inventory=self.inventory,
             name="Milk",
             price=10,
             stock=10,
@@ -267,7 +306,7 @@ class ListInventoriesViewTests(BaseAPITestCase):
         )
 
     def test_happy_path_lists_two_inventories_with_role_and_orders_by_name(
-        self,
+            self,
     ):
         self.client.force_authenticate(user=self.user)
         inv_b = Inventory.objects.create(name="Beta AS", org_number="987654321")
