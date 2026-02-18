@@ -180,6 +180,51 @@ class InventoryListViewTests(BaseAPITestCase):
         session2 = self.client.session
         self.assertNotIn(SESSION_ACTIVE_INVENTORY_KEY, session2)
 
+    def test_items_are_isolated_per_inventory_when_switching_active_inventory(
+        self,
+    ):
+        # Arrange: make inventory B og membership
+        inv_b = Inventory.objects.create(
+            name="Jessica Cookies AS", org_number="444555666"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv_b,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Items A (self.inventory) and B
+        InventoryItem.objects.create(
+            inventory=self.inventory, name="A-Item", price=100, stock=1
+        )
+        InventoryItem.objects.create(
+            inventory=inv_b, name="B-Item", price=200, stock=2
+        )
+
+        # Act + Assert: Just A items
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
+        res_a = self.client.get("/api/inventory/")
+        body_a = self.assert_contract(
+            res_a, LIST_ITEMS_RESPONSES, status.HTTP_200_OK
+        )
+        names_a = [row["name"] for row in body_a["data"]]
+        self.assertEqual(names_a, ["A-Item"])
+
+        # Act + Assert: Just B Items
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(inv_b.id)
+        session.save()
+
+        res_b = self.client.get("/api/inventory/")
+        body_b = self.assert_contract(
+            res_b, LIST_ITEMS_RESPONSES, status.HTTP_200_OK
+        )
+        names_b = [row["name"] for row in body_b["data"]]
+        self.assertEqual(names_b, ["B-Item"])
+
 
 class AdjustStockViewTests(BaseAPITestCase):
     def setUp(self):

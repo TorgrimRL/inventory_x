@@ -81,7 +81,7 @@ class InventoryView(APIView):
 
             # Attempt to create the item
             created = services.create_item(
-                inventory_id=membership.inventory,
+                inventory_id=membership.inventory.id,
                 name=name,
                 price=price,
                 stock=stock,

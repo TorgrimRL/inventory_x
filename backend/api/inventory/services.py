@@ -23,7 +23,7 @@ def get_all_items(inventory_id: UUID):
     return list(items)
 
 
-def create_item(inventory_id, name, price, stock):
+def create_item(inventory_id: UUID, name, price, stock):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
@@ -33,7 +33,7 @@ def create_item(inventory_id, name, price, stock):
             raise ValueError(f"Item with name '{name}' already exists.")
 
         item = InventoryItem.objects.create(
-            inventory=inventory_id, name=name, price=price, stock=stock
+            inventory_id=inventory_id, name=name, price=price, stock=stock
         )
         return {
             "id": item.id,
