@@ -16,9 +16,6 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: { main: "#0b1437" },
-    background: {
-      default: "#0f0f0f",
-    },
   },
   shape: { borderRadius: 14 },
 });

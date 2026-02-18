@@ -18,8 +18,12 @@ const LandingPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
+        width: "100%",
         background: "#0f0f0f",
-        color: "#EDCDB4",
+        position: "absolute",
+        top: 0,
+        left:0,
+        right: 0,
       }}
     >
       {/* HERO */}
