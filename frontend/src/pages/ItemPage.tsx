@@ -27,9 +27,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import axios from "axios";
 import { useEffect, useState } from "react";
-
+import ApiClient from "../services/apiClient.ts";
 import AdjustStockModal from "../components/inventory/adjustStockModal";
 
 type InventoryItem = {
@@ -97,7 +96,7 @@ export default function ItemPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/inventory/");
+      const res = await ApiClient.get("/api/inventory/");
       const data = res.data;
       setItems((data.data || data) as InventoryItem[]);
     } catch (e) {
@@ -163,7 +162,7 @@ export default function ItemPage() {
     };
 
     try {
-      await axios.post("/api/inventory/", payload);
+      await ApiClient.post("/api/inventory/", payload);
 
       setItems((prev) => [
         ...prev,

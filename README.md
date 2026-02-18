@@ -54,12 +54,25 @@ Testing
 
 ```bash
 make test
-```
+````
 
-`make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional path after that (you may omit the `api/` and `src/` prefixes).
-Example:
-`
-make test frontend src/math.test.tsx` # or: `make test frontend math.test.tsx`
+`make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional
+path after that.
+
+You may omit:
+
+* the `api/` prefix for backend paths
+* the `src/` prefix for frontend paths
+* the `test/` prefix for frontend test files (tests live under `src/test/`)
+
+Examples:
+
+```bash
+make test frontend inventories.test.tsx
+make test frontend test/inventories.test.tsx
+make test frontend ItemPage.test.tsx
+make test backend inventory/tests/test_views.py
+```
 
 Stop containers:
 
