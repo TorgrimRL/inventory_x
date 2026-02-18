@@ -51,6 +51,10 @@ ADJUST_STOCK_RESPONSES = {
         response=ErrorResponseSerializer,
         description="Item not found",
     ),
+    409: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="No active inventory selected",
+    ),
 }
 
 CREATE_ITEM_RESPONSES = {
@@ -70,6 +74,10 @@ CREATE_ITEM_RESPONSES = {
         response=ErrorResponseSerializer,
         description="Authentication required",
     ),
+    409: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="No active inventory selected",
+    ),
 }
 
 LIST_ITEMS_RESPONSES = {
@@ -80,6 +88,10 @@ LIST_ITEMS_RESPONSES = {
     401: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Authentication required",
+    ),
+    409: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="No active inventory selected",
     ),
     500: OpenApiResponse(
         response=ErrorResponseSerializer,

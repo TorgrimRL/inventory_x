@@ -4,6 +4,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from api.user.models import User
+
 from .models import Inventory, InventoryItem, InventoryMembership
 
 
@@ -15,7 +16,9 @@ def get_all_items(inventory_id: UUID):
     Args:
         inventory_id:
     """
-    queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by("id")
+    queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
+        "id"
+    )
     items = queryset.values("id", "name", "price", "stock")
     return list(items)
 
@@ -29,7 +32,9 @@ def create_item(inventory_id, name, price, stock):
         if InventoryItem.objects.filter(name=name).exists():
             raise ValueError(f"Item with name '{name}' already exists.")
 
-        item = InventoryItem.objects.create(inventory=inventory_id, name=name, price=price, stock=stock)
+        item = InventoryItem.objects.create(
+            inventory=inventory_id, name=name, price=price, stock=stock
+        )
         return {
             "id": item.id,
             "name": item.name,
@@ -56,7 +61,9 @@ def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
 
     try:
         with transaction.atomic():
-            item = InventoryItem.objects.select_for_update().get(id=item_id, inventory_id=inventory_id)
+            item = InventoryItem.objects.select_for_update().get(
+                id=item_id, inventory_id=inventory_id
+            )
 
             if direction == "increase":
                 new_stock = item.stock + amount

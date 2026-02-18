@@ -38,35 +38,48 @@ class InventoryServicesTests(TestCase):
 
     def test_adjust_stock_increase(self):
         updated_item = adjust_stock(
-            inventory_id=self.inventory.id, item_id=self.item_1.id, direction="increase", amount=5
+            inventory_id=self.inventory.id,
+            item_id=self.item_1.id,
+            direction="increase",
+            amount=5,
         )
         self.assertEqual(updated_item.stock, 15)
 
     def test_adjust_stock_decrease(self):
-        updated_item = adjust_stock(inventory_id=self.inventory.id,
-                                    item_id=self.item_2.id, direction="decrease", amount=4
-                                    )
+        updated_item = adjust_stock(
+            inventory_id=self.inventory.id,
+            item_id=self.item_2.id,
+            direction="decrease",
+            amount=4,
+        )
         self.assertEqual(updated_item.stock, 1)
 
     def test_adjust_stock_invalid_amount(self):
         with self.assertRaises(ValueError):
-            adjust_stock(inventory_id=self.inventory.id, item_id=self.item_1.id, direction="increase", amount=0)
+            adjust_stock(
+                inventory_id=self.inventory.id,
+                item_id=self.item_1.id,
+                direction="increase",
+                amount=0,
+            )
 
     def test_adjust_stock_item_does_not_exist(self):
         with self.assertRaises(LookupError):
-            adjust_stock(inventory_id=self.inventory.id,
-                         item_id=9999,
-                         direction="increase",
-                         amount=1,
-                         )
+            adjust_stock(
+                inventory_id=self.inventory.id,
+                item_id=9999,
+                direction="increase",
+                amount=1,
+            )
 
     def test_adjust_stock_rejects_negative_and_does_not_change_db(self):
         with self.assertRaises(ValueError) as ctx:
-            adjust_stock(inventory_id=self.inventory.id,
-                         item_id=self.item_2.id,
-                         direction="decrease",
-                         amount=999,
-                         )
+            adjust_stock(
+                inventory_id=self.inventory.id,
+                item_id=self.item_2.id,
+                direction="decrease",
+                amount=999,
+            )
 
         self.assertEqual(str(ctx.exception), "Stock cannot be negative")
 

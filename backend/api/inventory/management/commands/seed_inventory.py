@@ -62,22 +62,129 @@ class Command(BaseCommand):
             # --- Items ---
             # Ola: bookstore / author event (Jo Nesbø)
             ola_catalog = [
-                ("Jo Nesbø — Latest Release (Hardcover)", 399),
-                ("Jo Nesbø — Latest Release (Paperback)", 249),
-                ("Book: Crime Novel Bestseller", 299),
-                ("Book: Children’s Picture Book", 199),
-                ("Notebook (A5)", 69),
-                ("Bookmark Pack", 39),
+                ("Grunnboka — Eyvind Hellstrøm", 449),
+                ("Ufred — Åsne Seierstad", 449),
+                ("Landet som ble for rikt — Martin Bech Holte", 449),
+                ("På min vakt — Jens Stoltenberg / Per Anders Madsen", 499),
+                ("Minnesota — Jo Nesbø", 449),
+                ("Hushjelpen — Freida McFadden", 249),
+                ("Mormor danset i regnet — Trude Teige", 399),
+                ("Hele deg — Annette Dragland", 399),
+                ("Tørt land — Jørn Lier Horst", 429),
+                ("Stargate — Ingvild H. Rishøi", 229),
+                ("Den siste saken — Jørn Lier Horst", 429),
+                ("Morfar pustet med havet — Trude Teige", 399),
+                ("Vagusnerven — Annette Løno / Torkil Færø", 399),
+                ("Hushjelpens hemmelighet — Freida McFadden", 249),
+                ("Pondus 24/7 — Frode Øverli", 399),
+                ("Ildlandet — Pascal Engman", 429),
+                ("X — Pascal Engman", 429),
+                ("Gater jeg har levd — Nikolai Torgersen", 429),
+                ("Søvngjengeren — Lars Kepler", 449),
+                ("Sjøfareren — Erika Fatland", 449),
+                ("Mormors utrolige venninner — Trude Teige", 399),
+                ("Sju kvadratmeter med lås — Jussi Adler-Olsen", 249),
+                ("Bestselger — Pascal Engman", 429),
+                ("Alternativt statsbudsjett — Martin Bech Holte", 449),
+                (
+                    "Hvite striper, sorte får — Øistein Monsen "
+                    "/ Torgeir Pedersen Krokfjord",
+                    399,
+                ),
+                ("Ikke mennesker jeg kan regne med — Kyrre Andreassen", 399),
+                ("Enkene — Pascal Engman", 429),
+                ("Kokain — Pascal Engman", 429),
+                ("Sorgen i St. Peter Ording — Ingvar Ambjørnsen", 399),
+                ("Jævla menn — Andrev Walden", 399),
+                ("Rottekongen — Pascal Engman", 429),
+                ("Hel ved II — Lars Mytting", 449),
+                ("Kvinnen i etasjen over — Freida McFadden", 249),
+                ("En lykkelig familie — Stian Hjelvin Andersen", 399),
+                ("Å vanne blomster om kvelden — Valérie Perrin", 249),
+                ("Den låste døren — Freida McFadden", 249),
+                ("Skriket — Jørn Lier Horst / Jan-Erik Fjell", 429),
+                ("Juleroser 2025 — Herborg Kråkevik", 499),
+                ("Kongeriket — Jo Nesbø", 249),
+                ("Skjult skjønnhet — Lucinda Riley / Harry Whittaker", 249),
+                ("Min første bakebok — Elin Vatnar Nilsen", 299),
+                ("Så gjør vi så — Helga Flatland", 399),
+                (
+                    "Alt jeg har lært om ledelse — Nicolai Tangen /"
+                    " Ellen Emmerentze Jervell",
+                    449,
+                ),
+                ("Doggerland — Agnes Ravatn", 399),
+                ("Den fantastiske bussen — Jakob Martin Strid", 349),
+                ("Diamanter og rust — Anne Holt", 429),
+                ("Mysteriet med hullet i veggen — Camilla Brinck", 299),
+                ("Kongen av Os — Jo Nesbø", 449),
+                ("Julequiz 2025 — Jarle Enerud", 249),
+                ("Let them-teorien — Mel Robbins", 399),
             ]
 
             # Jessica: cookie shop / production + popup store
             jessica_catalog = [
-                ("Chocolate Chip Cookies (box of 12)", 129),
-                ("Double Chocolate Cookies (box of 12)", 139),
-                ("Oatmeal Raisin Cookies (box of 12)", 119),
-                ("Cookie Dough (2kg bucket)", 299),
-                ("Chocolate Chips (1kg)", 159),
-                ("Packaging: Cookie Boxes (50 pcs)", 249),
+                # Signatur-cookies (TikTok/viral style)
+                ("NY-style Chocolate Chip Cookie (single)", 79),
+                ("NY-style Double Chocolate Cookie (single)", 79),
+                ("Stuffed Cookie: Nutella (single)", 89),
+                ("Stuffed Cookie: Biscoff (single)", 89),
+                ("Stuffed Cookie: Salted Caramel (single)", 89),
+                ("Brownie Cookie (single)", 79),
+                ("Red Velvet Cookie (single)", 79),
+                ("White Choc Macadamia Cookie (single)", 79),
+                ("Peanut Butter Cookie (single)", 79),
+                ("Vegan Chocolate Cookie (single)", 79),
+                ("Gluten-free Chocolate Cookie (single)", 89),
+                ("Oatmeal Raisin Cookie (single)", 69),
+                # Bokser (pop-up salg)
+                ("Cookie Box (6 pcs) — assorted", 199),
+                ("Cookie Box (12 pcs) — assorted", 349),
+                ("Mini Cookies (24 pcs) — assorted", 299),
+                ("Cookie Gift Box (premium)", 449),
+                ("Pop-up Sampler (mini + dips)", 399),
+                # Andre bakevarer
+                ("Brownies (box of 6)", 299),
+                ("Blondies (box of 6)", 299),
+                ("Brookies (box of 6)", 329),
+                ("Cinnamon Rolls (box of 4)", 249),
+                ("Cupcakes (box of 6)", 329),
+                # Dips / toppings (upsell)
+                ("Dip: Salted Caramel (200ml)", 79),
+                ("Dip: Chocolate Ganache (200ml)", 79),
+                ("Dip: Vanilla Cream (200ml)", 79),
+                ("Topping: Sprinkles (small jar)", 49),
+                ("Topping: Crushed Oreo (small jar)", 49),
+                # Råvarer (produksjon)
+                ("Flour (5kg)", 149),
+                ("Sugar (5kg)", 129),
+                ("Brown sugar (2kg)", 109),
+                ("Butter (2kg)", 249),
+                ("Eggs (30-pack)", 129),
+                ("Chocolate chips (1kg)", 159),
+                ("Dark chocolate (1kg)", 179),
+                ("White chocolate (1kg)", 179),
+                ("Cocoa powder (1kg)", 139),
+                ("Vanilla extract (250ml)", 119),
+                ("Baking powder (500g)", 69),
+                ("Sea salt flakes (500g)", 79),
+                ("Biscoff spread (1.6kg)", 199),
+                ("Hazelnut spread (1kg)", 129),
+                ("Macadamia nuts (1kg)", 249),
+                ("Peanut butter (1kg)", 119),
+                ("Oats (2kg)", 89),
+                ("Raisins (1kg)", 79),
+                # Emballasje / drift
+                ("Cookie Boxes (50 pcs)", 249),
+                ("Cupcake Boxes (25 pcs)", 249),
+                ("Paper bags (100 pcs)", 199),
+                ("Labels / stickers (roll)", 79),
+                ("Napkins (500 pcs)", 129),
+                ("Gloves (100 pcs)", 99),
+                ("Takeaway forks/spoons (100 pcs)", 99),
+                ("Shipping boxes (20 pcs)", 199),
+                ("Bubble wrap (roll)", 129),
+                ("Tape (6-pack)", 129),
             ]
 
             # Generic set for other inventories (small, neutral)
@@ -114,7 +221,7 @@ class Command(BaseCommand):
                     )
                 )
 
-            # Everyone else gets generic items (so they aren’t empty)
+            # Everyone else gets generic items
             for inv in inventories:
                 if inv.id in (ola_inv.id, jessica_inv.id):
                     continue
@@ -172,9 +279,47 @@ class Command(BaseCommand):
                 role=InventoryMembership.Role.OWNER,
             )
 
+        # Count items per inventory from what we created (no DB query needed)
+        counts_by_inventory_name = {inv.name: 0 for inv in inventories}
+        for it in items_to_create:
+            counts_by_inventory_name[it.inventory.name] += 1
+
+        total_items = len(items_to_create)
+        total_inventories = len(inventories)
+
+        # Membership counts (we did a mix of bulk_create + create)
+        memberships_total = InventoryMembership.objects.count()
+
+        # Useful “persona” checks
+        ola_count = counts_by_inventory_name.get("Ola AS", 0)
+        jessica_count = counts_by_inventory_name.get("Jessica Cookies AS", 0)
+
+        self.stdout.write(self.style.SUCCESS("✅ Seed completed"))
         self.stdout.write(
             self.style.SUCCESS(
-                f"Seeded {len(items_to_create)} items across {len(inventories)} inventories."
+                f"- Inventories: {total_inventories}\n"
+                f"- Items: {total_items}\n"
+                f"- Memberships: {memberships_total}"
             )
         )
-        self.stdout.write(self.style.SUCCESS("Seeded inventories + memberships."))
+
+        self.stdout.write(self.style.SUCCESS("\n📦 Items per inventory:"))
+        for inv_name in sorted(counts_by_inventory_name.keys()):
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"- {inv_name}: {counts_by_inventory_name[inv_name]} items"
+                )
+            )
+
+        self.stdout.write(self.style.SUCCESS("\n👤 Persona sanity checks:"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"- Ola AS items: {ola_count} (expected {len(ola_catalog)})"
+            )
+        )
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"- Jessica Cookies AS items: {jessica_count}"
+                f" (expected {len(jessica_catalog)})"
+            )
+        )

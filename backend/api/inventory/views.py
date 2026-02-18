@@ -25,6 +25,7 @@ from api.inventory.serializers import (
     SetActiveInventoryRequestSerializer,
     UserInventoryListItemSerializer,
 )
+
 from .context import SESSION_ACTIVE_INVENTORY_KEY, require_active_membership
 from .contracts import (
     CREATE_ITEM_RESPONSES,
@@ -49,7 +50,7 @@ class InventoryView(APIView):
     def get(self, request: Request) -> Response:
         try:
             membership = require_active_membership(request)
-            data = services.get_all_items(inventory_id=membership.inventory_id)
+            data = services.get_all_items(inventory_id=membership.inventory.id)
             return Response({"data": data}, status=status.HTTP_200_OK)
         except APIException:
             raise
@@ -79,7 +80,12 @@ class InventoryView(APIView):
             stock = serializer.validated_data.get("stock", 0)
 
             # Attempt to create the item
-            created = services.create_item(inventory_id=membership.inventory, name=name, price=price, stock=stock)
+            created = services.create_item(
+                inventory_id=membership.inventory,
+                name=name,
+                price=price,
+                stock=stock,
+            )
             return Response(created, status=status.HTTP_201_CREATED)
 
         except ValueError as e:
@@ -123,7 +129,7 @@ class AdjustStockView(APIView):
         try:
             membership = require_active_membership(request)
             item = services.adjust_stock(
-                inventory_id=membership.inventory_id,
+                inventory_id=membership.inventory.id,
                 item_id=item_id,
                 direction=serializer.validated_data["direction"],
                 amount=serializer.validated_data["amount"],

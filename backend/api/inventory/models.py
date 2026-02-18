@@ -35,11 +35,11 @@ class Inventory(models.Model):
     @classmethod
     @transaction.atomic
     def register_with_owner(
-            cls,
-            *,
-            user,
-            name: str,
-            org_number: str,
+        cls,
+        *,
+        user,
+        name: str,
+        org_number: str,
     ) -> tuple["Inventory", "InventoryMembership"]:
         inventory = cls(name=name, org_number=org_number)
         inventory.full_clean(validate_unique=False)
@@ -84,7 +84,7 @@ class Inventory(models.Model):
 
 class InventoryItem(models.Model):
     id: int
-    inventory = models.ForeignKey(
+    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
         "Inventory",
         on_delete=models.CASCADE,
         related_name="items",
@@ -104,7 +104,7 @@ class InventoryMembership(models.Model):
         EMPLOYEE = "employee", "Employee"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory = models.ForeignKey(
+    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
         Inventory, on_delete=models.CASCADE, related_name="memberships"
     )
     user = models.ForeignKey(
