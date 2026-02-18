@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
@@ -5,7 +7,7 @@ from api.user.models import User
 from .models import Inventory, InventoryItem, InventoryMembership
 
 
-def get_all_items(inventory_id):
+def get_all_items(inventory_id: UUID):
     """
     Fetches all inventory items from the database.
     Returns them as a list of dictionaries.
@@ -40,7 +42,7 @@ def create_item(inventory_id, name, price, stock):
         raise Exception("Error creating inventory item") from e
 
 
-def adjust_stock(item_id: int, direction: str, amount: int):
+def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
     """
     Adjusts stock for an inventory item.
     direction: "increase" or "decrease"
@@ -54,7 +56,7 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
     try:
         with transaction.atomic():
-            item = InventoryItem.objects.select_for_update().get(id=item_id)
+            item = InventoryItem.objects.select_for_update().get(id=item_id, inventory_id=inventory_id)
 
             if direction == "increase":
                 new_stock = item.stock + amount

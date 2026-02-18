@@ -121,7 +121,9 @@ class AdjustStockView(APIView):
             )
 
         try:
+            membership = require_active_membership(request)
             item = services.adjust_stock(
+                inventory_id=membership.inventory_id,
                 item_id=item_id,
                 direction=serializer.validated_data["direction"],
                 amount=serializer.validated_data["amount"],
