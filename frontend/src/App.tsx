@@ -8,6 +8,7 @@ import Login from "./components/auth/loginForm";
 import Registration from "./components/auth/registrationForm";
 import RegisterInventoryForm from "./components/inventory/registerInventoryForm.tsx";
 import RequireActiveInventory from "./components/inventory/requireActiveInventory.tsx";
+import Navbar from "./components/navbar/topbar.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
@@ -26,6 +27,7 @@ export const PATHS = {
 function App() {
   return (
     <div>
+      <Navbar />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
         <Route path={PATHS.LOGIN} element={<Login />} />
