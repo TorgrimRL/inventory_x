@@ -7,6 +7,7 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./components/auth/loginForm";
 import Registration from "./components/auth/registrationForm";
 import RegisterInventoryForm from "./components/inventory/registerInventoryForm.tsx";
+import RequireActiveInventory from "./components/inventory/requireActiveInventory.tsx";
 import Navbar from "./components/navbar/topbar.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
@@ -35,13 +36,27 @@ function App() {
 
         {/* --- PROTECTED ROUTES --- */}
         <Route element={<AuthGuardLayout />}>
-          <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
+          <Route
+            path={PATHS.DASHBOARD}
+            element={
+              <RequireActiveInventory>
+                <Dashboard />
+              </RequireActiveInventory>
+            }
+          />
           <Route path={PATHS.INVENTORIES} element={<InventoriesPage />} />
           <Route
             path={PATHS.INVENTORIES_NEW}
             element={<RegisterInventoryForm />}
           />
-          <Route path={PATHS.ADD_ITEM} element={<ItemPage />} />
+          <Route
+            path={PATHS.ADD_ITEM}
+            element={
+              <RequireActiveInventory>
+                <ItemPage />
+              </RequireActiveInventory>
+            }
+          />
         </Route>
       </Routes>
     </div>

@@ -1,11 +1,23 @@
-import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  ButtonBase,
+  Chip,
+  CircularProgress,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App.tsx";
 import {
+  getActiveInventory,
   type Inventory,
   listInventories,
+  setActiveInventory,
 } from "../services/inventoryService.ts";
 
 function getAuthMessage(status?: number): string {
@@ -21,6 +33,30 @@ export default function InventoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
+  const location = useLocation() as any;
+  const needChoice = Boolean(location?.state?.needChoice);
+  const [selectingId, setSelectingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const onSelect = async (id: string) => {
+    setSelectingId(id);
+    setError(null);
+
+    try {
+      const active = await setActiveInventory(id);
+      setActiveId(active.id);
+      navigate(PATHS.DASHBOARD);
+    } catch (err: any) {
+      const status: number | undefined = err?.response?.status;
+      setError(
+        status === 403
+          ? "You are not a member of this inventory."
+          : "Failed to set active inventory. Please try again.",
+      );
+    } finally {
+      setSelectingId(null);
+    }
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -31,10 +67,13 @@ export default function InventoriesPage() {
       try {
         const data = await listInventories();
         setInventories(data);
+
+        const active = await getActiveInventory(); // 200 => object, 204 => null
+        setActiveId(active?.id ?? null);
       } catch (err: any) {
         const status: number | undefined = err?.response?.status;
         const msg = getAuthMessage(status);
-
+        setActiveId(null);
         setError(msg);
         if (status === 401 || status === 403) setIsUnauthorized(true);
       } finally {
@@ -147,6 +186,12 @@ export default function InventoriesPage() {
               </Alert>
             )}
 
+            {/* NEED CHOICE (redirected from dashboard) */}
+            {!loading && !isUnauthorized && needChoice && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Please choose an inventory to continue.
+              </Alert>
+            )}
             {/* EMPTY */}
             {showEmpty && (
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -157,21 +202,96 @@ export default function InventoriesPage() {
             {/* LIST */}
             {showList && (
               <Stack spacing={1.5} sx={{ mb: 2 }}>
-                {inventories.map((inv) => (
-                  <Paper
-                    key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
-                    variant="outlined"
-                    sx={{ p: 2, borderRadius: 3 }}
-                  >
-                    <Typography fontWeight={800}>{inv.name}</Typography>
-                    <Typography sx={{ color: "text.secondary" }}>
-                      Org number: {inv.orgNumber}
-                    </Typography>
+                {inventories.map((inv) => {
+                  const isSelecting = selectingId === inv.id;
+                  const isActive = activeId === inv.id;
 
-                    {/* Hvis du vil: knapp for “velg aktiv” senere */}
-                    {/* <Button size="small" onClick={() => setActive(inv.id)}>Select</Button> */}
-                  </Paper>
-                ))}
+                  return (
+                    <Paper
+                      key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+                        overflow: "hidden",
+                        transition:
+                          "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
+                        borderColor: isActive
+                          ? "rgba(46, 125, 50, 0.55)" // "success-ish" uten å hardcode farger er vanskelig, men dette er mildt
+                          : isSelecting
+                            ? "rgba(11, 20, 55, 0.28)"
+                            : "rgba(11, 20, 55, 0.18)",
+                        bgcolor: isActive
+                          ? "rgba(46, 125, 50, 0.06)"
+                          : "transparent",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          boxShadow: "0 10px 24px rgba(11, 20, 55, 0.10)",
+                          borderColor: isActive
+                            ? "rgba(46, 125, 50, 0.75)"
+                            : "rgba(11, 20, 55, 0.35)",
+                        },
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() =>
+                          isActive
+                            ? navigate(PATHS.DASHBOARD)
+                            : onSelect(inv.id)
+                        }
+                        disabled={isSelecting}
+                        sx={{
+                          width: "100%",
+                          p: 2,
+                          display: "block",
+                          textAlign: "center",
+                          cursor: isSelecting ? "default" : "pointer",
+                        }}
+                      >
+                        <Stack spacing={0.5} alignItems="center">
+                          {/* Active chip */}
+                          {isActive && (
+                            <Chip
+                              label="Active"
+                              size="small"
+                              color="success"
+                              sx={{ fontWeight: 800 }}
+                            />
+                          )}
+
+                          <Typography fontWeight={800}>{inv.name}</Typography>
+
+                          <Typography sx={{ color: "text.secondary" }}>
+                            Org number: {inv.orgNumber}
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              mt: 1,
+                              height: 20,
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            {isSelecting && (
+                              <>
+                                <CircularProgress size={16} sx={{ mr: 1 }} />
+                                <Typography
+                                  sx={{
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: "text.secondary",
+                                  }}
+                                >
+                                  Selecting…
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        </Stack>
+                      </ButtonBase>
+                    </Paper>
+                  );
+                })}
               </Stack>
             )}
 
