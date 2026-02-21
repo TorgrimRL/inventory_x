@@ -2,7 +2,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ "main", "host-app" ]
+    branches: [ "host-app" ]
   workflow_dispatch:
 
 permissions:
