@@ -133,3 +133,13 @@ make debug-down
 make init # initialize server
 make swagger # load the swagger
 ```
+
+### Login credentials to test
+username: admin@example.com
+password: adminpass123
+
+alice@example.com
+alicepass456
+
+bob@example.com
+bobpass789
