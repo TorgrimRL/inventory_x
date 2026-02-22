@@ -151,6 +151,21 @@ The production stack runs:
 - `web` (Django + gunicorn)
 - `db` (PostgreSQL)
 
+#### VM `.env` (production)
+
+The VM `.env` file should contain production-specific values (separate from local development), for example:
+
+- `DEBUG=False`
+- `ALLOWED_HOSTS=inventoryx.td.org.uit.no`
+- `CORS_ALLOWED_ORIGINS=http://inventoryx.td.org.uit.no` (change to `https://...` when TLS is enabled)
+- `CSRF_TRUSTED_ORIGINS=http://inventoryx.td.org.uit.no` (change to `https://...` when TLS is enabled)
+- `SECURE_SSL_REDIRECT=False` (set to `True` after HTTPS/TLS is enabled)
+- `SECRET_KEY=<strong unique secret>`
+- `DATABASE_URL=postgres://...` (or equivalent Postgres env vars used by the compose stack)
+
+> Note: local development uses `.env` values from `.env.example` (Docker Compose + local Postgres container), while the
+> VM uses a separate `.env` in `/opt/myapp`.
+
 ### Optional: local smoke test of production images
 
 You can also test the **production images** locally (SPA + Gunicorn + Nginx + Postgres) using:
