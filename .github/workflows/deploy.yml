@@ -3,6 +3,13 @@ name: Build & Deploy
 on:
   push:
     branches: [ "host-app", "175-task-configure-httpstls-for-production-deployment-on-inventoryxtdorguitno" ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - ".dockerignore"
+      - "LICENSE"
+      - "deploy/certbot/**"
   workflow_dispatch:
 
 permissions:
