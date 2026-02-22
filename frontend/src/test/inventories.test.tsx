@@ -5,16 +5,22 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import InventoriesPage from "../pages/inventories";
-import { listInventories } from "../services/inventoryService";
+import {
+  getActiveInventory,
+  listInventories,
+} from "../services/inventoryService";
 
 // Mock react-router navigate
 jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
+  useLocation: () => ({ pathname: "/inventories", state: {} }),
 }));
 
 // Mock inventory service
 jest.mock("../services/inventoryService", () => ({
   listInventories: jest.fn(),
+  getActiveInventory: jest.fn(),
+  setActiveInventory: jest.fn(),
 }));
 
 describe("InventoriesPage", () => {
@@ -23,6 +29,7 @@ describe("InventoriesPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+    (getActiveInventory as jest.Mock).mockResolvedValue(null);
   });
 
   test("shows loading, then renders inventories list + CTAs", async () => {
