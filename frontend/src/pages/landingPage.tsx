@@ -20,7 +20,7 @@ const LandingPage = () => {
         minHeight: "100vh",
         width: "100%",
         background: "#0f0f0f",
-        position: "absolute",
+
         top: 0,
         left: 0,
         right: 0,
