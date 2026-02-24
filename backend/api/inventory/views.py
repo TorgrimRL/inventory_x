@@ -25,7 +25,6 @@ from api.inventory.serializers import (
     SetActiveInventoryRequestSerializer,
     UserInventoryListItemSerializer,
 )
-
 from .context import SESSION_ACTIVE_INVENTORY_KEY, get_request_active_membership
 from .contracts import (
     CREATE_ITEM_RESPONSES,
@@ -33,7 +32,7 @@ from .contracts import (
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
-from .permissions import HasActiveInventoryMembership, IsInventoryOwner
+from .permissions import IsActiveInventoryMember, IsInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
-    permission_classes = (IsAuthenticated, HasActiveInventoryMembership)
+    permission_classes = (IsAuthenticated, IsActiveInventoryMember)
 
     @extend_schema(responses=LIST_ITEMS_RESPONSES)
     def get(self, request: Request) -> Response:
@@ -106,7 +105,7 @@ class InventoryView(APIView):
 
 class AdjustStockView(APIView):
     serializer_class = AdjustStockSerializer
-    permission_classes = (IsAuthenticated, HasActiveInventoryMembership)
+    permission_classes = (IsAuthenticated, IsActiveInventoryMember)
 
     @extend_schema(
         summary="Adjust item stock",

@@ -26,7 +26,7 @@ def get_active_inventory_id(request) -> UUID | None:
         return None
 
 
-def require_active_membership(request) -> InventoryMembership:
+def get_active_membership_or_raise(request) -> InventoryMembership:
     cached = getattr(request, "_active_inventory_membership", None)
     if cached is not None:
         return cached

@@ -1,7 +1,7 @@
 from rest_framework import permissions
 from rest_framework.exceptions import NotFound
 
-from .context import require_active_membership
+from .context import get_active_membership_or_raise
 from .models import Inventory
 
 
@@ -30,7 +30,7 @@ class IsInventoryOwner(permissions.BasePermission):
         return inventory.is_owner(request.user)
 
 
-class HasActiveInventoryMembership(permissions.BasePermission):
+class IsActiveInventoryMember(permissions.BasePermission):
     """
     Grants access only if the request has a valid active inventory
     in the session and the authenticated user is
@@ -45,7 +45,7 @@ class HasActiveInventoryMembership(permissions.BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
 
-        membership = require_active_membership(request)
+        membership = get_active_membership_or_raise(request)
         request.active_inventory_membership = membership
         request.active_inventory = membership.inventory
         return True
