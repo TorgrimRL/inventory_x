@@ -43,7 +43,7 @@ ADJUST_STOCK_RESPONSES = {
         response=ValidationErrorResponseSerializer,
         description="Validation failed",
     ),
-    401: OpenApiResponse(
+    403: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Authentication required",
     ),

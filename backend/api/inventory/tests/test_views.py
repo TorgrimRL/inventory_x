@@ -317,7 +317,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         self.assert_contract(
             response,
             ADJUST_STOCK_RESPONSES,
-            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_item_not_found_returns_404(self):
