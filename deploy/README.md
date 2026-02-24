@@ -1,4 +1,4 @@
-Supert — her er en ferdig `deploy/README.md` du kan lime inn.
+
 
 # Deployment (production)
 
@@ -298,13 +298,3 @@ When provisioning a fresh VM, the high-level steps are:
 9. Enable automatic certificate renewal (cron)
 
 ---
-
-```
-
-To små tips før du committer:
-- Pass på at root `README.md` nå har en kort peker, f.eks.  
-  `- Production deployment docs: deploy/README.md`
-- Ikke legg inn faktisk cron-linje hvis du vil holde den generell (det er helt fint å bare beskrive den som over)
-
-Hvis du vil, kan jeg også gi deg en **kort root README-erstatningstekst** for deployment-seksjonen (2–4 linjer).
-```
