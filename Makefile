@@ -59,6 +59,8 @@ logs-frontend:
 logs-db:
 	docker compose logs -f db
 
+tidy: fmt lint
+
 fmt:
 	$(BACKEND_RUN_NODEPS) uv run ruff format .
 	$(FRONTEND_RUN) npx prettier --ignore-path /repo/.prettierignore --write /repo/README.md /repo/backend/README.md /repo/frontend/README.md

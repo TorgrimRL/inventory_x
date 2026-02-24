@@ -84,6 +84,12 @@ class Inventory(models.Model):
 
 class InventoryItem(models.Model):
     id: int
+    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
+        "Inventory",
+        on_delete=models.CASCADE,
+        related_name="items",
+        db_index=True,
+    )
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
@@ -98,7 +104,7 @@ class InventoryMembership(models.Model):
         EMPLOYEE = "employee", "Employee"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory = models.ForeignKey(
+    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
         Inventory, on_delete=models.CASCADE, related_name="memberships"
     )
     user = models.ForeignKey(
