@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Pin npm for reproducible builds
+RUN npm i -g npm@11.10.1
+
 COPY package*.json ./
 RUN npm ci
 
