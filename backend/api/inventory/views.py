@@ -14,8 +14,8 @@ from api.inventory.contracts import (
     GET_ACTIVE_INVENTORY_RESPONSES,
     INVITE_USER_RESPONSES,
     LIST_INVENTORIES_RESPONSES,
-    UPDATE_ITEM_RESPONSES,
     SET_ACTIVE_INVENTORY_RESPONSES,
+    UPDATE_ITEM_RESPONSES,
 )
 from api.inventory.serializers import (
     ActiveInventoryResponseSerializer,
@@ -34,7 +34,7 @@ from .contracts import (
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
-from .permissions import IsInventoryOwner
+from .permissions import IsActiveInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -270,7 +270,7 @@ class ListInventoriesView(APIView):
 class InviteUserView(APIView):
     permission_classes = (
         IsAuthenticated,
-        IsInventoryOwner,
+        IsActiveInventoryOwner,
     )
     serializer_class = InviteUserRequestSerializer
 
@@ -278,7 +278,10 @@ class InviteUserView(APIView):
         summary="Invite user to inventory",
         responses=INVITE_USER_RESPONSES,
     )
-    def post(self, request: Request, inventory_id: str) -> Response:
+    def post(self, request: Request) -> Response:
+        """
+        Invites an user to the current active inventory.
+        """
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -287,9 +290,21 @@ class InviteUserView(APIView):
             )
 
         try:
+            # NOTE: IsActiveInventoryOwner fills this field
+            active_inventory = getattr(request, "active_inventory", None)
+
+            if active_inventory is None:
+                return Response(
+                    {
+                        "detail": "Internal server error: Missing active"
+                        "inventory context."
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
             services.invite_user(
                 requestor=request.user,
-                inventory_id=inventory_id,
+                inventory_id=active_inventory.id,
                 target_email=serializer.validated_data["email"],
             )
             return Response(status=status.HTTP_200_OK)

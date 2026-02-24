@@ -29,7 +29,7 @@ urlpatterns = [
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
     ),
     path(
-        "inventories/<uuid:inventory_id>/invite/",
+        "inventories/invite/",
         InviteUserView.as_view(),
         name="inventory-invite",
     ),

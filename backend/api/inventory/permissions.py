@@ -1,29 +1,21 @@
 from rest_framework import permissions
-from rest_framework.exceptions import NotFound
 
-from .models import Inventory
+from .context import require_active_membership
+from .models import InventoryMembership
 
 
-class IsInventoryOwner(permissions.BasePermission):
+class IsActiveInventoryOwner(permissions.BasePermission):
     """
-    Grant permission only if the request user is the OWNER of the inventory.
+    Grant permission only if the request user is the OWNER of the active
+    inventory currently selected in their session.
 
-    ASSUMPTION:
-        This permission expects the URL kwarg to be exactly 'inventory_id'.
-        Example URL: path('inventories/<uuid:inventory_id>/invite/', ...)
+    NOTE: Caches the associated inventory and memebrship to be used later
     """
 
     def has_permission(self, request, view):
-        inventory_id = view.kwargs.get("inventory_id")
+        membership = require_active_membership(request)
 
-        if not inventory_id:
-            return False
+        request.active_inventory = membership.inventory
+        request.active_membership = membership
 
-        try:
-            inventory = Inventory.objects.get(id=inventory_id)
-        except Inventory.DoesNotExist:
-            raise NotFound(
-                "Permission denied: Inventory was not found."
-            ) from None
-
-        return inventory.is_owner(request.user)
+        return membership.role == InventoryMembership.Role.OWNER

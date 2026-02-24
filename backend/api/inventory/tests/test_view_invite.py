@@ -25,9 +25,7 @@ class TestInviteUserView(BaseAPITestCase):
             name="Test Corp",
             org_number="123456789",
         )
-        self.url = reverse(
-            "inventory-invite", kwargs={"inventory_id": self.inventory.id}
-        )
+        self.url = reverse("inventory-invite")
 
     def test_invite_success(self):
         self.client.force_authenticate(user=self.owner)
