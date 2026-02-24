@@ -35,7 +35,7 @@ from .contracts import (
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
-from .permissions import IsActiveInventoryOwner
+from .permissions import IsActiveInventoryMember, IsActiveInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -298,7 +298,6 @@ class InviteUserView(APIView):
             )
 
         try:
-            # NOTE: IsActiveInventoryOwner fills this field
             active_inventory = getattr(request, "active_inventory", None)
 
             if active_inventory is None:

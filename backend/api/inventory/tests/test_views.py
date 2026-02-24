@@ -403,7 +403,23 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
         self.client.force_authenticate(self.user)
 
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+
+        self.membership = InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        self.client.force_authenticate(self.user)
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
         self.item = InventoryItem.objects.create(
+            inventory=self.inventory,
             name="Milk",
             price=25,
             stock=10,
@@ -533,12 +549,8 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
     def test_only_owner_can_update_name_and_price(self):
-        inv = Inventory.objects.create(name="Test AS", org_number="123123123")
-        InventoryMembership.objects.create(
-            user=self.user,
-            inventory=inv,
-            role=InventoryMembership.Role.EMPLOYEE,
-        )
+        self.membership.role = InventoryMembership.Role.EMPLOYEE
+        self.membership.save()
 
         response = self.client.patch(
             self.url,

@@ -29,7 +29,9 @@ def create_item(inventory_id: UUID, name, price, stock):
     Returns the created item as a dictionary.
     """
     try:
-        item = InventoryItem.objects.create(name=name, price=price, stock=stock)
+        item = InventoryItem.objects.create(
+            inventory_id=inventory_id, name=name, price=price, stock=stock
+        )
         return {
             "id": item.id,
             "name": item.name,
