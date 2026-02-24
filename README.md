@@ -54,16 +54,16 @@ Testing
 
 ```bash
 make test
-````
+```
 
 `make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional
 path after that.
 
 You may omit:
 
-* the `api/` prefix for backend paths
-* the `src/` prefix for frontend paths
-* the `test/` prefix for frontend test files (tests live under `src/test/`)
+- the `api/` prefix for backend paths
+- the `src/` prefix for frontend paths
+- the `test/` prefix for frontend test files (tests live under `src/test/`)
 
 Examples:
 

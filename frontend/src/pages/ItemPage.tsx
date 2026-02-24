@@ -28,8 +28,9 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import ApiClient from "../services/apiClient.ts";
+
 import AdjustStockModal from "../components/inventory/adjustStockModal";
+import ApiClient from "../services/apiClient.ts";
 
 type InventoryItem = {
   id: number | string;
