@@ -25,6 +25,7 @@ from api.inventory.serializers import (
     SetActiveInventoryRequestSerializer,
     UserInventoryListItemSerializer,
 )
+
 from .context import SESSION_ACTIVE_INVENTORY_KEY, get_request_active_membership
 from .contracts import (
     CREATE_ITEM_RESPONSES,
