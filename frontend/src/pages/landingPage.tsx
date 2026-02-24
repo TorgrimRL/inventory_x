@@ -47,7 +47,7 @@ const LandingPage = () => {
             variant="h6"
             sx={{ color: "#C4A588", opacity: 0.85, mb: 4 }}
           >
-            Precision. Control. Elegance.
+            Track items and manage stock for your business in real time.
           </Typography>
 
           <Stack direction="row" spacing={3} justifyContent="center">
