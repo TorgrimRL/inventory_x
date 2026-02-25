@@ -2,6 +2,8 @@
 Django settings for backend project.
 """
 
+import os
+import sys
 from pathlib import Path
 
 import environ
@@ -10,6 +12,7 @@ import environ
 env = environ.Env()
 environ.Env.read_env()
 
+HOST_ENPOINT = "http://inventoryx.td.org.uit.no"
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security & Core Config
@@ -47,7 +50,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -126,6 +129,19 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 60 * 60
+
+if "test" in sys.argv or env.bool("TESTING", default=False):
+    EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Ideally, load these from environment variables (.env file)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 LOGGING = {
     "version": 1,
