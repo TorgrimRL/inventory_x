@@ -34,7 +34,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="logo">
         <Link to={PATHS.HOME} className="logo-link">
-          <h2>Inventory x NEXUS TESTER</h2>
+          <h2>Inventory x</h2>
         </Link>
       </div>
 
