@@ -2,55 +2,141 @@
 Django settings for backend project.
 """
 
-import os
 import sys
 from pathlib import Path
 
 import environ
 
-# Environment Setup
+# ==============================================================================
+# ENVIRONMENT SETUP
+# ==============================================================================
 env = environ.Env()
 environ.Env.read_env()
 
-HOST_ENPOINT = "http://inventoryx.td.org.uit.no"
 BASE_DIR = Path(__file__).resolve().parent.parent
+HOST_ENDPOINT = "http://inventoryx.td.org.uit.no"
 
-# Security & Core Config
+# ==============================================================================
+# CORE & SECURITY
+# ==============================================================================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-me")
 DEBUG = env.bool("DEBUG", default=True)
+
 # If DEBUG is True, allow all. Otherwise, read from env.
-# TODO: For prod double check all `DEBUG` and env settings
 ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
 
-# Application definition
+# ==============================================================================
+# APPS & MIDDLEWARE
+# ==============================================================================
 INSTALLED_APPS = [
+    # 1. Django Core
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # 2. Third-Party
     "corsheaders",
     "rest_framework",
-    "django.contrib.auth",  # Required for AUTH_USER_MODEL
-    "django.contrib.contenttypes",  # Required for permissions
-    "django.contrib.sessions",  # Required for login state
-    "django.contrib.staticfiles",
-    "django.contrib.admin",
-    "django.contrib.messages",
+    "drf_spectacular",
+    # 3. Local Apps
     "config",
-    # Our apps
     "api.inventory.apps.InventoryConfig",
     "api.user.apps.UserConfig",
-    "drf_spectacular",
 ]
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",  # Manages sessions
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Link usermodel
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 ]
+
+ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
+AUTH_USER_MODEL = "user.User"
+
+# ==============================================================================
+# DATABASE & CACHE
+# ==============================================================================
+DATABASES = {
+    "default": env.db(
+        "DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
+}
+
+# ==============================================================================
+# REST FRAMEWORK & SWAGGER
+# ==============================================================================
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ]
+    + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Inventory API",
+    "VERSION": "1.0.0",
+    "SWAGGER_UI_SETTINGS": {
+        "tryItOutEnabled": True,
+        "persistAuthorization": True,
+    },
+}
+
+# ==============================================================================
+# CORS, CSRF, & SESSIONS
+# ==============================================================================
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+]
+
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = False
+
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_AGE = 60 * 60
+
+# ==============================================================================
+# EMAIL CONFIGURATION
+# ==============================================================================
+if "test" in sys.argv or env.bool("TESTING", default=False):
+    EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env("EMAIL_PORT", default="")
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+
+# ==============================================================================
+# INTERNATIONALIZATION & STATIC FILES
+# ==============================================================================
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+STATIC_URL = "static/"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -63,93 +149,19 @@ TEMPLATES = [
     },
 ]
 
-STATIC_URL = "static/"
-
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-    ],
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-    ],
-}
-
-# Render a tool to easily send requests
-if DEBUG:
-    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ]
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Inventory API",
-    "VERSION": "1.0.0",
-    "SWAGGER_UI_SETTINGS": {
-        "tryItOutEnabled": True,
-        "persistAuthorization": True,
-    },
-}
-
-ROOT_URLCONF = "config.urls"
-WSGI_APPLICATION = "config.wsgi.application"
-
-# Database
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
-}
-
-AUTH_USER_MODEL = "user.User"
-
-# Internationalization & Time
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
-
-# CORS CONFIG (Who can talk to the API)
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-]
-
-# CSRF CONFIG
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-]
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False
-
-# SESSION CONFIG (Login state & cookies)
-SESSION_COOKIE_SECURE = False
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_AGE = 60 * 60
-
-if "test" in sys.argv or env.bool("TESTING", default=False):
-    EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-# Ideally, load these from environment variables (.env file)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-
+# ==============================================================================
+# LOGGING
+# ==============================================================================
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "%(levelname)-8s %(asctime)s [%(threadName)-12.12s] \
-            [%(name)-15.15s] %(message)s",
+            # Safely combined strings without breaking layout
+            "format": (
+                "%(levelname)-8s %(asctime)s [%(threadName)-12.12s] "
+                "[%(name)-15.15s] %(message)s"
+            ),
             "style": "%",
         },
     },
