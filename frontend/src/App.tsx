@@ -13,6 +13,8 @@ import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
 import AuthGuardLayout from "./services/authguard.tsx";
+import ForgotPassword from "./pages/PasswordForgot.tsx";
+import ResetPassword from "./pages/PasswordReset.tsx";
 
 export const PATHS = {
   HOME: "/",
@@ -22,6 +24,8 @@ export const PATHS = {
   INVENTORIES: "/inventories",
   INVENTORIES_NEW: "/inventories/new",
   ADD_ITEM: "/add_item",
+  PASSWORD_FORGOT: "/password_forgot",
+  PASSWORD_RESET: "/password_reset"
 } as const;
 
 function App() {
@@ -32,6 +36,9 @@ function App() {
         {/* --- PUBLIC ROUTES --- */}
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
+        <Route path={PATHS.PASSWORD_RESET} element={<ResetPassword />} />
+        <Route path={PATHS.PASSWORD_FORGOT} element={<ForgotPassword />} />
+
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 
         {/* --- PROTECTED ROUTES --- */}
