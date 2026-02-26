@@ -12,9 +12,9 @@ import Navbar from "./components/navbar/topbar.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import ItemPage from "./pages/ItemPage";
-import AuthGuardLayout from "./services/authguard.tsx";
 import ForgotPassword from "./pages/PasswordForgot.tsx";
 import ResetPassword from "./pages/PasswordReset.tsx";
+import AuthGuardLayout from "./services/authguard.tsx";
 
 export const PATHS = {
   HOME: "/",
@@ -25,7 +25,7 @@ export const PATHS = {
   INVENTORIES_NEW: "/inventories/new",
   ADD_ITEM: "/add_item",
   PASSWORD_FORGOT: "/password_forgot",
-  PASSWORD_RESET: "/password_reset"
+  PASSWORD_RESET: "/password_reset",
 } as const;
 
 function App() {

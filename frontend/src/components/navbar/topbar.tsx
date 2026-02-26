@@ -20,7 +20,7 @@ export default function Navbar() {
   const publicNavItems = [
     ["Login", PATHS.LOGIN],
     ["SignUp", PATHS.REGISTRATION],
-    ["Forgot password", PATHS.PASSWORD_FORGOT]
+    ["Forgot password", PATHS.PASSWORD_FORGOT],
   ];
 
   useEffect(() => {
@@ -62,17 +62,18 @@ export default function Navbar() {
         ) : (
           /* For logged-out users */
           <>
-            {publicNavItems.map(([label, path]) => (
-              location.pathname !== path && (
-                <button
-                  key={path}
-                  className="submit-button"
-                  onClick={() => navigate(path)}
-                >
-                  {label}
-                </button>
-              )
-            ))}
+            {publicNavItems.map(
+              ([label, path]) =>
+                location.pathname !== path && (
+                  <button
+                    key={path}
+                    className="submit-button"
+                    onClick={() => navigate(path)}
+                  >
+                    {label}
+                  </button>
+                ),
+            )}
           </>
         )}
       </div>

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import apiClient from "../services/apiClient";
-import { PATHS } from "../App";
 
+import { PATHS } from "../App";
+import apiClient from "../services/apiClient";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -16,8 +16,7 @@ export default function ResetPassword() {
 
   const [loading, setLoading] = useState(false);
 
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -43,13 +42,11 @@ export default function ResetPassword() {
       setMessage("Password successfully updated! Redirecting to login...");
       setPassword("");
       setConfirmPassword("");
-
-    } catch (err) {
+    } catch {
       setError("Link expired or invalid. Please request a new reset link.");
     } finally {
-
       setTimeout(() => {
-        navigate(PATHS.LOGIN)
+        navigate(PATHS.LOGIN);
       }, 2000);
       setLoading(false);
     }
@@ -58,14 +55,11 @@ export default function ResetPassword() {
   // TODO: Add page guard
   useEffect(() => {
     const verifyUser = async () => {
-
       try {
-
         if (!token) {
-          return new Error('0');
+          return new Error("0");
         }
-
-      } catch (err) {
+      } catch {
         setError("Link expired or invalid. Redirecting...");
         setTimeout(() => {
           navigate(PATHS.PASSWORD_FORGOT);
@@ -76,10 +70,11 @@ export default function ResetPassword() {
     verifyUser();
   }, [navigate, token]);
 
-
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
+      <div
+        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
+      >
         <h2>Set New Password</h2>
 
         <form onSubmit={handleSubmit}>
@@ -101,7 +96,11 @@ export default function ResetPassword() {
             required
           />
 
-          <button type="submit" style={styles.button} disabled={loading || !password}>
+          <button
+            type="submit"
+            style={styles.button}
+            disabled={loading || !password}
+          >
             {loading ? "Updating..." : "Reset Password"}
           </button>
         </form>
@@ -113,7 +112,16 @@ export default function ResetPassword() {
   );
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
+  input: {
+    width: "100%",
+    padding: "10px",
+    margin: "10px 0",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    boxSizing: "border-box", // Now TS knows this is a valid BoxSizing value
+  },
+
   container: {
     display: "flex",
     justifyContent: "center",
@@ -125,14 +133,6 @@ const styles = {
     borderRadius: "8px",
     width: "320px",
     textAlign: "center",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    margin: "10px 0",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    boxSizing: "border-box", // Prevents input from spilling outside the card
   },
   button: {
     width: "100%",

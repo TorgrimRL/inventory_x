@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import apiClient from "../services/apiClient";
-import { PATHS } from "../App";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { PATHS } from "../App";
+import apiClient from "../services/apiClient";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -11,12 +11,12 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateEmail = (value) => {
+  const validateEmail = (value: any) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(value);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -34,10 +34,8 @@ export default function ForgotPassword() {
         setLoading(false);
         setMessage("If this email exists, a reset link has been sent.");
       }, 2159);
-
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Please try again later.");
-
     } finally {
       setTimeout(() => {
         navigate(PATHS.HOME);
@@ -47,7 +45,9 @@ export default function ForgotPassword() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
+      <div
+        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
+      >
         <h2>Forgot Password</h2>
 
         <form onSubmit={handleSubmit}>
