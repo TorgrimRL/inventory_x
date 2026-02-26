@@ -22,6 +22,8 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 allow_redefinition = true
+explicit_package_bases = true
+exclude = ["migrations/"]
 
 [tool.pylsp-mypy]
 enabled = true

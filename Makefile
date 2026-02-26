@@ -90,12 +90,12 @@ endif
 
 
 type-check:
-	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/' --explicit-package-bases --ignore-missing-imports
+	$(BACKEND_RUN_NODEPS) uv run mypy .
 
 check:
 	$(BACKEND_RUN_NODEPS) uv run ruff format --check .
 	$(BACKEND_RUN_NODEPS) uv run ruff check .
-	$(BACKEND_RUN_NODEPS) uv run mypy . --exclude 'migrations/' --explicit-package-bases --ignore-missing-imports
+	$(BACKEND_RUN_NODEPS) uv run mypy .
 	$(FRONTEND_RUN) npx prettier --ignore-path /repo/.prettierignore --check /repo/README.md /repo/backend/README.md /repo/frontend/README.md
 	$(FRONTEND_RUN) npm run format:check
 	$(FRONTEND_RUN) npx eslint .
