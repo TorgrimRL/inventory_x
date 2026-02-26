@@ -7,6 +7,8 @@ from pathlib import Path
 
 import environ
 
+# TODO: PROD CASE:CHECKS:  ENV,  SESSIONS, SMTP
+
 # ==============================================================================
 # ENVIRONMENT SETUP
 # ==============================================================================
