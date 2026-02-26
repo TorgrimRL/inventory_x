@@ -80,7 +80,7 @@ class PasswordResetView(APIView):
         send reset link with one time use code.
         """
         otc = secrets.token_hex(32)  # 32 bytes
-        cache.set(otc, mail, 60 * 5)  # 5min lifetime.
+        cache.set(otc, mail, timeout=60 * 5)  # 5min lifetime.
         reset_link = f"{settings.HOST_ENDPOINT}/password_reset?token={otc}"
 
         mail_content = render_to_string(

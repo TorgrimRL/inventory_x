@@ -55,6 +55,7 @@ export default function ResetPassword() {
     }
   };
 
+  // TODO: Add page guard
   useEffect(() => {
     const verifyUser = async () => {
 
