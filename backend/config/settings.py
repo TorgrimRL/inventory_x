@@ -125,6 +125,20 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 
 # ==============================================================================
+# PASSWORD VALIDATION
+# ==============================================================================
+_VAL_PATH = "django.contrib.auth.password_validation"
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": f"{_VAL_PATH}.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": f"{_VAL_PATH}.CommonPasswordValidator"},
+    {"NAME": f"{_VAL_PATH}.NumericPasswordValidator"},
+]
+
+# ==============================================================================
 # INTERNATIONALIZATION & STATIC FILES
 # ==============================================================================
 LANGUAGE_CODE = "en-us"
