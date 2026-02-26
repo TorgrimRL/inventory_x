@@ -1,4 +1,5 @@
 import re
+import secrets
 
 from django.core import mail
 from django.core.cache import cache
@@ -58,3 +59,42 @@ class PasswordResetTests(BaseAPITestCase):
         """
         response = self.client.post(self.url)  # No query params
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_reset_success_200(self):
+        """
+        Scenario: Valid OTC and strong password provided via PUT.
+        Expectation: 200 OK, Password hashed in DB, OTC burned from cache.
+        """
+
+        token = secrets.token_hex(32)
+        cache.set(token, self.user.email, 60)
+
+        # Call the PUT method
+        data = {"OTC": token, "NEW_PASSWORD": "StrongNewPassword123!"}
+        response = self.client.put(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify in password DB is updated && cache is burned.
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("StrongNewPassword123!"))
+        self.assertIsNone(cache.get(token))
+
+    def test_weak_password_400(self):
+        """
+        Scenario: Valid OTC but password fails validation (too short).
+        Expectation: 400 Bad Request.
+        """
+        token = secrets.token_hex(32)
+        cache.set(token, self.user.email, timeout=60)
+
+        data = {
+            "OTC": token,
+            "NEW_PASSWORD": "123",  # Fails MinimumLengthValidator
+        }
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Verify password did NOT change
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.check_password("123"))

@@ -4,7 +4,19 @@ from drf_spectacular.utils import (
     OpenApiResponse,
 )
 
-PASSOWORD_RESET_RESPONSES = {
+PASSWORD_RESET_RESPONSES_PUT = {
+    200: OpenApiResponse(description="Password updated successfully."),
+    400: OpenApiResponse(
+        description="Bad Request: Missing fields or\
+                password fails validation rules."
+    ),
+    404: OpenApiResponse(
+        description="Not Found: The OTC is invalid, expired,\
+                or the user no longer exists."
+    ),
+}
+
+PASSOWORD_RESET_RESPONSES_POST = {
     200: OpenApiResponse(
         description="OTC sent (or ignored silently if email is missing from DB\
         for security)"
@@ -14,7 +26,7 @@ PASSOWORD_RESET_RESPONSES = {
     ),
 }
 
-PASSWORD_RESET_PARAMS = [
+PASSWORD_RESET_PARAMS_POST = [
     OpenApiParameter(
         name="email",
         type=OpenApiTypes.STR,

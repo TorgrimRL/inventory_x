@@ -14,40 +14,65 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.user.contracts.password_reset import (
-    PASSOWORD_RESET_RESPONSES,
-    PASSWORD_RESET_PARAMS,
+    PASSOWORD_RESET_RESPONSES_POST,
+    PASSWORD_RESET_PARAMS_POST,
+    PASSWORD_RESET_RESPONSES_PUT,
 )
+from api.user.serializers.password_reset import PasswordResetConfirmSerializer
 from config import settings
 
 logger = logging.getLogger(__name__)
-user = get_user_model()
+User = get_user_model()
 
 
 class PasswordResetView(APIView):
     permission_classes = (AllowAny,)
 
     @extend_schema(
-        summary="Password reset",
+        summary="Send reset password link",
         description="Send one time code (OTC) to client. \
         Expects URL: /password_reset?email=user@example.com",
         request=None,
-        responses=PASSOWORD_RESET_RESPONSES,
-        parameters=PASSWORD_RESET_PARAMS,
+        responses=PASSOWORD_RESET_RESPONSES_POST,
+        parameters=PASSWORD_RESET_PARAMS_POST,
     )
     async def post(self, request: Request) -> Response:
         # Validating email exists
         email = request.query_params.get("email")
         if not email:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response(status=400)
 
-        elif not await user.objects.filter(email=email).aexists():
-            return Response(
-                status=status.HTTP_200_OK,
-            )
+        elif not await User.objects.filter(email=email).aexists():
+            return Response(status=200)
 
         return await self.__send_otc_to(email)
+
+    @extend_schema(
+        summary="Password reset",
+        request=PasswordResetConfirmSerializer,
+        responses=PASSWORD_RESET_RESPONSES_PUT,
+        parameters=None,
+    )
+    async def put(self, request: Request) -> Response:
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=400)
+
+        otc = serializer.validated_data["OTC"]
+        new_password = serializer.validated_data["NEW_PASSWORD"]
+
+        try:
+            user_mail = await sync_to_async(cache.get)(otc)
+            user = await sync_to_async(User.objects.get)(email=user_mail)
+
+            await sync_to_async(user.set_password)(new_password)
+            await sync_to_async(user.save)()
+            await sync_to_async(cache.delete)(otc)
+
+            return Response(status=200)
+
+        except User.DoesNotExist:
+            return Response(status=404)
 
     async def __send_otc_to(self, mail: str) -> Response:
         """
@@ -56,7 +81,7 @@ class PasswordResetView(APIView):
         """
         otc = secrets.token_hex(32)  # 32 bytes
         cache.set(otc, mail, 60 * 5)  # 5min lifetime.
-        reset_link = f"{settings.HOST_ENPOINT}/password_reset?token={otc}"
+        reset_link = f"{settings.HOST_ENDPOINT}/password_reset?token={otc}"
 
         mail_content = render_to_string(
             "reset_password.txt", {"link": reset_link}
