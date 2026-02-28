@@ -151,6 +151,7 @@ make swagger # load the swagger
 ```
 
 ### Login credentials to test
+
 username: admin@example.com
 password: adminpass123
 
