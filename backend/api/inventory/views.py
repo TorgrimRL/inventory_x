@@ -26,14 +26,14 @@ from api.inventory.serializers import (
     UserInventoryListItemSerializer,
 )
 
-from .context import SESSION_ACTIVE_INVENTORY_KEY, require_active_membership
+from .context import SESSION_ACTIVE_INVENTORY_KEY, get_request_active_membership
 from .contracts import (
     CREATE_ITEM_RESPONSES,
     LIST_ITEMS_RESPONSES,
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
-from .permissions import IsInventoryOwner
+from .permissions import IsActiveInventoryMember, IsInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -44,12 +44,12 @@ logger = logging.getLogger(__name__)
 
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsActiveInventoryMember)
 
     @extend_schema(responses=LIST_ITEMS_RESPONSES)
     def get(self, request: Request) -> Response:
         try:
-            membership = require_active_membership(request)
+            membership = get_request_active_membership(request)
             data = services.get_all_items(inventory_id=membership.inventory.id)
             return Response({"data": data}, status=status.HTTP_200_OK)
         except APIException:
@@ -74,7 +74,7 @@ class InventoryView(APIView):
             )
 
         try:
-            membership = require_active_membership(request)
+            membership = get_request_active_membership(request)
             name = serializer.validated_data["name"]
             price = serializer.validated_data["price"]
             stock = serializer.validated_data.get("stock", 0)
@@ -106,18 +106,13 @@ class InventoryView(APIView):
 
 class AdjustStockView(APIView):
     serializer_class = AdjustStockSerializer
+    permission_classes = (IsAuthenticated, IsActiveInventoryMember)
 
     @extend_schema(
         summary="Adjust item stock",
         responses=ADJUST_STOCK_RESPONSES,
     )
     def post(self, request: Request, item_id: int) -> Response:
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication required"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
@@ -127,7 +122,7 @@ class AdjustStockView(APIView):
             )
 
         try:
-            membership = require_active_membership(request)
+            membership = get_request_active_membership(request)
             item = services.adjust_stock(
                 inventory_id=membership.inventory.id,
                 item_id=item_id,

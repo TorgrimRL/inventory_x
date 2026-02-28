@@ -65,10 +65,7 @@ logs-frontend:
 logs-db:
 	docker compose logs -f db
 
-lint-fix:
-	$(BACKEND_RUN_NODEPS) uv run ruff format .
-	$(BACKEND_RUN_NODEPS) uv run ruff check . --fix
-	$(FRONTEND_RUN) npx eslint . --fix
+tidy: fmt lint
 
 fmt:
 	$(BACKEND_RUN_NODEPS) uv run ruff format .
