@@ -2,7 +2,14 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ "host-app" ]
+    branches: [ "main" ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - ".dockerignore"
+      - "LICENSE"
+      - "deploy/certbot/**"
   workflow_dispatch:
 
 permissions:
