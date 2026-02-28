@@ -2,7 +2,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ "host-app", "175-task-configure-httpstls-for-production-deployment-on-inventoryxtdorguitno" ]
+    branches: [ "main" ]
     paths-ignore:
       - "**/*.md"
       - "docs/**"
