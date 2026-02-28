@@ -59,9 +59,22 @@ make test
 ```
 
 `make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional
-path after that (you may omit the `api/` and `src/` prefixes).
-Example:
-`make test frontend src/math.test.tsx` # or: `make test frontend math.test.tsx`
+path after that.
+
+You may omit:
+
+- the `api/` prefix for backend paths
+- the `src/` prefix for frontend paths
+- the `test/` prefix for frontend test files (tests live under `src/test/`)
+
+Examples:
+
+```bash
+make test frontend inventories.test.tsx
+make test frontend test/inventories.test.tsx
+make test frontend ItemPage.test.tsx
+make test backend inventory/tests/test_views.py
+```
 
 Stop containers:
 
@@ -138,11 +151,12 @@ make swagger # load the swagger
 ```
 
 ### Login credentials to test
+
 username: admin@example.com
 password: adminpass123
 
-alice@example.com
-alicepass456
+username: alice@example.com
+password: alicepass456
 
-bob@example.com
-bobpass789
+username: bob@example.com
+password: bobpass789
