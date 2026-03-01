@@ -97,7 +97,7 @@ export default function ItemPage() {
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
+  const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
 
   async function loadItems() {
     setLoading(true);
@@ -201,6 +201,11 @@ export default function ItemPage() {
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
 
+  const lowStockThreshold = Math.max(
+    0,
+    Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
+  );
+
   const displayedItems = items
     .filter((item) => !lowStockOnly || item.stock <= lowStockThreshold)
     .sort((a, b) => {
@@ -231,7 +236,7 @@ export default function ItemPage() {
     setSortField("stock");
     setSortDirection("asc");
     setLowStockOnly(false);
-    setLowStockThreshold(5);
+    setLowStockThresholdInput("5");
   }
 
   return (
@@ -278,10 +283,25 @@ export default function ItemPage() {
                   size="small"
                   type="number"
                   label="Low stock threshold"
-                  value={lowStockThreshold}
-                  onChange={(e) =>
-                    setLowStockThreshold(Math.max(0, Number(e.target.value) || 0))
-                  }
+                  value={lowStockThresholdInput}
+                  onFocus={(e) => {
+                    if (e.target.value === "0") setLowStockThresholdInput("");
+                  }}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (next === "") {
+                      setLowStockThresholdInput("");
+                      return;
+                    }
+
+                    if (!/^\d+$/.test(next)) return;
+                    setLowStockThresholdInput(String(Number.parseInt(next, 10)));
+                  }}
+                  onBlur={() => {
+                    if (lowStockThresholdInput.trim() === "") {
+                      setLowStockThresholdInput("0");
+                    }
+                  }}
                   inputProps={{ min: 0, step: 1 }}
                   sx={{ width: 180 }}
                 />
