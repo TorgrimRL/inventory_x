@@ -14,12 +14,12 @@ import {
   Divider,
   IconButton,
   Link,
-  MenuItem,
   Paper,
   Snackbar,
   Stack,
   Switch,
   Table,
+  TableSortLabel,
   TableBody,
   TableCell,
   TableContainer,
@@ -95,7 +95,10 @@ export default function ItemPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
-  const [sortBy, setSortBy] = useState<"default" | "lowest-stock">("default");
+  const [sortField, setSortField] = useState<"name" | "stock" | "price">(
+    "stock",
+  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
 
@@ -204,12 +207,32 @@ export default function ItemPage() {
   const displayedItems = items
     .filter((item) => !lowStockOnly || item.stock <= lowStockThreshold)
     .sort((a, b) => {
-      if (sortBy === "lowest-stock") return a.stock - b.stock;
-      return 0;
+      let compare = 0;
+
+      if (sortField === "name") {
+        compare = a.name.localeCompare(b.name);
+      } else if (sortField === "stock") {
+        compare = a.stock - b.stock;
+      } else {
+        compare = Number(a.price) - Number(b.price);
+      }
+
+      return sortDirection === "asc" ? compare : -compare;
     });
 
+  function handleSort(field: "name" | "stock" | "price") {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection("asc");
+  }
+
   function resetListControls() {
-    setSortBy("default");
+    setSortField("stock");
+    setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThreshold(5);
   }
@@ -292,20 +315,6 @@ export default function ItemPage() {
             >
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                 <TextField
-                  select
-                  size="small"
-                  label="Sort"
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy(e.target.value as "default" | "lowest-stock")
-                  }
-                  sx={{ minWidth: 220 }}
-                >
-                  <MenuItem value="default">Default order</MenuItem>
-                  <MenuItem value="lowest-stock">Lowest stock first</MenuItem>
-                </TextField>
-
-                <TextField
                   size="small"
                   type="number"
                   label="Low stock threshold"
@@ -326,7 +335,11 @@ export default function ItemPage() {
                   />
                 </Stack>
 
-                <Button onClick={resetListControls} variant="text">
+                <Button
+                  onClick={resetListControls}
+                  variant="outlined"
+                  color="inherit"
+                >
                   Reset
                 </Button>
               </Stack>
@@ -361,13 +374,31 @@ export default function ItemPage() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>
-                        Product name
+                        <TableSortLabel
+                          active={sortField === "name"}
+                          direction={sortField === "name" ? sortDirection : "asc"}
+                          onClick={() => handleSort("name")}
+                        >
+                          Product name
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Stock
+                        <TableSortLabel
+                          active={sortField === "stock"}
+                          direction={sortField === "stock" ? sortDirection : "asc"}
+                          onClick={() => handleSort("stock")}
+                        >
+                          Stock
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Price
+                        <TableSortLabel
+                          active={sortField === "price"}
+                          direction={sortField === "price" ? sortDirection : "asc"}
+                          onClick={() => handleSort("price")}
+                        >
+                          Price
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Actions
