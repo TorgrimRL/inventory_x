@@ -94,7 +94,7 @@ export async function setActiveInventory(
   inventoryId: string,
 ): Promise<ActiveInventory> {
   const res = await apiClient.post(ACTIVE_ENDPOINT, {
-    inventory_id: inventoryId, // matcher backend
+    inventory_id: inventoryId,
   });
   return res.data as ActiveInventory;
 }

@@ -27,10 +27,11 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import AdjustStockModal from "../components/inventory/adjustStockModal";
+import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ApiClient from "../services/apiClient.ts";
 
 type InventoryItem = {
   id: number | string;
@@ -93,11 +94,14 @@ export default function ItemPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
+  // Live search input (filters as you type)
+  const [searchInput, setSearchInput] = useState("");
+
   async function loadItems() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/inventory/");
+      const res = await ApiClient.get("/api/inventory/");
       const data = res.data;
       setItems((data.data || data) as InventoryItem[]);
     } catch (e) {
@@ -163,15 +167,14 @@ export default function ItemPage() {
     };
 
     try {
-      const res = await axios.post("/api/inventory/", payload);
-
-      const created = res.data as InventoryItem;
+      await ApiClient.post("/api/inventory/", payload);
 
       setItems((prev) => [
         ...prev,
         {
-          ...created,
-          order_id: Math.random().toString(), // valgfritt, kan beholdes
+          ...payload,
+          id: Date.now(),
+          order_id: Math.random().toString(),
         },
       ]);
 
@@ -195,6 +198,18 @@ export default function ItemPage() {
     (name.trim().length === 0 ||
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
+
+  // Live, case-insensitive partial match by name
+  const visibleItems = useMemo(() => {
+    const q = searchInput.trim().toLowerCase();
+    if (q.length === 0) return items;
+
+    return items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
+  }, [items, searchInput]);
+
+  function handleClearSearch() {
+    setSearchInput("");
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -249,7 +264,8 @@ export default function ItemPage() {
               <Box>
                 <Typography variant="h5">Items</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {items.length} item{items.length === 1 ? "" : "s"}
+                  {visibleItems.length} item
+                  {visibleItems.length === 1 ? "" : "s"}
                 </Typography>
               </Box>
 
@@ -264,7 +280,16 @@ export default function ItemPage() {
 
             <Divider sx={{ my: 2 }} />
 
-            <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
+            <ItemSearchBar
+              value={searchInput}
+              disabled={loading}
+              onChange={setSearchInput}
+              onSearch={() => {}}
+              onClear={handleClearSearch}
+            />
+
+            {/* Add item button centered */}
+            <Stack direction="row" justifyContent="center" sx={{ mb: 2 }}>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -285,7 +310,7 @@ export default function ItemPage() {
                   Loading items…
                 </Typography>
               </Stack>
-            ) : items.length === 0 ? (
+            ) : visibleItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
                 <Typography variant="body1">No items found.</Typography>
               </Stack>
@@ -310,7 +335,7 @@ export default function ItemPage() {
                   </TableHead>
 
                   <TableBody>
-                    {items.map((item) => (
+                    {visibleItems.map((item) => (
                       <TableRow key={item.id} hover>
                         <TableCell>{item.name}</TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
