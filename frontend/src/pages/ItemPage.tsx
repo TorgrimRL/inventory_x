@@ -2,7 +2,6 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   CircularProgress,
@@ -13,7 +12,6 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  Link,
   Paper,
   Snackbar,
   Stack,
@@ -26,7 +24,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import axios from "axios";
@@ -239,43 +236,6 @@ export default function ItemPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Toolbar sx={{ py: 0.75 }}>
-          <Container
-            maxWidth="lg"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Link
-              href="https://inventoryx.td.-uit.no"
-              target="_blank"
-              rel="noopener noreferrer"
-              underline="none"
-              sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}
-            >
-              <Typography
-                variant="h4"
-                color="text.primary"
-                sx={{ lineHeight: 1 }}
-              >
-                Inventory X
-              </Typography>
-            </Link>
-          </Container>
-        </Toolbar>
-      </AppBar>
-
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{error}</Alert>}
@@ -384,6 +344,7 @@ export default function ItemPage() {
                           hideSortIcon={false}
                           direction={sortField === "name" ? sortDirection : "asc"}
                           onClick={() => handleSort("name")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
                           Product name
                         </TableSortLabel>
@@ -394,6 +355,7 @@ export default function ItemPage() {
                           hideSortIcon={false}
                           direction={sortField === "stock" ? sortDirection : "asc"}
                           onClick={() => handleSort("stock")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
                           Stock
                         </TableSortLabel>
@@ -404,6 +366,7 @@ export default function ItemPage() {
                           hideSortIcon={false}
                           direction={sortField === "price" ? sortDirection : "asc"}
                           onClick={() => handleSort("price")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
                           Price
                         </TableSortLabel>
