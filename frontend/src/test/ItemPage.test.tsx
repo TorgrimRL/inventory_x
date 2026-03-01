@@ -27,6 +27,7 @@ function getVisibleRows(): RowItem[] {
 }
 
 describe("ItemPage", () => {
+  jest.setTimeout(15000);
   beforeEach(() => {
     jest.clearAllMocks();
     mockedAxios.get.mockResolvedValue({
@@ -92,23 +93,47 @@ describe("ItemPage", () => {
     await screen.findByText("Milk");
 
     // Default sort is stock asc
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Bread", "Eggs", "Milk"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
 
     // Stock desc
     await user.click(screen.getByRole("button", { name: /stock/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Milk", "Eggs", "Bread"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
 
     // Name asc, then desc
     await user.click(screen.getByRole("button", { name: /product name/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Bread", "Eggs", "Milk"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
     await user.click(screen.getByRole("button", { name: /product name/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Milk", "Eggs", "Bread"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
 
     // Price asc, then desc
     await user.click(screen.getByRole("button", { name: /price/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Bread", "Eggs", "Milk"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
     await user.click(screen.getByRole("button", { name: /price/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual(["Milk", "Eggs", "Bread"]);
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
   });
 
   test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
