@@ -17,12 +17,12 @@ import {
   Stack,
   Switch,
   Table,
-  TableSortLabel,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
   Typography,
 } from "@mui/material";
@@ -295,7 +295,9 @@ export default function ItemPage() {
                     }
 
                     if (!/^\d+$/.test(next)) return;
-                    setLowStockThresholdInput(String(Number.parseInt(next, 10)));
+                    setLowStockThresholdInput(
+                      String(Number.parseInt(next, 10)),
+                    );
                   }}
                   onBlur={() => {
                     if (lowStockThresholdInput.trim() === "") {
@@ -362,7 +364,9 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "name"}
                           hideSortIcon={false}
-                          direction={sortField === "name" ? sortDirection : "asc"}
+                          direction={
+                            sortField === "name" ? sortDirection : "asc"
+                          }
                           onClick={() => handleSort("name")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
@@ -373,7 +377,9 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "stock"}
                           hideSortIcon={false}
-                          direction={sortField === "stock" ? sortDirection : "asc"}
+                          direction={
+                            sortField === "stock" ? sortDirection : "asc"
+                          }
                           onClick={() => handleSort("stock")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
@@ -384,7 +390,9 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "price"}
                           hideSortIcon={false}
-                          direction={sortField === "price" ? sortDirection : "asc"}
+                          direction={
+                            sortField === "price" ? sortDirection : "asc"
+                          }
                           onClick={() => handleSort("price")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
