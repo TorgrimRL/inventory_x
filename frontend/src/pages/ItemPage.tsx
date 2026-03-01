@@ -337,8 +337,13 @@ export default function ItemPage() {
 
                 <Button
                   onClick={resetListControls}
-                  variant="outlined"
+                  variant="contained"
                   color="inherit"
+                  sx={{
+                    bgcolor: "grey.300",
+                    color: "text.primary",
+                    "&:hover": { bgcolor: "grey.400" },
+                  }}
                 >
                   Reset
                 </Button>
@@ -376,6 +381,7 @@ export default function ItemPage() {
                       <TableCell sx={{ fontWeight: 600 }}>
                         <TableSortLabel
                           active={sortField === "name"}
+                          hideSortIcon={false}
                           direction={sortField === "name" ? sortDirection : "asc"}
                           onClick={() => handleSort("name")}
                         >
@@ -385,6 +391,7 @@ export default function ItemPage() {
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         <TableSortLabel
                           active={sortField === "stock"}
+                          hideSortIcon={false}
                           direction={sortField === "stock" ? sortDirection : "asc"}
                           onClick={() => handleSort("stock")}
                         >
@@ -394,6 +401,7 @@ export default function ItemPage() {
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         <TableSortLabel
                           active={sortField === "price"}
+                          hideSortIcon={false}
                           direction={sortField === "price" ? sortDirection : "asc"}
                           onClick={() => handleSort("price")}
                         >
