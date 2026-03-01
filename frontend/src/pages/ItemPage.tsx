@@ -14,9 +14,11 @@ import {
   Divider,
   IconButton,
   Link,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -92,6 +94,10 @@ export default function ItemPage() {
 
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  const [sortBy, setSortBy] = useState<"default" | "lowest-stock">("default");
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
 
   async function loadItems() {
     setLoading(true);
@@ -195,6 +201,19 @@ export default function ItemPage() {
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
 
+  const displayedItems = items
+    .filter((item) => !lowStockOnly || item.stock <= lowStockThreshold)
+    .sort((a, b) => {
+      if (sortBy === "lowest-stock") return a.stock - b.stock;
+      return 0;
+    });
+
+  function resetListControls() {
+    setSortBy("default");
+    setLowStockOnly(false);
+    setLowStockThreshold(5);
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar
@@ -248,7 +267,8 @@ export default function ItemPage() {
               <Box>
                 <Typography variant="h5">Items</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {items.length} item{items.length === 1 ? "" : "s"}
+                  {displayedItems.length} of {items.length} item
+                  {items.length === 1 ? "" : "s"}
                 </Typography>
               </Box>
 
@@ -263,7 +283,54 @@ export default function ItemPage() {
 
             <Divider sx={{ my: 2 }} />
 
-            <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "stretch", md: "center" }}
+              spacing={1.5}
+              sx={{ mb: 2 }}
+            >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                <TextField
+                  select
+                  size="small"
+                  label="Sort"
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy(e.target.value as "default" | "lowest-stock")
+                  }
+                  sx={{ minWidth: 220 }}
+                >
+                  <MenuItem value="default">Default order</MenuItem>
+                  <MenuItem value="lowest-stock">Lowest stock first</MenuItem>
+                </TextField>
+
+                <TextField
+                  size="small"
+                  type="number"
+                  label="Low stock threshold"
+                  value={lowStockThreshold}
+                  onChange={(e) =>
+                    setLowStockThreshold(Math.max(0, Number(e.target.value) || 0))
+                  }
+                  inputProps={{ min: 0, step: 1 }}
+                  sx={{ width: 180 }}
+                />
+
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography variant="body2">Low stock only</Typography>
+                  <Switch
+                    checked={lowStockOnly}
+                    onChange={(e) => setLowStockOnly(e.target.checked)}
+                    inputProps={{ "aria-label": "Low stock only" }}
+                  />
+                </Stack>
+
+                <Button onClick={resetListControls} variant="text">
+                  Reset
+                </Button>
+              </Stack>
+
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -284,7 +351,7 @@ export default function ItemPage() {
                   Loading items…
                 </Typography>
               </Stack>
-            ) : items.length === 0 ? (
+            ) : displayedItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
                 <Typography variant="body1">No items found.</Typography>
               </Stack>
@@ -309,7 +376,7 @@ export default function ItemPage() {
                   </TableHead>
 
                   <TableBody>
-                    {items.map((item) => (
+                    {displayedItems.map((item) => (
                       <TableRow key={item.id} hover>
                         <TableCell>{item.name}</TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
