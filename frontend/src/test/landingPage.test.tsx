@@ -24,10 +24,21 @@ describe("LandingPage - user story tests", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: /inventory x/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /get started/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /log in/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /create account/i }),
     ).toBeInTheDocument();
+  });
+
+  test("clicking Get Started navigates to registration page", () => {
+    render(<LandingPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.REGISTRATION);
   });
 
   test("clicking Log in navigates to login page", () => {
