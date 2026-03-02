@@ -60,4 +60,22 @@ describe("RequireActiveInventory", () => {
 
     expect(mockNav).not.toHaveBeenCalled();
   });
+  it("redirects to /inventories with needChoice when stale/invalid session (409)", async () => {
+    (getActiveInventory as jest.Mock).mockRejectedValue({
+      response: { status: 409 },
+    });
+
+    render(
+      <RequireActiveInventory>
+        <div>Protected</div>
+      </RequireActiveInventory>,
+    );
+
+    await waitFor(() => {
+      expect(mockNav).toHaveBeenCalledWith(PATHS.INVENTORIES, {
+        replace: true,
+        state: { needChoice: true, from: "/dashboard" },
+      });
+    });
+  });
 });

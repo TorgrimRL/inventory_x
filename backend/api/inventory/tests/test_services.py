@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase
 
 from api.inventory.models import Inventory, InventoryItem, InventoryMembership
@@ -7,15 +9,27 @@ from api.user.models import User
 
 class InventoryServicesTests(TestCase):
     def setUp(self):
+        org = str(uuid.uuid4().int)[:9]
+        self.inventory = Inventory.objects.create(
+            name="Test Inventory",
+            org_number=org,
+        )
+
         self.item_1 = InventoryItem.objects.create(
-            name="Mouse", price=50, stock=10
+            inventory=self.inventory,
+            name="Mouse",
+            price=50,
+            stock=10,
         )
         self.item_2 = InventoryItem.objects.create(
-            name="Keyboard", price=100, stock=5
+            inventory=self.inventory,
+            name="Keyboard",
+            price=100,
+            stock=5,
         )
 
     def test_get_all_items_returns_correct_data(self):
-        results = get_all_items()
+        results = get_all_items(inventory_id=self.inventory.id)
 
         # Assert
         self.assertEqual(len(results), 2)
@@ -24,23 +38,35 @@ class InventoryServicesTests(TestCase):
 
     def test_adjust_stock_increase(self):
         updated_item = adjust_stock(
-            item_id=self.item_1.id, direction="increase", amount=5
+            inventory_id=self.inventory.id,
+            item_id=self.item_1.id,
+            direction="increase",
+            amount=5,
         )
         self.assertEqual(updated_item.stock, 15)
 
     def test_adjust_stock_decrease(self):
         updated_item = adjust_stock(
-            item_id=self.item_2.id, direction="decrease", amount=4
+            inventory_id=self.inventory.id,
+            item_id=self.item_2.id,
+            direction="decrease",
+            amount=4,
         )
         self.assertEqual(updated_item.stock, 1)
 
     def test_adjust_stock_invalid_amount(self):
         with self.assertRaises(ValueError):
-            adjust_stock(item_id=self.item_1.id, direction="increase", amount=0)
+            adjust_stock(
+                inventory_id=self.inventory.id,
+                item_id=self.item_1.id,
+                direction="increase",
+                amount=0,
+            )
 
     def test_adjust_stock_item_does_not_exist(self):
         with self.assertRaises(LookupError):
             adjust_stock(
+                inventory_id=self.inventory.id,
                 item_id=9999,
                 direction="increase",
                 amount=1,
@@ -49,6 +75,7 @@ class InventoryServicesTests(TestCase):
     def test_adjust_stock_rejects_negative_and_does_not_change_db(self):
         with self.assertRaises(ValueError) as ctx:
             adjust_stock(
+                inventory_id=self.inventory.id,
                 item_id=self.item_2.id,
                 direction="decrease",
                 amount=999,

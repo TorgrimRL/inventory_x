@@ -21,11 +21,17 @@ define norm_one_frontend_arg
 $(strip \
   $(if $(filter -% --%,$(1)),$(1),\
     $(if $(filter src/%,$(1)),$(1),\
-      $(if $(or $(findstring /,$(1)),$(findstring .,$(1))),src/$(1),$(1))\
+      $(if $(filter test/%,$(1)),src/$(1),\
+        $(if $(or $(findstring /,$(1)),$(findstring .,$(1))),\
+          $(if $(or $(findstring .test.,$(1)),$(findstring .spec.,$(1))),src/test/$(1),src/$(1)),\
+          $(1)\
+        )\
+      )\
     )\
   )\
 )
 endef
+
 
 define norm_frontend_args
 $(foreach a,$(1),$(call norm_one_frontend_arg,$(patsubst frontend/%,%,$(a))))
@@ -58,6 +64,8 @@ logs-frontend:
 
 logs-db:
 	docker compose logs -f db
+
+tidy: fmt lint
 
 fmt:
 	$(BACKEND_RUN_NODEPS) uv run ruff format .
