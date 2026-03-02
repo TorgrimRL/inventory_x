@@ -7,23 +7,21 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
         width: "100%",
-        background: "#0f0f0f",
-
-        top: 0,
-        left: 0,
-        right: 0,
+        bgcolor: "background.default",
       }}
     >
       {/* HERO */}
@@ -33,7 +31,12 @@ const LandingPage = () => {
             variant="h2"
             fontWeight={700}
             sx={{
-              background: "linear-gradient(90deg, #C4A588, #895B40, #EDCDB4)",
+              background: `linear-gradient(
+                90deg,
+                ${theme.palette.primary.main},
+                ${theme.palette.secondary.main},
+                ${theme.palette.primary.light || theme.palette.primary.main}
+              )`,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               letterSpacing: 2,
@@ -45,9 +48,13 @@ const LandingPage = () => {
 
           <Typography
             variant="h6"
-            sx={{ color: "#C4A588", opacity: 0.85, mb: 4 }}
+            sx={{
+              color: "text.primary",
+              opacity: 0.85,
+              mb: 4,
+            }}
           >
-            Track items and manage stock for your business in real time.
+            Track items and manage stock for your business
           </Typography>
 
           <Stack direction="row" spacing={3} justifyContent="center">
@@ -57,10 +64,17 @@ const LandingPage = () => {
                 px: 5,
                 py: 1.5,
                 borderRadius: 2,
-                background: "linear-gradient(90deg, #82543A, #C4A588)",
-                color: "#0f0f0f",
                 fontWeight: 600,
-                boxShadow: "0 8px 20px rgba(137,91,64,0.4)",
+                background: `linear-gradient(
+                  90deg,
+                  ${theme.palette.secondary.main},
+                  ${theme.palette.primary.main}
+                )`,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "#0f0f0f"
+                    : theme.palette.background.default,
+                boxShadow: `0 8px 20px ${theme.palette.primary.main}55`,
               }}
               onClick={() => navigate(PATHS.REGISTRATION)}
             >
@@ -73,10 +87,10 @@ const LandingPage = () => {
                 px: 5,
                 py: 1.5,
                 borderRadius: 2,
-                borderColor: "#C4A588",
-                color: "#C4A588",
+                borderColor: "primary.main",
+                color: "primary.main",
                 "&:hover": {
-                  backgroundColor: "rgba(196,165,136,0.1)",
+                  backgroundColor: `${theme.palette.primary.main}15`,
                 },
               }}
               onClick={() => navigate(PATHS.LOGIN)}
@@ -112,13 +126,14 @@ const LandingPage = () => {
               key={item.title}
               elevation={0}
               sx={{
-                background: "rgba(25,25,25,0.9)",
-                border: "1px solid #82543A",
+                bgcolor: "background.paper",
+                border: 1,
+                borderColor: "divider",
                 borderRadius: 3,
                 transition: "0.3s",
                 "&:hover": {
-                  borderColor: "#C4A588",
-                  boxShadow: "0 10px 30px rgba(137,91,64,0.3)",
+                  borderColor: "primary.main",
+                  boxShadow: `0 10px 30px ${theme.palette.primary.main}33`,
                 },
               }}
             >
@@ -126,7 +141,11 @@ const LandingPage = () => {
                 <Typography
                   variant="h6"
                   sx={{
-                    background: "linear-gradient(90deg, #C4A588, #EDCDB4)",
+                    background: `linear-gradient(
+                      90deg,
+                      ${theme.palette.primary.main},
+                      ${theme.palette.secondary.main}
+                    )`,
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     mb: 1,
@@ -135,7 +154,12 @@ const LandingPage = () => {
                   {item.title}
                 </Typography>
 
-                <Typography sx={{ color: "#C4A588", opacity: 0.8 }}>
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    opacity: 0.9,
+                  }}
+                >
                   {item.text}
                 </Typography>
               </CardContent>
@@ -146,7 +170,13 @@ const LandingPage = () => {
 
       {/* CTA */}
       <Box textAlign="center" sx={{ pb: 16 }}>
-        <Typography variant="h5" sx={{ color: "#C4A588", mb: 3 }}>
+        <Typography
+          variant="h5"
+          sx={{
+            color: "primary.main",
+            mb: 3,
+          }}
+        >
           Refine Your Inventory Experience
         </Typography>
 
@@ -156,10 +186,17 @@ const LandingPage = () => {
             px: 6,
             py: 1.8,
             borderRadius: 2,
-            background: "linear-gradient(90deg, #895B40, #EDCDB4)",
-            color: "#0f0f0f",
             fontWeight: 600,
-            boxShadow: "0 10px 30px rgba(137,91,64,0.4)",
+            background: `linear-gradient(
+              90deg,
+              ${theme.palette.secondary.main},
+              ${theme.palette.primary.main}
+            )`,
+            color:
+              theme.palette.mode === "dark"
+                ? "#0f0f0f"
+                : theme.palette.background.default,
+            boxShadow: `0 10px 30px ${theme.palette.primary.main}55`,
           }}
           onClick={() => navigate(PATHS.REGISTRATION)}
         >
