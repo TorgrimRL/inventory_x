@@ -323,6 +323,7 @@ export default function InventoriesPage() {
                   variant="outlined"
                   size="large"
                   onClick={() => navigate(PATHS.DASHBOARD)}
+                  disabled={!activeId}
                   sx={{
                     height: 54,
                     borderRadius: 3,
@@ -330,7 +331,7 @@ export default function InventoriesPage() {
                     textTransform: "none",
                   }}
                 >
-                  Back to dashboard
+                  To dashboard
                 </Button>
               </Stack>
             )}

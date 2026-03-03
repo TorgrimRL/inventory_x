@@ -210,7 +210,7 @@ class RegisterInventoryView(views.APIView):
 
 
 class UpdateItemView(views.APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsActiveInventoryOwner)
     serializer_class = InventoryItemUpdateSerializer
 
     @extend_schema(
@@ -218,17 +218,6 @@ class UpdateItemView(views.APIView):
         responses=UPDATE_ITEM_RESPONSES,
     )
     def patch(self, request: Request, item_id: int) -> Response:
-        is_owner = InventoryMembership.objects.filter(
-            user=request.user,
-            role=InventoryMembership.Role.OWNER,
-        ).exists()
-
-        if not is_owner:
-            return Response(
-                {"detail": "Only the owner can edit name and price."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():

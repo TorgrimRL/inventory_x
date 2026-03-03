@@ -1,6 +1,7 @@
 import "./App.css";
 import "./components/utils/buttons.css";
 
+import { ThemeProvider } from "@mui/material/styles";
 import { Route, Routes } from "react-router-dom";
 
 // PAGES
@@ -13,7 +14,9 @@ import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
 import InviteEmployee from "./pages/InviteEmployee";
 import ItemPage from "./pages/ItemPage";
+import LandingPage from "./pages/landingPage";
 import AuthGuardLayout from "./services/authguard.tsx";
+import { LightTheme } from "./theme";
 
 export const PATHS = {
   HOME: "/",
@@ -32,6 +35,14 @@ function App() {
       <Navbar />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
+        <Route
+          path={PATHS.HOME}
+          element={
+            <ThemeProvider theme={LightTheme}>
+              <LandingPage />
+            </ThemeProvider>
+          }
+        />
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
         <Route path="*" element={<div>404 - Page Not Found</div>} />

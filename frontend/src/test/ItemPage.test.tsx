@@ -7,23 +7,50 @@ import ItemPage from "../pages/ItemPage";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("ItemPage - minimal user story tests", () => {
+type RowItem = { name: string; stock: number; price: number };
+
+function getVisibleRows(): RowItem[] {
+  const table = screen.getByRole("table");
+  const bodyRows = within(table).getAllByRole("row").slice(1);
+
+  return bodyRows.map((row) => {
+    const cells = within(row).getAllByRole("cell");
+
+    return {
+      name: cells[0].textContent?.trim() || "",
+      stock: Number(cells[1].textContent?.trim() || "0"),
+      price: Number(
+        (cells[2].textContent || "0").replace(/[^\d.-]/g, "") || "0",
+      ),
+    };
+  });
+}
+
+describe("ItemPage", () => {
+  jest.setTimeout(15000);
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedAxios.get.mockResolvedValue({
+      data: {
+        data: [
+          { id: 1, name: "Milk", stock: 10, price: 20 },
+          { id: 2, name: "Bread", stock: 3, price: 5 },
+          { id: 3, name: "Eggs", stock: 7, price: 12 },
+        ],
+      },
+    } as any);
   });
 
   test("add item and see 'Item added'", async () => {
-    mockedAxios.get.mockResolvedValue({ data: { data: [] } } as any);
-
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
-      data: { id: 1, name: "Keyboard", price: 100, stock: 5 },
+      data: { id: 4, name: "Keyboard", price: 100, stock: 5 },
     } as any);
 
     const user = userEvent.setup();
     render(<ItemPage />);
 
-    await screen.findByText(/no items found/i);
+    await screen.findByText("Milk");
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
@@ -38,10 +65,8 @@ describe("ItemPage - minimal user story tests", () => {
     });
 
     await user.type(nameInput, "Keyboard");
-
     await user.clear(priceInput);
     await user.type(priceInput, "100");
-
     await user.clear(stockInput);
     await user.type(stockInput, "5");
 
@@ -58,7 +83,91 @@ describe("ItemPage - minimal user story tests", () => {
     });
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
-
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
+  });
+
+  test("sorts by stock, name and price (asc/desc) via table header controls", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    // Default sort is stock asc
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
+
+    // Stock desc
+    await user.click(screen.getByRole("button", { name: /stock/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
+
+    // Name asc, then desc
+    await user.click(screen.getByRole("button", { name: /product name/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
+    await user.click(screen.getByRole("button", { name: /product name/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
+
+    // Price asc, then desc
+    await user.click(screen.getByRole("button", { name: /price/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
+    await user.click(screen.getByRole("button", { name: /price/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
+  });
+
+  test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const thresholdInput = screen.getByRole("spinbutton", {
+      name: /low stock threshold/i,
+    });
+
+    // Default threshold=5 and low-stock-only ON => only Bread (3)
+    await user.click(screen.getByRole("switch"));
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
+
+    // Raise threshold to 7 => Bread + Eggs
+    await user.clear(thresholdInput);
+    await user.type(thresholdInput, "7");
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+
+    // Lower threshold to 2 => empty state
+    await user.clear(thresholdInput);
+    await user.type(thresholdInput, "2");
+    expect(await screen.findByText(/no items found/i)).toBeInTheDocument();
+
+    // Reset => full list back
+    await user.click(screen.getByRole("button", { name: /^reset$/i }));
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
   });
 });
