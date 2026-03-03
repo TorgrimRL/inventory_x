@@ -114,6 +114,29 @@ LIST_INVENTORIES_RESPONSES = {
     ),
 }
 
+UPDATE_ITEM_RESPONSES = {
+    200: OpenApiResponse(
+        response=InventoryItemCreateSerializer,
+        description="Item updated successfully",
+    ),
+    400: OpenApiResponse(
+        response=ValidationErrorResponseSerializer,
+        description="Validation failed",
+    ),
+    401: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Authentication credentials were not provided.",
+    ),
+    403: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Forbidden.",
+    ),
+    404: OpenApiResponse(
+        response=ErrorResponseSerializer,
+        description="Item not found",
+    ),
+}
+
 INVITE_USER_RESPONSES = {
     200: OpenApiResponse(
         response=None,
@@ -125,6 +148,10 @@ INVITE_USER_RESPONSES = {
         response=ErrorResponseSerializer,
     ),
     404: OpenApiResponse(
+        response=ErrorResponseSerializer,
+    ),
+    409: OpenApiResponse(
+        description="Inventory with the same name already exists",
         response=ErrorResponseSerializer,
     ),
 }

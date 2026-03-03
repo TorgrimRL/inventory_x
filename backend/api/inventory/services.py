@@ -29,9 +29,6 @@ def create_item(inventory_id: UUID, name, price, stock):
     Returns the created item as a dictionary.
     """
     try:
-        if InventoryItem.objects.filter(name=name).exists():
-            raise ValueError(f"Item with name '{name}' already exists.")
-
         item = InventoryItem.objects.create(
             inventory_id=inventory_id, name=name, price=price, stock=stock
         )
@@ -75,6 +72,24 @@ def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
 
             item.stock = new_stock
             item.save()
+            return item
+
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err
+
+
+def update_item(item_id: int, name: str, price: int):
+    """
+    Updates item fields (name, price) only. Stock is not changed here.
+    """
+    try:
+        with transaction.atomic():
+            item = InventoryItem.objects.select_for_update().get(id=item_id)
+
+            item.name = name
+            item.price = price
+            item.save(update_fields=["name", "price"])
+
             return item
 
     except InventoryItem.DoesNotExist as err:

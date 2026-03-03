@@ -7,10 +7,16 @@ from .views import (
     InviteUserView,
     ListInventoriesView,
     RegisterInventoryView,
+    UpdateItemView,
 )
 
 urlpatterns = [
     path("", InventoryView.as_view(), name="inventory"),
+    path(
+        "<int:item_id>/",
+        UpdateItemView.as_view(),
+        name="update-item",
+    ),
     path(
         "<int:item_id>/adjust-stock/",
         AdjustStockView.as_view(),
@@ -23,7 +29,7 @@ urlpatterns = [
         "inventories/", ListInventoriesView.as_view(), name="inventories-list"
     ),
     path(
-        "inventories/<uuid:inventory_id>/invite/",
+        "inventories/invite/",
         InviteUserView.as_view(),
         name="inventory-invite",
     ),
