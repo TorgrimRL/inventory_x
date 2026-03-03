@@ -16,11 +16,13 @@ from api.inventory.contracts import (
     INVITE_USER_RESPONSES,
     LIST_INVENTORIES_RESPONSES,
     SET_ACTIVE_INVENTORY_RESPONSES,
+    UPDATE_ITEM_RESPONSES,
 )
 from api.inventory.serializers import (
     ActiveInventoryResponseSerializer,
     AdjustStockSerializer,
     InventoryItemCreateSerializer,
+    InventoryItemUpdateSerializer,
     InviteUserRequestSerializer,
     SetActiveInventoryRequestSerializer,
     UserInventoryListItemSerializer,
@@ -33,7 +35,7 @@ from .contracts import (
     REGISTER_INVENTORY_RESPONSES,
 )
 from .models import Inventory, InventoryAlreadyExistsError, InventoryMembership
-from .permissions import IsActiveInventoryMember, IsInventoryOwner
+from .permissions import IsActiveInventoryMember, IsActiveInventoryOwner
 from .serializers import (
     RegisterInventoryRequestSerializer,
     RegisterInventoryResponseSerializer,
@@ -207,6 +209,47 @@ class RegisterInventoryView(views.APIView):
         return fixed
 
 
+class UpdateItemView(views.APIView):
+    permission_classes = (IsAuthenticated, IsActiveInventoryOwner)
+    serializer_class = InventoryItemUpdateSerializer
+
+    @extend_schema(
+        summary="Update item details",
+        responses=UPDATE_ITEM_RESPONSES,
+    )
+    def patch(self, request: Request, item_id: int) -> Response:
+        serializer = self.serializer_class(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {"detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            item = services.update_item(
+                item_id=item_id,
+                name=serializer.validated_data["name"],
+                price=serializer.validated_data["price"],
+            )
+        except LookupError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "message": "Item updated",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class ListInventoriesView(APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -224,7 +267,7 @@ class ListInventoriesView(APIView):
 class InviteUserView(APIView):
     permission_classes = (
         IsAuthenticated,
-        IsInventoryOwner,
+        IsActiveInventoryOwner,
     )
     serializer_class = InviteUserRequestSerializer
 
@@ -232,7 +275,10 @@ class InviteUserView(APIView):
         summary="Invite user to inventory",
         responses=INVITE_USER_RESPONSES,
     )
-    def post(self, request: Request, inventory_id: str) -> Response:
+    def post(self, request: Request) -> Response:
+        """
+        Invites an user to the current active inventory.
+        """
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -241,9 +287,20 @@ class InviteUserView(APIView):
             )
 
         try:
+            active_inventory = getattr(request, "active_inventory", None)
+
+            if active_inventory is None:
+                return Response(
+                    {
+                        "detail": "Internal server error: Missing active"
+                        "inventory context."
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
             services.invite_user(
                 requestor=request.user,
-                inventory_id=inventory_id,
+                inventory_id=active_inventory.id,
                 target_email=serializer.validated_data["email"],
             )
             return Response(status=status.HTTP_200_OK)
