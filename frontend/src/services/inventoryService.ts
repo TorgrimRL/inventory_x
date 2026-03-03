@@ -71,3 +71,30 @@ export async function listInventories(): Promise<Inventory[]> {
 
   return [];
 }
+
+export type ActiveInventory = {
+  id: string;
+  name: string;
+  orgNumber: string;
+  role: string;
+};
+
+const ACTIVE_ENDPOINT = "/api/inventory/active/";
+
+export async function getActiveInventory(): Promise<ActiveInventory | null> {
+  const res = await apiClient.get(ACTIVE_ENDPOINT, {
+    validateStatus: (s) => (s >= 200 && s < 300) || s === 204,
+  });
+
+  if (res.status === 204) return null;
+  return res.data as ActiveInventory;
+}
+
+export async function setActiveInventory(
+  inventoryId: string,
+): Promise<ActiveInventory> {
+  const res = await apiClient.post(ACTIVE_ENDPOINT, {
+    inventory_id: inventoryId,
+  });
+  return res.data as ActiveInventory;
+}

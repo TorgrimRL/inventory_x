@@ -1,20 +1,28 @@
 import "@testing-library/jest-dom";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import InventoriesPage from "../pages/inventories";
-import { listInventories } from "../services/inventoryService";
+import {
+  getActiveInventory,
+  listInventories,
+  setActiveInventory,
+} from "../services/inventoryService";
 
+let mockLocationState: any = {};
 // Mock react-router navigate
 jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
+  useLocation: () => ({ pathname: "/inventories", state: mockLocationState }),
 }));
 
 // Mock inventory service
 jest.mock("../services/inventoryService", () => ({
   listInventories: jest.fn(),
+  getActiveInventory: jest.fn(),
+  setActiveInventory: jest.fn(),
 }));
 
 describe("InventoriesPage", () => {
@@ -23,6 +31,7 @@ describe("InventoriesPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+    (getActiveInventory as jest.Mock).mockResolvedValue(null);
   });
 
   test("shows loading, then renders inventories list + CTAs", async () => {
@@ -30,7 +39,12 @@ describe("InventoriesPage", () => {
       { id: "1", name: "Ola AS", orgNumber: "123456789", role: "owner" },
       { id: "2", name: "Kari AS", orgNumber: "987654321", role: "employee" },
     ]);
-
+    (getActiveInventory as jest.Mock).mockResolvedValueOnce({
+      id: "1",
+      name: "Ola AS",
+      orgNumber: "123456789",
+      role: "owner",
+    });
     render(<InventoriesPage />);
 
     // loading state
@@ -45,7 +59,7 @@ describe("InventoriesPage", () => {
     // CTAs available
     const registerNew = screen.getByRole("button", { name: /register new/i });
     const backToDashboard = screen.getByRole("button", {
-      name: /back to dashboard/i,
+      name: /to dashboard/i,
     });
 
     fireEvent.click(registerNew);
@@ -68,7 +82,7 @@ describe("InventoriesPage", () => {
       screen.getByRole("button", { name: /register new/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /back to dashboard/i }),
+      screen.getByRole("button", { name: /to dashboard/i }),
     ).toBeInTheDocument();
   });
 
@@ -89,5 +103,41 @@ describe("InventoriesPage", () => {
     fireEvent.click(goToLogin);
 
     expect(mockNavigate).toHaveBeenCalledWith(PATHS.HOME);
+  });
+
+  test("shows needChoice warning when navigated with state.needChoice", async () => {
+    mockLocationState = { needChoice: true, from: "/dashboard" };
+
+    (listInventories as jest.Mock).mockResolvedValueOnce([
+      { id: "1", name: "Ola AS", orgNumber: "123456789", role: "owner" },
+    ]);
+
+    render(<InventoriesPage />);
+
+    expect(
+      await screen.findByText(/please choose an inventory to continue/i),
+    ).toBeInTheDocument();
+  });
+
+  test("selecting inventory sets active and navigates to dashboard", async () => {
+    (listInventories as jest.Mock).mockResolvedValueOnce([
+      { id: "1", name: "Ola AS", orgNumber: "123456789", role: "owner" },
+    ]);
+    (setActiveInventory as jest.Mock).mockResolvedValueOnce({
+      id: "1",
+      name: "Ola AS",
+      orgNumber: "123456789",
+      role: "owner",
+    });
+
+    render(<InventoriesPage />);
+
+    const row = await screen.findByText("Ola AS");
+    fireEvent.click(row);
+
+    await waitFor(() => {
+      expect(setActiveInventory).toHaveBeenCalledWith("1");
+      expect(mockNavigate).toHaveBeenCalledWith(PATHS.DASHBOARD);
+    });
   });
 });

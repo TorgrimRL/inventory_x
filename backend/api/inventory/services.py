@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
@@ -6,26 +8,33 @@ from api.user.models import User
 from .models import Inventory, InventoryItem, InventoryMembership
 
 
-def get_all_items():
+def get_all_items(inventory_id: UUID):
     """
     Fetches all inventory items from the database.
     Returns them as a list of dictionaries.
+
+    Args:
+        inventory_id:
     """
-    try:
-        queryset = InventoryItem.objects.all()
-        items = queryset.values("id", "name", "price", "stock")
-        return list(items)
-    except Exception as e:
-        raise Exception("Failed to fetch items") from e
+    queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
+        "id"
+    )
+    items = queryset.values("id", "name", "price", "stock")
+    return list(items)
 
 
-def create_item(name, price, stock):
+def create_item(inventory_id: UUID, name, price, stock):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
     """
     try:
-        item = InventoryItem.objects.create(name=name, price=price, stock=stock)
+        if InventoryItem.objects.filter(name=name).exists():
+            raise ValueError(f"Item with name '{name}' already exists.")
+
+        item = InventoryItem.objects.create(
+            inventory_id=inventory_id, name=name, price=price, stock=stock
+        )
         return {
             "id": item.id,
             "name": item.name,
@@ -38,7 +47,7 @@ def create_item(name, price, stock):
         raise Exception("Error creating inventory item") from e
 
 
-def adjust_stock(item_id: int, direction: str, amount: int):
+def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
     """
     Adjusts stock for an inventory item.
     direction: "increase" or "decrease"
@@ -52,7 +61,9 @@ def adjust_stock(item_id: int, direction: str, amount: int):
 
     try:
         with transaction.atomic():
-            item = InventoryItem.objects.select_for_update().get(id=item_id)
+            item = InventoryItem.objects.select_for_update().get(
+                id=item_id, inventory_id=inventory_id
+            )
 
             if direction == "increase":
                 new_stock = item.stock + amount

@@ -18,7 +18,7 @@ DEBUG = env.bool("DEBUG", default=True)
 # If DEBUG is True, allow all. Otherwise, read from env.
 # TODO: For prod double check all `DEBUG` and env settings
 ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
-
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 # Application definition
 INSTALLED_APPS = [
     "corsheaders",
@@ -106,24 +106,36 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# CORS CONFIG (Who can talk to the API)
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
+# CORS / CSRF / proxy / cookies (dev + prod)
+
+# Local dev defaults (used unless overridden in .env)
+DEFAULT_DEV_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:5173",
 ]
 
-# CSRF CONFIG
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-]
+CORS_ALLOW_CREDENTIALS = True
+
+# In dev: defaults to localhost origins
+# In prod: set these explicitly in .env (comma-separated)
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS", default=DEFAULT_DEV_ORIGINS
+)
+
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS", default=DEFAULT_DEV_ORIGINS
+)
+
+# Reverse proxy (nginx) -> Django HTTPS awareness
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+# Cookies
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = not DEBUG
 
-# SESSION CONFIG (Login state & cookies)
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 60 * 60
 

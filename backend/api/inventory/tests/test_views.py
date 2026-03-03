@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 
+from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts import (
     ADJUST_STOCK_RESPONSES,
     CREATE_ITEM_RESPONSES,
@@ -13,8 +14,32 @@ from api.tests.base import BaseAPITestCase
 
 
 class InventoryListViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
+
+        # Create an inventory + membership and set it active in session
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Make the session select active inventory
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
     def test_inventory_list_view(self):
-        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
+        InventoryItem.objects.create(
+            inventory=self.inventory, name="Monitor", price=200, stock=1
+        )
 
         response = self.client.get("/api/inventory/")
         self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
@@ -24,8 +49,12 @@ class InventoryListViewTests(BaseAPITestCase):
         self.assertEqual(data["data"][0]["name"], "Monitor")
 
     def test_inventory_list_multiple_items(self):
-        InventoryItem.objects.create(name="Monitor", price=200, stock=1)
-        InventoryItem.objects.create(name="Keyboard", price=100, stock=5)
+        InventoryItem.objects.create(
+            inventory=self.inventory, name="Monitor", price=200, stock=1
+        )
+        InventoryItem.objects.create(
+            inventory=self.inventory, name="Keyboard", price=100, stock=5
+        )
 
         response = self.client.get("/api/inventory/")
 
@@ -125,6 +154,78 @@ class InventoryListViewTests(BaseAPITestCase):
             or ("detail" in data and "price" in str(data["detail"]).lower())
         )
 
+    def test_get_409_clears_session_when_not_member(self):
+        # Arrange: lag en inventory brukeren IKKE er medlem av
+        other_inventory = Inventory.objects.create(
+            name="Other Co",
+            org_number="999888777",
+        )
+
+        # Sett session til inventory user ikke er medlem av
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(other_inventory.id)
+        session.save()
+
+        # Act
+        res = self.client.get("/api/inventory/")
+
+        # Assert: require_active_membership -> 409
+        self.assert_contract(
+            res, LIST_ITEMS_RESPONSES, status.HTTP_409_CONFLICT
+        )
+
+        body = res.json()
+        self.assertIn("detail", body)
+
+        # Assert: session key ble fjernet
+        session2 = self.client.session
+        self.assertNotIn(SESSION_ACTIVE_INVENTORY_KEY, session2)
+
+    def test_items_are_isolated_per_inventory_when_switching_active_inventory(
+        self,
+    ):
+        # Arrange: make inventory B og membership
+        inv_b = Inventory.objects.create(
+            name="Jessica Cookies AS", org_number="444555666"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=inv_b,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Items A (self.inventory) and B
+        InventoryItem.objects.create(
+            inventory=self.inventory, name="A-Item", price=100, stock=1
+        )
+        InventoryItem.objects.create(
+            inventory=inv_b, name="B-Item", price=200, stock=2
+        )
+
+        # Act + Assert: Just A items
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
+        res_a = self.client.get("/api/inventory/")
+        body_a = self.assert_contract(
+            res_a, LIST_ITEMS_RESPONSES, status.HTTP_200_OK
+        )
+        names_a = [row["name"] for row in body_a["data"]]
+        self.assertEqual(names_a, ["A-Item"])
+
+        # Act + Assert: Just B Items
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(inv_b.id)
+        session.save()
+
+        res_b = self.client.get("/api/inventory/")
+        body_b = self.assert_contract(
+            res_b, LIST_ITEMS_RESPONSES, status.HTTP_200_OK
+        )
+        names_b = [row["name"] for row in body_b["data"]]
+        self.assertEqual(names_b, ["B-Item"])
+
 
 class AdjustStockViewTests(BaseAPITestCase):
     def setUp(self):
@@ -134,7 +235,23 @@ class AdjustStockViewTests(BaseAPITestCase):
         )
         self.client.force_authenticate(self.user)
 
+        # Create an inventory + membership and set it active in session
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        # Make the session select active inventory
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
         self.item = InventoryItem.objects.create(
+            inventory=self.inventory,
             name="Milk",
             price=10,
             stock=10,
@@ -201,7 +318,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         self.assert_contract(
             response,
             ADJUST_STOCK_RESPONSES,
-            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_item_not_found_returns_404(self):
@@ -244,6 +361,38 @@ class AdjustStockViewTests(BaseAPITestCase):
 
         self.item.refresh_from_db()
         self.assertEqual(self.item.stock, 10)
+
+    def test_cannot_adjust_item_outside_active_inventory_returns_404(self):
+        # Arrange
+        other_inv = Inventory.objects.create(
+            name="Other Co",
+            org_number="999888777",
+        )
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=other_inv,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        other_item = InventoryItem.objects.create(
+            inventory=other_inv,
+            name="Other Milk",
+            price=10,
+            stock=10,
+        )
+
+        # Act
+        url = reverse("adjust-stock", args=[other_item.id])
+        res = self.client.post(
+            url,
+            {"direction": "increase", "amount": 1},
+            format="json",
+        )
+
+        # Assert
+        self.assert_contract(
+            res, ADJUST_STOCK_RESPONSES, status.HTTP_404_NOT_FOUND
+        )
 
 
 class UpdateItemViewTests(BaseAPITestCase):
