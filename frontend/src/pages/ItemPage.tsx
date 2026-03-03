@@ -166,13 +166,13 @@ export default function ItemPage() {
     };
 
     try {
-      await ApiClient.post("/api/inventory/", payload);
+      const res = await ApiClient.post("/api/inventory/", payload);
+      const created = res.data as InventoryItem;
 
       setItems((prev) => [
         ...prev,
         {
-          ...payload,
-          id: Date.now(),
+          ...created,
           order_id: Math.random().toString(),
         },
       ]);
