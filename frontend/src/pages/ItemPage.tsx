@@ -98,7 +98,7 @@ export default function ItemPage() {
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  
+
   // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<"name" | "stock" | "price">(
     "stock",
