@@ -27,11 +27,11 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 
 import AdjustStockModal from "../components/inventory/adjustStockModal";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ApiClient from "../services/apiClient.ts";
 
 type InventoryItem = {
   id: number | string;
@@ -101,7 +101,7 @@ export default function ItemPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/inventory/");
+      const res = await ApiClient.get("/api/inventory/");
       const data = res.data;
       setItems((data.data || data) as InventoryItem[]);
     } catch (e) {
@@ -167,7 +167,7 @@ export default function ItemPage() {
     };
 
     try {
-      await axios.post("/api/inventory/", payload);
+      await ApiClient.post("/api/inventory/", payload);
 
       setItems((prev) => [
         ...prev,

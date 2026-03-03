@@ -7,8 +7,6 @@ from pathlib import Path
 
 import environ
 
-# TODO: PROD CASE:CHECKS:  ENV,  SESSIONS, SMTP
-
 # ==============================================================================
 # ENVIRONMENT SETUP
 # ==============================================================================
@@ -26,6 +24,7 @@ DEBUG = env.bool("DEBUG", default=True)
 
 # If DEBUG is True, allow all. Otherwise, read from env.
 ALLOWED_HOSTS = ["*"] if DEBUG else env.list("ALLOWED_HOSTS", default=[])
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 
 # ==============================================================================
 # APPS & MIDDLEWARE
@@ -73,6 +72,8 @@ DATABASES = {
 # ==============================================================================
 # REST FRAMEWORK & SWAGGER
 # ==============================================================================
+STATIC_URL = "static/"
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -81,10 +82,15 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-    ]
-    + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+    ],
 }
 
+# Render a tool to easily send requests
+if DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ]
 SPECTACULAR_SETTINGS = {
     "TITLE": "Inventory API",
     "VERSION": "1.0.0",
@@ -95,20 +101,28 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ==============================================================================
-# CORS, CSRF, & SESSIONS
+# CORS, CSRF, & PROXY
 # ==============================================================================
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-]
+DEFAULT_DEV_ORIGINS = ["http://127.0.0.1:5173", "http://localhost:5173"]
 
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS", default=DEFAULT_DEV_ORIGINS
+)
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS", default=DEFAULT_DEV_ORIGINS
+)
+
+# Reverse proxy (nginx) -> Django HTTPS awareness
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+# Cookies logic (Secure only in prod)
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = not DEBUG
 
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 60 * 60
 
@@ -125,20 +139,6 @@ EMAIL_PORT = env("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-
-# ==============================================================================
-# PASSWORD VALIDATION
-# ==============================================================================
-_VAL_PATH = "django.contrib.auth.password_validation"
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": f"{_VAL_PATH}.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
-    },
-    {"NAME": f"{_VAL_PATH}.CommonPasswordValidator"},
-    {"NAME": f"{_VAL_PATH}.NumericPasswordValidator"},
-]
 
 # ==============================================================================
 # INTERNATIONALIZATION & STATIC FILES
@@ -173,11 +173,8 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            # Safely combined strings without breaking layout
-            "format": (
-                "%(levelname)-8s %(asctime)s [%(threadName)-12.12s] "
-                "[%(name)-15.15s] %(message)s"
-            ),
+            "format": "%(levelname)-8s %(asctime)s [%(threadName)-12.12s] \
+                    [%(name)-15.15s] %(message)s",
             "style": "%",
         },
     },

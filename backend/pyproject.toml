@@ -12,6 +12,7 @@ dependencies = [
     "drf-spectacular>=0.29.0",
     "psycopg>=3.3.2",
     "adrf>=0.1.0",
+    "gunicorn",
 ]
 
 [tool.mypy]
