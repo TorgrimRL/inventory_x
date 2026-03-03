@@ -2,7 +2,6 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   CircularProgress,
@@ -13,18 +12,18 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  Link,
   Paper,
   Snackbar,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
@@ -94,11 +93,19 @@ export default function ItemPage() {
 
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
-  // Live search input (filters as you type)
+  // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  
+  // Story #49 sort + low-stock filter controls
+  const [sortField, setSortField] = useState<"name" | "stock" | "price">(
+    "stock",
+  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
 
   async function loadItems() {
     setLoading(true);
@@ -198,57 +205,68 @@ export default function ItemPage() {
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
 
-  // Live, case-insensitive partial match by name
-  const visibleItems = useMemo(() => {
-    const q = searchInput.trim().toLowerCase();
-    if (q.length === 0) return items;
+  const lowStockThreshold = Math.max(
+    0,
+    Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
+  );
 
-    return items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
-  }, [items, searchInput]);
+  const displayedItems = useMemo(() => {
+    const q = searchInput.trim().toLowerCase();
+
+    const searched =
+      q.length === 0
+        ? items
+        : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
+
+    const filtered = searched.filter(
+      (item) => !lowStockOnly || item.stock <= lowStockThreshold,
+    );
+
+    return [...filtered].sort((a, b) => {
+      let compare = 0;
+
+      if (sortField === "name") {
+        compare = a.name.localeCompare(b.name);
+      } else if (sortField === "stock") {
+        compare = a.stock - b.stock;
+      } else {
+        compare = Number(a.price) - Number(b.price);
+      }
+
+      return sortDirection === "asc" ? compare : -compare;
+    });
+  }, [
+    items,
+    lowStockOnly,
+    lowStockThreshold,
+    searchInput,
+    sortDirection,
+    sortField,
+  ]);
+
+  function handleSort(field: "name" | "stock" | "price") {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection("asc");
+  }
 
   function handleClearSearch() {
     setSearchInput("");
   }
 
+  function resetListControls() {
+    setSortField("stock");
+    setSortDirection("asc");
+    setLowStockOnly(false);
+    setLowStockThresholdInput("5");
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Toolbar sx={{ py: 0.75 }}>
-          <Container
-            maxWidth="lg"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Link
-              href="https://inventoryx.td.-uit.no"
-              target="_blank"
-              rel="noopener noreferrer"
-              underline="none"
-              sx={{ display: "inline-flex", alignItems: "center", gap: 1.5 }}
-            >
-              <Typography
-                variant="h4"
-                color="text.primary"
-                sx={{ lineHeight: 1 }}
-              >
-                Inventory X
-              </Typography>
-            </Link>
-          </Container>
-        </Toolbar>
-      </AppBar>
-
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{error}</Alert>}
@@ -263,8 +281,8 @@ export default function ItemPage() {
               <Box>
                 <Typography variant="h5">Items</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {visibleItems.length} item
-                  {visibleItems.length === 1 ? "" : "s"}
+                  {displayedItems.length} of {items.length} item
+                  {items.length === 1 ? "" : "s"}
                 </Typography>
               </Box>
 
@@ -287,8 +305,66 @@ export default function ItemPage() {
               onClear={handleClearSearch}
             />
 
-            {/* Add item button centered */}
-            <Stack direction="row" justifyContent="center" sx={{ mb: 2 }}>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "stretch", md: "center" }}
+              spacing={1.5}
+              sx={{ mb: 2 }}
+            >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                <TextField
+                  size="small"
+                  type="number"
+                  label="Low stock threshold"
+                  value={lowStockThresholdInput}
+                  onFocus={(e) => {
+                    if (e.target.value === "0") setLowStockThresholdInput("");
+                  }}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (next === "") {
+                      setLowStockThresholdInput("");
+                      return;
+                    }
+
+                    if (!/^\d+$/.test(next)) return;
+                    setLowStockThresholdInput(
+                      String(Number.parseInt(next, 10)),
+                    );
+                  }}
+                  onBlur={() => {
+                    if (lowStockThresholdInput.trim() === "") {
+                      setLowStockThresholdInput("0");
+                    }
+                  }}
+                  inputProps={{ min: 0, step: 1 }}
+                  sx={{ width: 180 }}
+                />
+
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography variant="body2">Low stock only</Typography>
+                  <Switch
+                    checked={lowStockOnly}
+                    onChange={(e) => setLowStockOnly(e.target.checked)}
+                    inputProps={{ "aria-label": "Low stock only" }}
+                  />
+                </Stack>
+
+                <Button
+                  onClick={resetListControls}
+                  variant="contained"
+                  color="inherit"
+                  sx={{
+                    bgcolor: "grey.300",
+                    color: "text.primary",
+                    "&:hover": { bgcolor: "grey.400" },
+                  }}
+                >
+                  Reset
+                </Button>
+              </Stack>
+
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -309,7 +385,7 @@ export default function ItemPage() {
                   Loading items…
                 </Typography>
               </Stack>
-            ) : visibleItems.length === 0 ? (
+            ) : displayedItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
                 <Typography variant="body1">No items found.</Typography>
               </Stack>
@@ -319,13 +395,43 @@ export default function ItemPage() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>
-                        Product name
+                        <TableSortLabel
+                          active={sortField === "name"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "name" ? sortDirection : "asc"
+                          }
+                          onClick={() => handleSort("name")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Product name
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Stock
+                        <TableSortLabel
+                          active={sortField === "stock"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "stock" ? sortDirection : "asc"
+                          }
+                          onClick={() => handleSort("stock")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Stock
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Price
+                        <TableSortLabel
+                          active={sortField === "price"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "price" ? sortDirection : "asc"
+                          }
+                          onClick={() => handleSort("price")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Price
+                        </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Actions
@@ -334,7 +440,7 @@ export default function ItemPage() {
                   </TableHead>
 
                   <TableBody>
-                    {visibleItems.map((item) => (
+                    {displayedItems.map((item) => (
                       <TableRow key={item.id} hover>
                         <TableCell>{item.name}</TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
