@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from rest_framework.exceptions import APIException
+from rest_framework.request import Request
 
 from api.inventory.models import InventoryMembership
 
@@ -25,11 +26,11 @@ def get_active_inventory_id(request) -> UUID | None:
         return None
 
 
-def require_active_membership(request) -> InventoryMembership:
-    """
-    Returns InventoryMembership for the active inventory.
-    Raises 409 if missing/invalid/not member.
-    """
+def get_active_membership_or_raise(request) -> InventoryMembership:
+    cached = getattr(request, "_active_inventory_membership", None)
+    if cached is not None:
+        return cached
+
     inv_id = get_active_inventory_id(request)
     if not inv_id:
         raise NoActiveInventorySelected()
@@ -43,4 +44,15 @@ def require_active_membership(request) -> InventoryMembership:
         request.session.pop(SESSION_ACTIVE_INVENTORY_KEY, None)
         raise NoActiveInventorySelected()
 
+    request._active_inventory_membership = membership
+    return membership
+
+
+def get_request_active_membership(request: Request) -> InventoryMembership:
+    membership = getattr(request, "active_inventory_membership", None)
+    if membership is None:
+        raise RuntimeError(
+            "active_inventory_membership was not set on request. "
+            "Did you forget HasActiveInventoryMembership?"
+        )
     return membership

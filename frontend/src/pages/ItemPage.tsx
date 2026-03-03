@@ -26,10 +26,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import AdjustStockModal from "../components/inventory/adjustStockModal";
+import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ApiClient from "../services/apiClient.ts";
 
 type InventoryItem = {
   id: number | string;
@@ -92,6 +93,10 @@ export default function ItemPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
+  // Existing main-branch search
+  const [searchInput, setSearchInput] = useState("");
+
+  // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<"name" | "stock" | "price">(
     "stock",
   );
@@ -103,7 +108,7 @@ export default function ItemPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/inventory/");
+      const res = await ApiClient.get("/api/inventory/");
       const data = res.data;
       setItems((data.data || data) as InventoryItem[]);
     } catch (e) {
@@ -169,7 +174,7 @@ export default function ItemPage() {
     };
 
     try {
-      await axios.post("/api/inventory/", payload);
+      await ApiClient.post("/api/inventory/", payload);
 
       setItems((prev) => [
         ...prev,
@@ -206,9 +211,19 @@ export default function ItemPage() {
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
   );
 
-  const displayedItems = items
-    .filter((item) => !lowStockOnly || item.stock <= lowStockThreshold)
-    .sort((a, b) => {
+  const displayedItems = useMemo(() => {
+    const q = searchInput.trim().toLowerCase();
+
+    const searched =
+      q.length === 0
+        ? items
+        : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
+
+    const filtered = searched.filter(
+      (item) => !lowStockOnly || item.stock <= lowStockThreshold,
+    );
+
+    return [...filtered].sort((a, b) => {
       let compare = 0;
 
       if (sortField === "name") {
@@ -221,6 +236,14 @@ export default function ItemPage() {
 
       return sortDirection === "asc" ? compare : -compare;
     });
+  }, [
+    items,
+    lowStockOnly,
+    lowStockThreshold,
+    searchInput,
+    sortDirection,
+    sortField,
+  ]);
 
   function handleSort(field: "name" | "stock" | "price") {
     if (sortField === field) {
@@ -230,6 +253,10 @@ export default function ItemPage() {
 
     setSortField(field);
     setSortDirection("asc");
+  }
+
+  function handleClearSearch() {
+    setSearchInput("");
   }
 
   function resetListControls() {
@@ -271,6 +298,14 @@ export default function ItemPage() {
 
             <Divider sx={{ my: 2 }} />
 
+            <ItemSearchBar
+              value={searchInput}
+              disabled={loading}
+              onChange={setSearchInput}
+              onSearch={() => {}}
+              onClear={handleClearSearch}
+            />
+
             <Stack
               direction={{ xs: "column", md: "row" }}
               justifyContent="space-between"
@@ -295,9 +330,7 @@ export default function ItemPage() {
                     }
 
                     if (!/^\d+$/.test(next)) return;
-                    setLowStockThresholdInput(
-                      String(Number.parseInt(next, 10)),
-                    );
+                    setLowStockThresholdInput(String(Number.parseInt(next, 10)));
                   }}
                   onBlur={() => {
                     if (lowStockThresholdInput.trim() === "") {
@@ -364,9 +397,7 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "name"}
                           hideSortIcon={false}
-                          direction={
-                            sortField === "name" ? sortDirection : "asc"
-                          }
+                          direction={sortField === "name" ? sortDirection : "asc"}
                           onClick={() => handleSort("name")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
@@ -377,9 +408,7 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "stock"}
                           hideSortIcon={false}
-                          direction={
-                            sortField === "stock" ? sortDirection : "asc"
-                          }
+                          direction={sortField === "stock" ? sortDirection : "asc"}
                           onClick={() => handleSort("stock")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
@@ -390,9 +419,7 @@ export default function ItemPage() {
                         <TableSortLabel
                           active={sortField === "price"}
                           hideSortIcon={false}
-                          direction={
-                            sortField === "price" ? sortDirection : "asc"
-                          }
+                          direction={sortField === "price" ? sortDirection : "asc"}
                           onClick={() => handleSort("price")}
                           sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                         >
@@ -411,9 +438,9 @@ export default function ItemPage() {
                         <TableCell>{item.name}</TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
                         <TableCell align="right">
-                          {new Intl.NumberFormat("en-US", {
+                          {new Intl.NumberFormat("nb-NO", {
                             style: "currency",
-                            currency: "USD",
+                            currency: "NOK",
                           }).format(Number(item.price))}
                         </TableCell>
                         <TableCell align="right">
