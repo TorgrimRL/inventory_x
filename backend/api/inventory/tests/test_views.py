@@ -403,7 +403,22 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
         self.client.force_authenticate(self.user)
 
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+
+        self.membership = InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
         self.item = InventoryItem.objects.create(
+            inventory=self.inventory,
             name="Milk",
             price=25,
             stock=10,
@@ -414,24 +429,7 @@ class UpdateItemViewTests(BaseAPITestCase):
             args=[self.item.id],
         )
 
-        self._owner_ready = False
-
-    def make_owner(self):
-        if self._owner_ready:
-            return
-
-        inv = Inventory.objects.create(name="Test AS", org_number="123123123")
-        InventoryMembership.objects.create(
-            user=self.user,
-            inventory=inv,
-            role=InventoryMembership.Role.OWNER,
-        )
-
-        self._owner_ready = True
-
     def test_update_item_success(self):
-        self.make_owner()
-
         response = self.client.patch(
             self.url,
             {"name": "Skim Milk", "price": 30},
@@ -450,8 +448,6 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assertEqual(self.item.stock, 10)
 
     def test_update_item_blank_name_returns_400(self):
-        self.make_owner()
-
         response = self.client.patch(
             self.url,
             {"name": "", "price": 30},
@@ -465,8 +461,6 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
     def test_update_item_negative_price_returns_400(self):
-        self.make_owner()
-
         response = self.client.patch(
             self.url,
             {"name": "Milk", "price": -5},
@@ -483,8 +477,6 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assertEqual(self.item.price, 25)
 
     def test_update_item_non_numeric_price_returns_400(self):
-        self.make_owner()
-
         response = self.client.patch(
             self.url,
             {"name": "Milk", "price": "abc"},
@@ -501,8 +493,6 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assertEqual(self.item.price, 25)
 
     def test_update_item_not_found_returns_404(self):
-        self.make_owner()
-
         url = reverse("update-item", args=[9999])
 
         response = self.client.patch(
@@ -533,12 +523,8 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
     def test_only_owner_can_update_name_and_price(self):
-        inv = Inventory.objects.create(name="Test AS", org_number="123123123")
-        InventoryMembership.objects.create(
-            user=self.user,
-            inventory=inv,
-            role=InventoryMembership.Role.EMPLOYEE,
-        )
+        self.membership.role = InventoryMembership.Role.EMPLOYEE
+        self.membership.save()
 
         response = self.client.patch(
             self.url,

@@ -29,9 +29,6 @@ def create_item(inventory_id: UUID, name, price, stock):
     Returns the created item as a dictionary.
     """
     try:
-        if InventoryItem.objects.filter(name=name).exists():
-            raise ValueError(f"Item with name '{name}' already exists.")
-
         item = InventoryItem.objects.create(
             inventory_id=inventory_id, name=name, price=price, stock=stock
         )
