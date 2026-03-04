@@ -20,7 +20,7 @@ describe("InventoryKpiSummary", () => {
     );
 
     expect(screen.getByText("Total inventory value")).toBeInTheDocument();
-    expect(screen.getByText("340")).toBeInTheDocument();
+    expect(screen.getByText(/340\s*kr/i)).toBeInTheDocument();
 
     expect(screen.getByText("Low-stock count")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("InventoryKpiSummary", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  test("shows filtered metrics in addition to totals when filter is active", () => {
+  test("shows a duplicated KPI card with filtered metrics when filter is active", () => {
     const allItems = [
       { price: 25, stock: 10 },
       { price: 30, stock: 3 },
@@ -50,10 +50,13 @@ describe("InventoryKpiSummary", () => {
       />,
     );
 
-    expect(screen.getByText("340")).toBeInTheDocument();
-    expect(screen.getByText("Filtered value: 90")).toBeInTheDocument();
-    expect(screen.getByText("2 / 2")).toBeInTheDocument();
-    expect(screen.getByText("2 / 3")).toBeInTheDocument();
+    expect(screen.getByText(/information based on filter/i)).toBeInTheDocument();
+    expect(screen.getByText(/340\s*kr/i)).toBeInTheDocument();
+    expect(screen.getByText(/90\s*kr/i)).toBeInTheDocument();
+
+    // There is a low-stock + item-count value for total and one for filtered card
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
   test("shows zeros for empty inventory", () => {
@@ -65,6 +68,7 @@ describe("InventoryKpiSummary", () => {
       />,
     );
 
-    expect(screen.getAllByText("0")).toHaveLength(3);
+    expect(screen.getByText(/0\s*kr/i)).toBeInTheDocument();
+    expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(2);
   });
 });

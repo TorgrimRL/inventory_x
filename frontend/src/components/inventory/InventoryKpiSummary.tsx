@@ -21,6 +21,34 @@ function lowStockCount(items: KpiItem[], threshold: number) {
   return items.filter((item) => item.stock <= threshold).length;
 }
 
+function formatCount(value: number) {
+  return new Intl.NumberFormat("nb-NO").format(value);
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("nb-NO", {
+    style: "currency",
+    currency: "NOK",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+type MetricBlockProps = {
+  title: string;
+  value: string;
+};
+
+function MetricBlock({ title, value }: MetricBlockProps) {
+  return (
+    <Stack sx={{ minWidth: 180 }}>
+      <Typography variant="caption" color="text.secondary">
+        {title}
+      </Typography>
+      <Typography variant="h6">{value}</Typography>
+    </Stack>
+  );
+}
+
 export default function InventoryKpiSummary({
   allItems,
   visibleItems,
@@ -44,42 +72,45 @@ export default function InventoryKpiSummary({
   }, [allItems, lowStockThreshold, visibleItems]);
 
   return (
-    <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-        <Stack sx={{ minWidth: 180 }}>
-          <Typography variant="caption" color="text.secondary">
-            Total inventory value
-          </Typography>
-          <Typography variant="h6">{metrics.total.value}</Typography>
-          {showFilteredMetrics && (
-            <Typography variant="body2" color="text.secondary">
-              Filtered value: {metrics.filtered.value}
-            </Typography>
-          )}
+    <Stack spacing={2} sx={{ mb: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+          <MetricBlock
+            title="Total inventory value"
+            value={formatCurrency(metrics.total.value)}
+          />
+          <MetricBlock
+            title="Low-stock count"
+            value={formatCount(metrics.total.lowStock)}
+          />
+          <MetricBlock
+            title="Item count"
+            value={formatCount(metrics.total.itemCount)}
+          />
         </Stack>
+      </Paper>
 
-        <Stack sx={{ minWidth: 180 }}>
-          <Typography variant="caption" color="text.secondary">
-            Low-stock count
+      {showFilteredMetrics && (
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Information based on filter
           </Typography>
-          <Typography variant="h6">
-            {showFilteredMetrics
-              ? `${metrics.filtered.lowStock} / ${metrics.total.lowStock}`
-              : metrics.total.lowStock}
-          </Typography>
-        </Stack>
-
-        <Stack sx={{ minWidth: 180 }}>
-          <Typography variant="caption" color="text.secondary">
-            Item count
-          </Typography>
-          <Typography variant="h6">
-            {showFilteredMetrics
-              ? `${metrics.filtered.itemCount} / ${metrics.total.itemCount}`
-              : metrics.total.itemCount}
-          </Typography>
-        </Stack>
-      </Stack>
-    </Paper>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <MetricBlock
+              title="Total inventory value"
+              value={formatCurrency(metrics.filtered.value)}
+            />
+            <MetricBlock
+              title="Low-stock count"
+              value={formatCount(metrics.filtered.lowStock)}
+            />
+            <MetricBlock
+              title="Item count"
+              value={formatCount(metrics.filtered.itemCount)}
+            />
+          </Stack>
+        </Paper>
+      )}
+    </Stack>
   );
 }
