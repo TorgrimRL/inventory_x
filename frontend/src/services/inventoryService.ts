@@ -106,3 +106,11 @@ export async function updateItem(
   const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
   return res.data;
 }
+
+const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
+/**
+ * Invites a user to the currently active inventory via email.
+ */
+export async function inviteUser(email: string): Promise<void> {
+  await apiClient.post(INVITE_ENDPOINT, { email });
+}
