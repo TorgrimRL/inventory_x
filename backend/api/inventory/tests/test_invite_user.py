@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 
+from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts.invite_user import INVITE_USER_RESPONSES
 from api.inventory.models import Inventory, InventoryMembership
 from api.inventory.services.invite_user import invite_user
@@ -80,12 +81,15 @@ class TestInviteUserView(BaseAPITestCase):
             name="Test Corp",
             org_number="123456789",
         )
-        self.url = reverse(
-            "inventory-invite", kwargs={"inventory_id": self.inventory.id}
-        )
+        self.url = reverse("inventory-invite")
+
+        self.client.force_authenticate(user=self.owner)
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
 
     def test_invite_success(self):
-        self.client.force_authenticate(user=self.owner)
         payload = {"email": self.employee.email}
 
         response = self.client.post(self.url, payload)
@@ -101,8 +105,20 @@ class TestInviteUserView(BaseAPITestCase):
         ).exists()
 
     def test_invite_permission_denied_for_non_owner(self):
-        self.client.force_authenticate(user=self.stranger)
-        payload = {"email": self.employee.email}
+        InventoryMembership.objects.create(
+            inventory=self.inventory,
+            user=self.employee,
+            role=InventoryMembership.Role.EMPLOYEE,
+        )
+
+        self.client.logout()
+        self.client.force_authenticate(user=self.employee)
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
+        payload = {"email": self.stranger.email}
 
         response = self.client.post(self.url, payload)
 
@@ -111,7 +127,6 @@ class TestInviteUserView(BaseAPITestCase):
         )
 
     def test_invite_invalid_email_format(self):
-        self.client.force_authenticate(user=self.owner)
         payload = {"email": "not-an-email"}
 
         response = self.client.post(self.url, payload)
@@ -121,7 +136,6 @@ class TestInviteUserView(BaseAPITestCase):
         )
 
     def test_invite_user_not_found(self):
-        self.client.force_authenticate(user=self.owner)
         payload = {"email": "ghost@example.com"}
 
         response = self.client.post(self.url, payload)
@@ -131,15 +145,21 @@ class TestInviteUserView(BaseAPITestCase):
         )
 
     def test_invite_inventory_not_found(self):
-        self.client.force_authenticate(user=self.owner)
-
         import uuid
 
-        url = reverse("inventory-invite", kwargs={"inventory_id": uuid.uuid4()})
+        random_id = str(uuid.uuid4())
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = random_id
+        session.save()
+
         payload = {"email": self.employee.email}
 
-        response = self.client.post(url, payload)
+        response = self.client.post(self.url, payload)
 
         self.assert_contract(
-            response, INVITE_USER_RESPONSES, status.HTTP_404_NOT_FOUND
+            response, INVITE_USER_RESPONSES, status.HTTP_409_CONFLICT
         )
+
+        updated_session = self.client.session
+        self.assertNotIn(SESSION_ACTIVE_INVENTORY_KEY, updated_session)

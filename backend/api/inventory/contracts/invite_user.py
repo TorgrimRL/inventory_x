@@ -18,4 +18,8 @@ INVITE_USER_RESPONSES = {
     404: OpenApiResponse(
         response=ErrorResponseSerializer,
     ),
+    409: OpenApiResponse(
+        description="Inventory with the same name already exists",
+        response=ErrorResponseSerializer,
+    ),
 }

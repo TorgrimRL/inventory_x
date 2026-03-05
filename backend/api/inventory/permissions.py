@@ -1,33 +1,7 @@
 from rest_framework import permissions
-from rest_framework.exceptions import NotFound
 
 from .context import get_active_membership_or_raise
-from .models import Inventory
-
-
-class IsInventoryOwner(permissions.BasePermission):
-    """
-    Grant permission only if the request user is the OWNER of the inventory.
-
-    ASSUMPTION:
-        This permission expects the URL kwarg to be exactly 'inventory_id'.
-        Example URL: path('inventories/<uuid:inventory_id>/invite/', ...)
-    """
-
-    def has_permission(self, request, view):
-        inventory_id = view.kwargs.get("inventory_id")
-
-        if not inventory_id:
-            return False
-
-        try:
-            inventory = Inventory.objects.get(id=inventory_id)
-        except Inventory.DoesNotExist:
-            raise NotFound(
-                "Permission denied: Inventory was not found."
-            ) from None
-
-        return inventory.is_owner(request.user)
+from .models import InventoryMembership
 
 
 class IsActiveInventoryMember(permissions.BasePermission):
@@ -35,7 +9,6 @@ class IsActiveInventoryMember(permissions.BasePermission):
     Grants access only if the request has a valid active inventory
     in the session and the authenticated user is
     a member of that inventory.
-
     On success, attaches:
       - request.active_inventory_membership
       - request.active_inventory
@@ -49,3 +22,21 @@ class IsActiveInventoryMember(permissions.BasePermission):
         request.active_inventory_membership = membership
         request.active_inventory = membership.inventory
         return True
+
+
+class IsActiveInventoryOwner(IsActiveInventoryMember):
+    """
+    Grant permission only if the request user is the OWNER of the active
+    inventory currently selected in their session.
+    """
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
+        membership = getattr(request, "active_inventory_membership", None)
+
+        if membership is None:
+            return False
+
+        return membership.role == InventoryMembership.Role.OWNER

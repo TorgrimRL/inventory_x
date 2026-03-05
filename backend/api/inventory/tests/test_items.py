@@ -6,6 +6,7 @@ from rest_framework import status
 
 from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts.adjust_stock import ADJUST_STOCK_RESPONSES
+from api.inventory.contracts.update_item import UPDATE_ITEM_RESPONSES
 from api.inventory.models import Inventory, InventoryItem, InventoryMembership
 from api.inventory.services.items import adjust_stock, get_all_items
 from api.tests.base import BaseAPITestCase
@@ -257,3 +258,152 @@ class AdjustStockViewTests(BaseAPITestCase):
         self.assert_contract(
             res, ADJUST_STOCK_RESPONSES, status.HTTP_404_NOT_FOUND
         )
+
+
+class UpdateItemViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
+
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+
+        self.membership = InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
+        self.item = InventoryItem.objects.create(
+            inventory=self.inventory,
+            name="Milk",
+            price=25,
+            stock=10,
+        )
+
+        self.url = reverse(
+            "update-item",
+            args=[self.item.id],
+        )
+
+    def test_update_item_success(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Skim Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_200_OK,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, "Skim Milk")
+        self.assertEqual(self.item.price, 30)
+        self.assertEqual(self.item.stock, 10)
+
+    def test_update_item_blank_name_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_update_item_negative_price_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": -5},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.price, 25)
+
+    def test_update_item_non_numeric_price_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": "abc"},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.price, 25)
+
+    def test_update_item_not_found_returns_404(self):
+        url = reverse("update-item", args=[9999])
+
+        response = self.client.patch(
+            url,
+            {"name": "Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_requires_authentication(self):
+        self.client.logout()
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_only_owner_can_update_name_and_price(self):
+        self.membership.role = InventoryMembership.Role.EMPLOYEE
+        self.membership.save()
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Skim Milk", "price": 30},
+            format="json",
+        )
+
+        self.assert_contract(
+            response,
+            UPDATE_ITEM_RESPONSES,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.name, "Milk")
+        self.assertEqual(self.item.price, 25)
+        self.assertEqual(self.item.stock, 10)
