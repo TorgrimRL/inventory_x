@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 
-# --- Shared/Generic Serializers ---
 class ErrorResponseSerializer(serializers.Serializer):
     """Format for 401 and 500 errors (simple string message)"""
 

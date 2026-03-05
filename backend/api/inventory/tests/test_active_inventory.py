@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 
-from api.inventory.contracts import (
+from api.inventory.contracts.active_inventory import (
     GET_ACTIVE_INVENTORY_RESPONSES,
     SET_ACTIVE_INVENTORY_RESPONSES,
 )
