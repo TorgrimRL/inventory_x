@@ -12,6 +12,7 @@ import RequireActiveInventory from "./components/inventory/requireActiveInventor
 import Navbar from "./components/navbar/topbar.tsx";
 import Dashboard from "./pages/dashboard";
 import InventoriesPage from "./pages/inventories.tsx";
+import InviteEmployee from "./pages/InviteEmployee";
 import ItemPage from "./pages/ItemPage";
 import LandingPage from "./pages/landingPage";
 import AuthGuardLayout from "./services/authguard.tsx";
@@ -25,6 +26,7 @@ export const PATHS = {
   INVENTORIES: "/inventories",
   INVENTORIES_NEW: "/inventories/new",
   ADD_ITEM: "/add_item",
+  INVITE_EMPLOYEE: "/invite_employee",
 } as const;
 
 function App() {
@@ -65,6 +67,14 @@ function App() {
             element={
               <RequireActiveInventory>
                 <ItemPage />
+              </RequireActiveInventory>
+            }
+          />
+          <Route
+            path={PATHS.INVITE_EMPLOYEE}
+            element={
+              <RequireActiveInventory>
+                <InviteEmployee />
               </RequireActiveInventory>
             }
           />
