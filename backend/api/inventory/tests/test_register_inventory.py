@@ -3,7 +3,9 @@ from typing import Any
 from django.urls import reverse
 from rest_framework import status
 
-from api.inventory.contracts import REGISTER_INVENTORY_RESPONSES
+from api.inventory.contracts.register_inventory import (
+    REGISTER_INVENTORY_RESPONSES,
+)
 from api.inventory.models import Inventory, InventoryMembership
 from api.tests.base import BaseAPITestCase
 
