@@ -14,7 +14,7 @@ env = environ.Env()
 environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-HOST_ENDPOINT = "http://inventoryx.td.org.uit.no"
+HOST_ENDPOINT = env("HOST_ENDPOINT", default="http://localhost:5173")
 
 # ==============================================================================
 # CORE & SECURITY
