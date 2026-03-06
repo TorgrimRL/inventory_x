@@ -26,17 +26,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             "blank": "The One-Time Code cannot be empty.",
         },
     )
-    NEW_PASSWORD = serializers.CharField(
-        min_length=8,
-        style={"input_type": "password"},
-        error_messages={
-            "required": "Please enter a new password.",
-            "blank": "Your new password cannot be empty.",
-            "min_length": "Password must be at least 8 characters long.",
-        },
-    )
 
-    def validate(self, value: str) -> str:
-        # This automatically runs Django's built-in password validators
+    def validate_password(self, value: str) -> str:
         validate_password(value)
         return value
