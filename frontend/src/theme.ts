@@ -28,7 +28,7 @@ export const DarkTheme = createTheme({
       paper: "#191919",
     },
     text: {
-      primary: "#C4A588",
+      primary: "#E0CFC2",
       secondary: "rgba(196,165,136,0.8)",
     },
     divider: "#82543A",
