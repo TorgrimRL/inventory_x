@@ -61,12 +61,11 @@ class PasswordResetView(APIView):
         new_password = serializer.validated_data["NEW_PASSWORD"]
 
         try:
-            user_mail = await sync_to_async(cache.get)(otc)
-            user = await sync_to_async(User.objects.get)(email=user_mail)
-
-            await sync_to_async(user.set_password)(new_password)
-            await sync_to_async(user.save)()
-            await sync_to_async(cache.delete)(otc)
+            user_mail = await cache.aget(otc)
+            user = await User.objects.aget(email=user_mail)
+            user.set_password(new_password)
+            await user.asave()
+            await cache.adelete(otc)
 
             return Response(status=200)
 
