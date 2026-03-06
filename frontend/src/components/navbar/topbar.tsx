@@ -19,7 +19,7 @@ export default function Navbar() {
 
   const publicNavItems = [
     ["Login", PATHS.LOGIN],
-    ["SignUp", PATHS.REGISTRATION],
+    ["Registration", PATHS.REGISTRATION],
     ["Forgot password", PATHS.PASSWORD_FORGOT],
   ];
 

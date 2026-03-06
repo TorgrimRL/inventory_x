@@ -52,14 +52,9 @@ export default function ResetPassword() {
     }
   };
 
-  // TODO: Add page guard
   useEffect(() => {
     const verifyUser = async () => {
-      try {
-        if (!token) {
-          return new Error("0");
-        }
-      } catch {
+      if (!token) {
         setError("Link expired or invalid. Redirecting...");
         setTimeout(() => {
           navigate(PATHS.PASSWORD_FORGOT);
