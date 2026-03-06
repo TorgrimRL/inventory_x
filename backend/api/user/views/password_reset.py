@@ -65,7 +65,7 @@ class PasswordResetView(APIView):
             user = await User.objects.aget(email=user_mail)
             user.set_password(new_password)
             await user.asave()
-            await cache.adelete(otc)
+            await sync_to_async(cache.delete)(otc)
 
             return Response(status=200)
 
@@ -78,7 +78,7 @@ class PasswordResetView(APIView):
         send reset link with one time use code.
         """
         otc = secrets.token_hex(32)  # 32 bytes
-        cache.aset(otc, mail, timeout=60 * 5)  # 5min lifetime.
+        await cache.aset(otc, mail, timeout=60 * 5)  # 5min lifetime.
         reset_link = f"{settings.HOST_ENDPOINT}/password_reset?token={otc}"
 
         mail_content = render_to_string(
