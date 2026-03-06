@@ -4,9 +4,16 @@ from drf_spectacular.utils import (
     OpenApiResponse,
 )
 
+from api.user.serializers.password_reset import (
+    PasswordResetValidationErrorSerializer,
+)
+
 PASSWORD_RESET_RESPONSES_PUT = {
     200: OpenApiResponse(description="Password updated successfully."),
-    400: OpenApiResponse(description="Bad Request: Fails validation rules."),
+    400: OpenApiResponse(
+        response=PasswordResetValidationErrorSerializer,
+        description="Bad Request: Fails validation rules.",
+    ),
     404: OpenApiResponse(
         description="Not Found: The OTC is invalid, expired,\
                 or the user no longer exists."
