@@ -14,8 +14,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.user.contracts.password_reset import (
-    PASSOWORD_RESET_RESPONSES_POST,
     PASSWORD_RESET_PARAMS_POST,
+    PASSWORD_RESET_RESPONSES_POST,
     PASSWORD_RESET_RESPONSES_PUT,
 )
 from api.user.serializers.password_reset import PasswordResetConfirmSerializer
@@ -33,7 +33,7 @@ class PasswordResetView(APIView):
         description="Send one time code (OTC) to client. \
         Expects URL: /password_reset?email=user@example.com",
         request=None,
-        responses=PASSOWORD_RESET_RESPONSES_POST,
+        responses=PASSWORD_RESET_RESPONSES_POST,
         parameters=PASSWORD_RESET_PARAMS_POST,
     )
     async def post(self, request: Request) -> Response:
@@ -90,7 +90,7 @@ class PasswordResetView(APIView):
         )
         logging.debug(mail_content)
 
-        # Spawn a new thead to process the mailing.
+        # Spawn a new thread to process the mailing.
         async_send_mail = sync_to_async(send_mail, thread_sensitive=False)
         try:
             await async_send_mail(

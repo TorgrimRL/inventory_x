@@ -73,6 +73,7 @@ DATABASES = {
 # REST FRAMEWORK & SWAGGER
 # ==============================================================================
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

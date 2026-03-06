@@ -20,7 +20,7 @@ PASSWORD_RESET_RESPONSES_PUT = {
     ),
 }
 
-PASSOWORD_RESET_RESPONSES_POST = {
+PASSWORD_RESET_RESPONSES_POST = {
     200: OpenApiResponse(
         description="OTC sent (or ignored silently if email is missing from DB\
         for security)"

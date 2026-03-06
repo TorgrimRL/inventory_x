@@ -8,7 +8,7 @@ from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
 from api.user.contracts.password_reset import (
-    PASSOWORD_RESET_RESPONSES_POST,
+    PASSWORD_RESET_RESPONSES_POST,
     PASSWORD_RESET_RESPONSES_PUT,
 )
 
@@ -28,7 +28,7 @@ class PasswordResetTests(BaseAPITestCase):
         """
         response = self.client.post(f"{self.url}?email=user@example.com")
         self.assert_contract(
-            response, PASSOWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
+            response, PASSWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
         )
 
         # Assert mail.
@@ -54,7 +54,7 @@ class PasswordResetTests(BaseAPITestCase):
         """
         response = self.client.post(f"{self.url}?email=hacker@example.com")
         self.assert_contract(
-            response, PASSOWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
+            response, PASSWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
         )
 
         # Ensure NO email was sent
@@ -68,7 +68,7 @@ class PasswordResetTests(BaseAPITestCase):
         response = self.client.post(self.url)  # No query params
         self.assert_contract(
             response,
-            PASSOWORD_RESET_RESPONSES_POST,
+            PASSWORD_RESET_RESPONSES_POST,
             status.HTTP_400_BAD_REQUEST,
         )
 
