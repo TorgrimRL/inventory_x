@@ -55,7 +55,11 @@ class PasswordResetView(APIView):
     )
     async def put(self, request: Request) -> Response:
         serializer = PasswordResetConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         otc = serializer.validated_data["OTC"]
         new_password = serializer.validated_data["NEW_PASSWORD"]

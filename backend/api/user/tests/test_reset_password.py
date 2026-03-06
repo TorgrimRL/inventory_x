@@ -7,6 +7,10 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
+from api.user.contracts.password_reset import (
+    PASSOWORD_RESET_RESPONSES_POST,
+    PASSWORD_RESET_RESPONSES_PUT,
+)
 
 
 class PasswordResetTests(BaseAPITestCase):
@@ -23,7 +27,9 @@ class PasswordResetTests(BaseAPITestCase):
         Expectation: 200 OK, Email sent, Token stored in Redis.
         """
         response = self.client.post(f"{self.url}?email=user@example.com")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_contract(
+            response, PASSOWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
+        )
 
         # Assert mail.
         self.assertEqual(len(mail.outbox), 1)
@@ -47,7 +53,9 @@ class PasswordResetTests(BaseAPITestCase):
         Expectation: 200 OK (security), but NO email sent.
         """
         response = self.client.post(f"{self.url}?email=hacker@example.com")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_contract(
+            response, PASSOWORD_RESET_RESPONSES_POST, status.HTTP_200_OK
+        )
 
         # Ensure NO email was sent
         self.assertEqual(len(mail.outbox), 0)
@@ -58,7 +66,11 @@ class PasswordResetTests(BaseAPITestCase):
         Expectation: 400 Bad Request.
         """
         response = self.client.post(self.url)  # No query params
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assert_contract(
+            response,
+            PASSOWORD_RESET_RESPONSES_POST,
+            status.HTTP_400_BAD_REQUEST,
+        )
 
     def test_password_reset_success_200(self):
         """
@@ -72,7 +84,11 @@ class PasswordResetTests(BaseAPITestCase):
         # Call the PUT method
         data = {"OTC": token, "NEW_PASSWORD": "StrongNewPassword123!"}
         response = self.client.put(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_contract(
+            response,
+            PASSWORD_RESET_RESPONSES_PUT,
+            status.HTTP_200_OK,
+        )
 
         # Verify in password DB is updated && cache is burned.
         self.user.refresh_from_db()
@@ -92,8 +108,11 @@ class PasswordResetTests(BaseAPITestCase):
             "NEW_PASSWORD": "123",  # Fails MinimumLengthValidator
         }
         response = self.client.put(self.url, data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assert_contract(
+            response,
+            PASSWORD_RESET_RESPONSES_PUT,
+            status.HTTP_400_BAD_REQUEST,
+        )
 
         # Verify password did NOT change
         self.user.refresh_from_db()

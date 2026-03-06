@@ -31,3 +31,17 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def validate_password(self, value: str) -> str:
         validate_password(value)
         return value
+
+
+class PasswordResetErrorDetailSerializer(serializers.Serializer):
+    OTC = serializers.ListField(child=serializers.CharField(), required=False)
+    NEW_PASSWORD = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    non_field_errors = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+
+
+class PasswordResetValidationErrorSerializer(serializers.Serializer):
+    detail = PasswordResetErrorDetailSerializer()
