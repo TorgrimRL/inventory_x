@@ -26,6 +26,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             "blank": "The One-Time Code cannot be empty.",
         },
     )
+    NEW_PASSWORD = serializers.CharField(min_length=8)
 
     def validate_password(self, value: str) -> str:
         validate_password(value)
