@@ -166,6 +166,19 @@ TEMPLATES = [
 ]
 
 # ==============================================================================
+# PASSWORD VALIDATION
+# ==============================================================================
+_CUSTOM_PATH = "api.user.validators"
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": f"{_CUSTOM_PATH}.CustomMinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": f"{_CUSTOM_PATH}.CustomCommonPasswordValidator"},
+    {"NAME": f"{_CUSTOM_PATH}.CustomNumericPasswordValidator"},
+]
+# ==============================================================================
 # LOGGING
 # ==============================================================================
 LOGGING = {
