@@ -6,10 +6,7 @@ from drf_spectacular.utils import (
 
 PASSWORD_RESET_RESPONSES_PUT = {
     200: OpenApiResponse(description="Password updated successfully."),
-    400: OpenApiResponse(
-        description="Bad Request: Missing fields or\
-                password fails validation rules."
-    ),
+    400: OpenApiResponse(description="Bad Request: Fails validation rules."),
     404: OpenApiResponse(
         description="Not Found: The OTC is invalid, expired,\
                 or the user no longer exists."
