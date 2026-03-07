@@ -41,7 +41,9 @@ def create_item(inventory_id: UUID, name, price, stock):
         raise Exception("Error creating inventory item") from e
 
 
-def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
+def adjust_stock(
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int
+):
     """
     Adjusts stock for an inventory item.
     direction: "increase" or "decrease"
@@ -75,7 +77,7 @@ def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
         raise LookupError("Item not found") from err
 
 
-def update_item(item_id: int, name: str, price: int):
+def update_item(item_id: UUID, name: str, price: int):
     """
     Updates item fields (name, price) only. Stock is not changed here.
     """

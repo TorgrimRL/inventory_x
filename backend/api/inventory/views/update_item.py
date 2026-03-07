@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, views
 from rest_framework.permissions import IsAuthenticated
@@ -18,7 +20,7 @@ class UpdateItemView(views.APIView):
         summary="Update item details",
         responses=UPDATE_ITEM_RESPONSES,
     )
-    def patch(self, request: Request, item_id: int) -> Response:
+    def patch(self, request: Request, item_id: UUID) -> Response:
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
