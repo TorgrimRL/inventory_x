@@ -141,6 +141,7 @@ class StockLog(models.Model):
     # Item State
     item_id = models.IntegerField(null=True, blank=True)
     item_name = models.CharField(max_length=255, null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True)
 
     # Action Details
     action = models.CharField(max_length=256)

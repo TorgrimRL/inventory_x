@@ -4,10 +4,6 @@ from api.inventory.models import StockLog
 
 
 def audit_logger(action_name):
-    """
-    Decorator to automatically log inventory actions to the StockLog table.
-    """
-
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -19,22 +15,26 @@ def audit_logger(action_name):
                 user = None
 
             p_name = user.display_name if user else "System"
-
-            # Extract Item Details
             inv_id = kwargs.get("inventory_id")
             item_id = kwargs.get("item_id")
-            item_name = kwargs.get("name")
 
             current_stock = None
+            item_name = None
+            price = None
+
             if result:
                 if isinstance(result, dict):
-                    current_stock = result.get("stock")
+                    inv_id = inv_id or result.get("inventory_id")
                     item_id = item_id or result.get("id")
-                    item_name = item_name or result.get("name")
+                    item_name = result.get("name")
+                    current_stock = result.get("stock")
+                    price = result.get("price")
                 else:
-                    current_stock = getattr(result, "stock", None)
+                    inv_id = inv_id or getattr(result, "inventory_id", None)
                     item_id = item_id or getattr(result, "id", None)
-                    item_name = item_name or getattr(result, "name", None)
+                    item_name = getattr(result, "name", None)
+                    current_stock = getattr(result, "stock", None)
+                    price = getattr(result, "price", None)
 
             StockLog.objects.create(
                 inventory_id=inv_id,
@@ -44,6 +44,7 @@ def audit_logger(action_name):
                 amount=kwargs.get("amount"),
                 direction=kwargs.get("direction"),
                 current_stock=current_stock,
+                price=price,
                 performed_by=user,
                 performed_by_name=p_name,
             )
