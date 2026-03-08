@@ -1,8 +1,6 @@
 from drf_spectacular.utils import OpenApiResponse
 
-from api.user.serializers.common import (
-    ErrorResponseSerializer,
-)
+from api.common.serializers import ErrorResponseSerializer
 from api.user.serializers.login import (
     LoginResponseSerializer,
     LoginValidationErrorSerializer,

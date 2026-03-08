@@ -1,9 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse
 
-from api.user.serializers.common import ErrorResponseSerializer
-from api.user.serializers.verify import (
-    VerifySessionResponseSerializer,
-)
+from api.common.serializers import ErrorResponseSerializer
+from api.user.serializers.verify import VerifySessionResponseSerializer
 
 VERIFY_RESPONSES = {
     200: VerifySessionResponseSerializer,

@@ -98,3 +98,19 @@ export async function setActiveInventory(
   });
   return res.data as ActiveInventory;
 }
+
+export async function updateItem(
+  itemId: number | string,
+  payload: { name: string; price: number },
+) {
+  const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
+  return res.data;
+}
+
+const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
+/**
+ * Invites a user to the currently active inventory via email.
+ */
+export async function inviteUser(email: string): Promise<void> {
+  await apiClient.post(INVITE_ENDPOINT, { email });
+}
