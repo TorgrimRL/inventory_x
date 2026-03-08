@@ -3,6 +3,7 @@ from uuid import UUID
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
+from api.inventory.decorators import audit_logger
 from api.user.models import User
 
 from .models import Inventory, InventoryItem, InventoryMembership
@@ -23,6 +24,7 @@ def get_all_items(inventory_id: UUID):
     return list(items)
 
 
+@audit_logger("create_item")
 def create_item(inventory_id: UUID, name, price, stock):
     """
     Creates a new inventory item.
@@ -44,6 +46,7 @@ def create_item(inventory_id: UUID, name, price, stock):
         raise Exception("Error creating inventory item") from e
 
 
+@audit_logger("adjust_stock")
 def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
     """
     Adjusts stock for an inventory item.
@@ -78,6 +81,7 @@ def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
         raise LookupError("Item not found") from err
 
 
+@audit_logger("update_item")
 def update_item(item_id: int, name: str, price: int):
     """
     Updates item fields (name, price) only. Stock is not changed here.

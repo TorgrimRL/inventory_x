@@ -125,3 +125,27 @@ class InventoryMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.inventory} as {self.role}"
+
+
+class StockLog(models.Model):
+    """
+    Log any action within Inventory table.
+    """
+
+    inventory = models.ForeignKey(
+        "Inventory",
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+    item_id = models.IntegerField(null=True, blank=True)
+    action = models.CharField(max_length=256)
+    changes = models.JSONField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    class Meta:
+        ordering = ["-timestamp"]
