@@ -5,8 +5,6 @@ from django.db import transaction
 from api.inventory.decorators import audit_logger
 from api.inventory.models import InventoryItem
 
-from .models import InventoryItem
-
 
 def get_all_items(inventory_id: UUID):
     """
@@ -24,7 +22,7 @@ def get_all_items(inventory_id: UUID):
 
 
 @audit_logger("create_item")
-def create_item(inventory_id: UUID, name, price, stock):
+def create_item(inventory_id: UUID, name, price, stock, request=None):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
@@ -46,7 +44,9 @@ def create_item(inventory_id: UUID, name, price, stock):
 
 
 @audit_logger("adjust_stock")
-def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
+def adjust_stock(
+    inventory_id: UUID, item_id: int, direction: str, amount: int, request=None
+):
     """
     Adjusts stock for an inventory item.
     direction: "increase" or "decrease"
@@ -81,7 +81,7 @@ def adjust_stock(inventory_id: UUID, item_id: int, direction: str, amount: int):
 
 
 @audit_logger("update_item")
-def update_item(item_id: int, name: str, price: int):
+def update_item(item_id: int, name: str, price: int, request=None):
     """
     Updates item fields (name, price) only. Stock is not changed here.
     """

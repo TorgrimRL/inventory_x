@@ -40,6 +40,7 @@ class AdjustStockView(APIView):
                 item_id=item_id,
                 direction=serializer.validated_data["direction"],
                 amount=serializer.validated_data["amount"],
+                request=request,
             )
         except LookupError as exc:
             return Response(

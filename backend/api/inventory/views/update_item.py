@@ -32,6 +32,7 @@ class UpdateItemView(views.APIView):
                 item_id=item_id,
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
+                request=request,
             )
         except LookupError as exc:
             return Response(
