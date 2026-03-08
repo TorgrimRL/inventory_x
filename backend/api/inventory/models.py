@@ -129,23 +129,30 @@ class InventoryMembership(models.Model):
 
 class StockLog(models.Model):
     """
-    Log any action within Inventory table.
+    Audit log for actions performed on Inventory items.
     """
 
+    # Context
     inventory = models.ForeignKey(
-        "Inventory",
-        on_delete=models.CASCADE,
-        editable=False,
+        "Inventory", on_delete=models.CASCADE, editable=False
     )
-    item_id = models.IntegerField(null=True, blank=True)
-    action = models.CharField(max_length=256)
-    changes = models.JSONField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Item State
+    item_id = models.IntegerField(null=True, blank=True)
+    item_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # Action Details
+    action = models.CharField(max_length=256)
+    amount = models.IntegerField(null=True, blank=True)
+    direction = models.CharField(max_length=50, null=True, blank=True)
+    current_stock = models.IntegerField(null=True, blank=True)
+
+    # Actor Details
     performed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
     )
+    performed_by_name = models.CharField(max_length=80, null=True, blank=True)
 
     class Meta:
         ordering = ["-timestamp"]
