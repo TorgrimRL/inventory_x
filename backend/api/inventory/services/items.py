@@ -93,3 +93,14 @@ def update_item(item_id: UUID, name: str, price: int):
 
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err
+
+
+def delete_item(inventory_id: UUID, item_id: UUID) -> None:
+    """
+    Deletes an inventory item belonging to the active inventory.
+    """
+    try:
+        item = InventoryItem.objects.get(id=item_id, inventory_id=inventory_id)
+        item.delete()
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err

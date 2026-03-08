@@ -297,7 +297,7 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
         self.url = reverse(
-            "update-item",
+            "item-detail",
             args=[self.item.id],
         )
 
@@ -366,7 +366,7 @@ class UpdateItemViewTests(BaseAPITestCase):
 
     def test_update_item_not_found_returns_404(self):
         non_existent_item_id = uuid.uuid4()
-        url = reverse("update-item", args=[non_existent_item_id])
+        url = reverse("item-detail", args=[non_existent_item_id])
 
         response = self.client.patch(
             url,
