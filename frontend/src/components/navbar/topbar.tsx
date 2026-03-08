@@ -15,6 +15,7 @@ export default function Navbar() {
   const authNavItems = [
     ["Storage", PATHS.INVENTORIES],
     ["Dashboard", PATHS.DASHBOARD],
+    ["Items", PATHS.ADD_ITEM]
   ];
 
   const publicNavItems = [
