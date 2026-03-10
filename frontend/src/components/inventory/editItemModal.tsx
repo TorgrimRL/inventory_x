@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -12,7 +13,11 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
-import { adjustStock, updateItem } from "../../services/inventoryService";
+import {
+  adjustStock,
+  deleteItem,
+  updateItem,
+} from "../../services/inventoryService";
 
 type Props = {
   open: boolean;
@@ -33,6 +38,8 @@ type Props = {
     price: number;
   }) => void;
   onStockUpdated: (newStock: number) => void;
+
+  onItemDeleted: (id: number | string) => void;
 };
 
 function extractError(err: any, fallback: string) {
@@ -62,6 +69,7 @@ export default function EditItemModal({
   onClose,
   onItemUpdated,
   onStockUpdated,
+  onItemDeleted,
 }: Props) {
   const [name, setName] = useState(initialName);
   const [price, setPrice] = useState(String(initialPrice));
@@ -142,6 +150,33 @@ export default function EditItemModal({
       onClose();
     } catch (err: any) {
       setError(extractError(err, "Failed to save changes."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this item? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+    try {
+      await deleteItem(itemId);
+
+      if (typeof onItemDeleted === "function") {
+        onItemDeleted(itemId);
+      }
+
+      onClose();
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      setError(extractError(err, "Failed to delete item."));
     } finally {
       setSaving(false);
     }
@@ -235,22 +270,32 @@ export default function EditItemModal({
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} color="inherit" disabled={saving}>
-          Cancel
-        </Button>
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
+        <Box>
+          {canEditDetails && (
+            <Button color="error" onClick={handleDelete} disabled={saving}>
+              Delete Item
+            </Button>
+          )}
+        </Box>
 
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          disabled={
-            saving ||
-            amountIsInvalid ||
-            (canEditDetails && (nameIsInvalid || priceIsInvalid))
-          }
-        >
-          {saving ? "Saving…" : "Save"}
-        </Button>
+        <Box>
+          <Button onClick={handleClose} color="inherit" disabled={saving}>
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={
+              saving ||
+              amountIsInvalid ||
+              (canEditDetails && (nameIsInvalid || priceIsInvalid))
+            }
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );

@@ -107,6 +107,11 @@ export async function updateItem(
   return res.data;
 }
 
+export async function deleteItem(itemId: number | string) {
+  const res = await apiClient.delete(`/api/inventory/${itemId}/`);
+  return res.data;
+}
+
 const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
 /**
  * Invites a user to the currently active inventory via email.

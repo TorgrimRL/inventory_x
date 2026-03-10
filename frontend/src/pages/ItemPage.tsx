@@ -577,6 +577,14 @@ export default function ItemPage() {
             setSnackMessage("Stock updated");
             setSnackOpen(true);
           }}
+          onItemDeleted={(deletedId) => {
+            setItems((prev) => prev.filter((it) => it.id !== deletedId));
+
+            setSelectedItem(null);
+            setSnackMessage("Item deleted");
+            setSnackOpen(true);
+            setEditOpen(false);
+          }}
         />
       )}
 
