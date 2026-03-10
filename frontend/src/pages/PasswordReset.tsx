@@ -8,12 +8,12 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token"); // Extracts ?token=... from URL
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -42,34 +42,34 @@ export default function ResetPassword() {
       setMessage("Password successfully updated! Redirecting to login...");
       setPassword("");
       setConfirmPassword("");
-    } catch {
-      setError("Link expired or invalid. Please request a new reset link.");
-    } finally {
+
       setTimeout(() => {
         navigate(PATHS.LOGIN);
       }, 2000);
+
+    } catch {
+      setError("Link expired or invalid. Please request a new reset link.");
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const verifyUser = async () => {
-      if (!token) {
-        setError("Link expired or invalid. Redirecting...");
-        setTimeout(() => {
-          navigate(PATHS.PASSWORD_FORGOT);
-        }, 5000);
-      }
-    };
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    verifyUser();
+    if (!token) {
+      setError("Link expired or invalid. Redirecting...");
+      timeoutId = setTimeout(() => {
+        navigate(PATHS.PASSWORD_FORGOT);
+      }, 5000);
+    }
+
+    return () => clearTimeout(timeoutId);
   }, [navigate, token]);
 
   return (
     <div style={styles.container}>
-      <div
-        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
-      >
+      <div style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}>
         <h2>Set New Password</h2>
 
         <form onSubmit={handleSubmit}>
@@ -79,6 +79,7 @@ export default function ResetPassword() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={styles.input}
+            autoComplete="new-password"
             required
           />
 
@@ -88,13 +89,14 @@ export default function ResetPassword() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             style={styles.input}
+            autoComplete="new-password"
             required
           />
 
           <button
             type="submit"
             style={styles.button}
-            disabled={loading || !password}
+            disabled={loading || !password || !token}
           >
             {loading ? "Updating..." : "Reset Password"}
           </button>
