@@ -46,7 +46,6 @@ export default function ResetPassword() {
       setTimeout(() => {
         navigate(PATHS.LOGIN);
       }, 2000);
-
     } catch {
       setError("Link expired or invalid. Please request a new reset link.");
     } finally {
@@ -69,7 +68,9 @@ export default function ResetPassword() {
 
   return (
     <div style={styles.container}>
-      <div style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}>
+      <div
+        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
+      >
         <h2>Set New Password</h2>
 
         <form onSubmit={handleSubmit}>
