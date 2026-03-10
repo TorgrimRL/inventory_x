@@ -24,6 +24,6 @@ describe("Navbar Component", () => {
     );
 
     await waitFor(() => expect(checkSession).toHaveBeenCalled());
-    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(screen.getByRole("banner")).toBeInTheDocument();
   });
 });

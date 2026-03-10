@@ -29,13 +29,13 @@ describe("Logout Test", () => {
     expect(document.cookie).toContain("inventoryToken");
 
     render(<Dashboard />);
-    const logoutBtn = await screen.findByRole("button", { name: /logout/i });
+    const logoutBtn = await screen.findByRole("button", { name: /log out/i });
     fireEvent.click(logoutBtn);
 
     // VERIFICATION
     await waitFor(() => {
       expect(document.cookie).toBe("");
     });
-    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
+    expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN, { replace: true });
   });
 });
