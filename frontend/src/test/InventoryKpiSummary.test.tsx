@@ -56,7 +56,9 @@ describe("InventoryKpiSummary", () => {
       />,
     );
 
-    expect(screen.getByText(/information based on filter/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/information based on filter/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/340\s*kr/i)).toBeInTheDocument();
     expect(screen.getByText(/90\s*kr/i)).toBeInTheDocument();
     expect(screen.getByText(/35\s*kr/i)).toBeInTheDocument();
