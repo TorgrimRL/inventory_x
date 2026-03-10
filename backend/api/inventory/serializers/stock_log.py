@@ -6,3 +6,7 @@ class StockLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockLog
         exclude = ["id", "inventory", "performed_by"]
+
+
+class StockLogSerializerList(serializers.ListSerializer):
+    child = StockLogSerializer()

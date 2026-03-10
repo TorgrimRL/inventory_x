@@ -1,13 +1,15 @@
 from api.common.serializers import ErrorResponseSerializer
-from api.inventory.serializers.stock_log import StockLogSerializer
+from api.inventory.serializers.stock_log import (
+    StockLogSerializerList,
+)
 from api.user.contracts.password_reset import OpenApiResponse
 
 STOCK_LOG_RESPONSES = {
     200: OpenApiResponse(
-        response=StockLogSerializer(many=True),
+        response=StockLogSerializerList,
         description="Successfully retrieved the list of stock logs for the item.",
     ),
-    401: OpenApiResponse(
+    403: OpenApiResponse(
         response=ErrorResponseSerializer,
         description="Authentication credentials were not provided.",
     ),
