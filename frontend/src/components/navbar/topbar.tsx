@@ -47,7 +47,6 @@ export default function Navbar() {
     ["Items", "/add_item"],
   ];
 
-  /* Verify session (runs once) */
   useEffect(() => {
     async function verifySession() {
       try {
@@ -193,26 +192,36 @@ export default function Navbar() {
                 )}
 
                 {location.pathname !== PATHS.REGISTRATION && (
-                  <Button
-                    component={RouterLink}
-                    to={PATHS.REGISTRATION}
-                    variant="contained"
-                    sx={{
-                      borderRadius: 2,
-                      fontWeight: 600,
-                      background: `linear-gradient(
+                  <>
+                    <Button
+                      component={RouterLink}
+                      to={PATHS.REGISTRATION}
+                      variant="contained"
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        background: `linear-gradient(
                         90deg,
                         ${theme.palette.secondary.main},
                         ${theme.palette.primary.main}
                       )`,
-                      color:
-                        theme.palette.mode === "dark"
-                          ? "#0f0f0f"
-                          : theme.palette.background.default,
-                    }}
-                  >
-                    Sign Up
-                  </Button>
+                        color:
+                          theme.palette.mode === "dark"
+                            ? "#0f0f0f"
+                            : theme.palette.background.default,
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+
+                    <Button
+                      component={RouterLink}
+                      to={PATHS.PASSWORD_FORGOT}
+                      variant="text"
+                    >
+                      Forgot password
+                    </Button>
+                  </>
                 )}
               </>
             )}
@@ -275,7 +284,7 @@ export default function Navbar() {
                     )),
 
                     <MenuItem
-                      key="log out"
+                      key="logout"
                       onClick={() => {
                         closeMobileMenu();
                       }}
@@ -302,6 +311,16 @@ export default function Navbar() {
                       }}
                     >
                       Sign Up
+                    </MenuItem>,
+
+                    <MenuItem
+                      key="forgot"
+                      onClick={() => {
+                        navigate(PATHS.PASSWORD_FORGOT);
+                        closeMobileMenu();
+                      }}
+                    >
+                      Forgot password
                     </MenuItem>,
                   ]}
             </Menu>

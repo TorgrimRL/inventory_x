@@ -1,0 +1,257 @@
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+
+import { adjustStock, updateItem } from "../../services/inventoryService";
+
+type Props = {
+  open: boolean;
+  itemId: number | string;
+
+  initialName: string;
+  initialPrice: number;
+  currentStock: number;
+
+  // owner => true, employee => false
+  canEditDetails: boolean;
+
+  onClose: () => void;
+
+  onItemUpdated: (updated: {
+    id: number | string;
+    name: string;
+    price: number;
+  }) => void;
+  onStockUpdated: (newStock: number) => void;
+};
+
+function extractError(err: any, fallback: string) {
+  const data = err?.response?.data;
+
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+
+  if (typeof data.detail === "string") return data.detail;
+  if (typeof data.message === "string") return data.message;
+
+  const nonField = data?.detail?.non_field_errors;
+  if (Array.isArray(nonField) && nonField.length > 0) {
+    return nonField.join(" ");
+  }
+
+  return fallback;
+}
+
+export default function EditItemModal({
+  open,
+  itemId,
+  initialName,
+  initialPrice,
+  currentStock,
+  canEditDetails,
+  onClose,
+  onItemUpdated,
+  onStockUpdated,
+}: Props) {
+  const [name, setName] = useState(initialName);
+  const [price, setPrice] = useState(String(initialPrice));
+
+  const [amount, setAmount] = useState<string>("0");
+  const [direction, setDirection] = useState<"increase" | "decrease">(
+    "increase",
+  );
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(initialName);
+    setPrice(String(initialPrice));
+    setAmount("0");
+    setDirection("increase");
+    setError(null);
+  }, [open, initialName, initialPrice]);
+
+  const priceNumber = useMemo(() => Number(price), [price]);
+  const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+  const nameIsInvalid = name.trim().length === 0;
+
+  const amountNumber = useMemo(() => Number(amount), [amount]);
+  const wantsStockChange = Number.isFinite(amountNumber) && amountNumber > 0;
+  const amountIsInvalid =
+    wantsStockChange && (!Number.isInteger(amountNumber) || amountNumber <= 0);
+
+  function handleClose() {
+    if (!saving) {
+      setError(null);
+      onClose();
+    }
+  }
+
+  async function handleSave() {
+    setError(null);
+
+    if (canEditDetails) {
+      if (nameIsInvalid) {
+        setError("Name is required.");
+        return;
+      }
+      if (priceIsInvalid) {
+        setError("Price must be a non-negative number.");
+        return;
+      }
+    }
+
+    if (amountIsInvalid) {
+      setError("Amount must be a positive whole number.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // 1) Update name/price (only if owner AND changed)
+      if (canEditDetails) {
+        const trimmed = name.trim();
+        const changed =
+          trimmed !== initialName ||
+          Number(priceNumber) !== Number(initialPrice);
+
+        if (changed) {
+          await updateItem(itemId, { name: trimmed, price: priceNumber });
+          onItemUpdated({ id: itemId, name: trimmed, price: priceNumber });
+        }
+      }
+
+      // 2) Adjust stock (only if amount > 0)
+      if (wantsStockChange) {
+        const res = await adjustStock(itemId, direction, amountNumber);
+        onStockUpdated(res.stock);
+      }
+
+      onClose();
+    } catch (err: any) {
+      setError(extractError(err, "Failed to save changes."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle>Edit item</DialogTitle>
+
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+
+          {!canEditDetails && (
+            <Alert severity="info">
+              Only owners can edit name and price. Stock can still be adjusted.
+            </Alert>
+          )}
+
+          <Typography variant="subtitle1">Details</Typography>
+
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={saving || !canEditDetails}
+            fullWidth
+            required
+            error={canEditDetails && nameIsInvalid}
+            helperText={
+              canEditDetails && nameIsInvalid ? "Name is required" : " "
+            }
+          />
+
+          <TextField
+            label="Price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            type="number"
+            inputProps={{ step: "0.01", min: 0 }}
+            disabled={saving || !canEditDetails}
+            fullWidth
+            required
+            error={canEditDetails && priceIsInvalid}
+            helperText={
+              canEditDetails && priceIsInvalid
+                ? "Price cannot be negative"
+                : " "
+            }
+          />
+
+          <Divider />
+
+          <Typography variant="subtitle1">Stock</Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            Current stock: {currentStock}
+          </Typography>
+
+          <TextField
+            label="Amount (0 = no change)"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            inputProps={{ min: 0, step: 1 }}
+            disabled={saving}
+            fullWidth
+            error={amountIsInvalid}
+            helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
+          />
+
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant={direction === "increase" ? "contained" : "outlined"}
+              onClick={() => setDirection("increase")}
+              disabled={saving}
+              fullWidth
+            >
+              Increase
+            </Button>
+
+            <Button
+              variant={direction === "decrease" ? "contained" : "outlined"}
+              onClick={() => setDirection("decrease")}
+              disabled={saving}
+              fullWidth
+            >
+              Decrease
+            </Button>
+          </Stack>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} color="inherit" disabled={saving}>
+          Cancel
+        </Button>
+
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          disabled={
+            saving ||
+            amountIsInvalid ||
+            (canEditDetails && (nameIsInvalid || priceIsInvalid))
+          }
+        >
+          {saving ? "Saving…" : "Save"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

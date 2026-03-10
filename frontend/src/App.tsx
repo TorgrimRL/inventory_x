@@ -15,6 +15,8 @@ import InventoriesPage from "./pages/inventories.tsx";
 import InviteEmployee from "./pages/InviteEmployee";
 import ItemPage from "./pages/ItemPage";
 import LandingPage from "./pages/landingPage";
+import ForgotPassword from "./pages/PasswordForgot.tsx";
+import ResetPassword from "./pages/PasswordReset.tsx";
 import AuthGuardLayout from "./services/authguard.tsx";
 import { LightTheme } from "./theme";
 
@@ -26,6 +28,8 @@ export const PATHS = {
   INVENTORIES: "/inventories",
   INVENTORIES_NEW: "/inventories/new",
   ADD_ITEM: "/add_item",
+  PASSWORD_FORGOT: "/password_forgot",
+  PASSWORD_RESET: "/password_reset",
   INVITE_EMPLOYEE: "/invite_employee",
 } as const;
 
@@ -45,6 +49,9 @@ function App() {
         />
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
+        <Route path={PATHS.PASSWORD_RESET} element={<ResetPassword />} />
+        <Route path={PATHS.PASSWORD_FORGOT} element={<ForgotPassword />} />
+
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 
         {/* --- PROTECTED ROUTES --- */}

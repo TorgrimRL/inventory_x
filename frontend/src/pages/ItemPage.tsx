@@ -28,9 +28,10 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
-import AdjustStockModal from "../components/inventory/adjustStockModal";
+import EditItemModal from "../components/inventory/editItemModal";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ApiClient from "../services/apiClient.ts";
+import { getActiveInventory } from "../services/inventoryService";
 
 type InventoryItem = {
   id: number | string;
@@ -90,11 +91,13 @@ export default function ItemPage() {
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
 
-  const [adjustOpen, setAdjustOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
+
+  const [canEditDetails, setCanEditDetails] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<"name" | "stock" | "price">(
@@ -119,8 +122,18 @@ export default function ItemPage() {
     }
   }
 
+  async function loadRole() {
+    try {
+      const active = await getActiveInventory();
+      setCanEditDetails(active?.role === "owner");
+    } catch {
+      setCanEditDetails(false);
+    }
+  }
+
   useEffect(() => {
     loadItems();
+    loadRole();
   }, []);
 
   function openDialog() {
@@ -132,27 +145,13 @@ export default function ItemPage() {
     if (!saving) setOpen(false);
   }
 
-  function openAdjustStock(item: InventoryItem) {
+  function openEditDetails(item: InventoryItem) {
     setSelectedItem(item);
-    setAdjustOpen(true);
+    setEditOpen(true);
   }
 
-  function closeAdjustStock() {
-    setAdjustOpen(false);
-    setSelectedItem(null);
-  }
-
-  function handleStockUpdated(newStock: number) {
-    if (!selectedItem) return;
-
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === selectedItem.id ? { ...item, stock: newStock } : item,
-      ),
-    );
-
-    setSnackMessage("Stock updated");
-    setSnackOpen(true);
+  function closeEditDetails() {
+    setEditOpen(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -174,13 +173,13 @@ export default function ItemPage() {
     };
 
     try {
-      await ApiClient.post("/api/inventory/", payload);
+      const res = await ApiClient.post("/api/inventory/", payload);
+      const created = res.data as InventoryItem;
 
       setItems((prev) => [
         ...prev,
         {
-          ...payload,
-          id: Date.now(),
+          ...created,
           order_id: Math.random().toString(),
         },
       ]);
@@ -455,7 +454,7 @@ export default function ItemPage() {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => openAdjustStock(item)}
+                            onClick={() => openEditDetails(item)}
                           >
                             Edit
                           </Button>
@@ -544,13 +543,40 @@ export default function ItemPage() {
       </Dialog>
 
       {selectedItem && (
-        <AdjustStockModal
-          open={adjustOpen}
+        <EditItemModal
+          open={editOpen}
           itemId={selectedItem.id}
-          itemName={selectedItem.name}
+          initialName={selectedItem.name}
+          initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
-          onClose={closeAdjustStock}
-          onStockUpdated={handleStockUpdated}
+          canEditDetails={canEditDetails}
+          onClose={closeEditDetails}
+          onItemUpdated={(updated: {
+            id: number | string;
+            name: string;
+            price: number;
+          }) => {
+            setItems((prev) =>
+              prev.map((it) =>
+                it.id === updated.id
+                  ? { ...it, name: updated.name, price: updated.price }
+                  : it,
+              ),
+            );
+
+            setSnackMessage("Item updated");
+            setSnackOpen(true);
+          }}
+          onStockUpdated={(newStock: number) => {
+            setItems((prev) =>
+              prev.map((it) =>
+                it.id === selectedItem.id ? { ...it, stock: newStock } : it,
+              ),
+            );
+
+            setSnackMessage("Stock updated");
+            setSnackOpen(true);
+          }}
         />
       )}
 
