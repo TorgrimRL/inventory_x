@@ -4,11 +4,6 @@ from api.inventory.models import InventoryMembership
 def remove_member(request_user, inventory, membership_id):
     """
     Removes an employee membership from the given inventory.
-
-    Raises:
-        LookupError: membership not found
-        PermissionError: user is not allowed
-        ValueError: invalid role removal
     """
 
     try:
