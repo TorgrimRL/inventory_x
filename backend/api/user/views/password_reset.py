@@ -2,7 +2,6 @@ import logging
 import secrets
 
 from adrf.views import APIView
-from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.mail import send_mail
@@ -36,16 +35,16 @@ class PasswordResetView(APIView):
         responses=PASSWORD_RESET_RESPONSES_POST,
         parameters=PASSWORD_RESET_PARAMS_POST,
     )
-    async def post(self, request: Request) -> Response:
+    def post(self, request: Request) -> Response:
         # Validating email exists
         email = request.query_params.get("email")
         if not email:
             return Response(status=400)
 
-        elif not await User.objects.filter(email=email).aexists():
+        elif not User.objects.filter(email=email).exists():
             return Response(status=200)
 
-        return await self.__send_otc_to(email)
+        return self.__send_otc_to(email)
 
     @extend_schema(
         summary="Password reset",
@@ -53,7 +52,7 @@ class PasswordResetView(APIView):
         responses=PASSWORD_RESET_RESPONSES_PUT,
         parameters=None,
     )
-    async def put(self, request: Request) -> Response:
+    def put(self, request: Request) -> Response:
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -65,24 +64,24 @@ class PasswordResetView(APIView):
         new_password = serializer.validated_data["NEW_PASSWORD"]
 
         try:
-            user_mail = await cache.aget(otc)
-            user = await User.objects.aget(email=user_mail)
+            user_mail = cache.get(otc)
+            user = User.objects.get(email=user_mail)
             user.set_password(new_password)
-            await user.asave()
-            await sync_to_async(cache.delete)(otc)
+            user.save()
+            cache.delete(otc)
 
             return Response(status=200)
 
         except User.DoesNotExist:
             return Response(status=404)
 
-    async def __send_otc_to(self, mail: str) -> Response:
+    def __send_otc_to(self, mail: str) -> Response:
         """
         PRIVATE METHOD:
         send reset link with one time use code.
         """
         otc = secrets.token_hex(32)  # 32 bytes
-        await cache.aset(otc, mail, timeout=60 * 5)  # 5min lifetime.
+        cache.set(otc, mail, timeout=60 * 5)  # 5min lifetime.
         reset_link = f"{settings.HOST_ENDPOINT}/password_reset?token={otc}"
 
         mail_content = render_to_string(
@@ -90,10 +89,8 @@ class PasswordResetView(APIView):
         )
         logging.debug(mail_content)
 
-        # Spawn a new thread to process the mailing.
-        async_send_mail = sync_to_async(send_mail, thread_sensitive=False)
         try:
-            await async_send_mail(
+            send_mail(
                 subject="Reset Password",
                 message=mail_content,
                 from_email=settings.EMAIL_HOST_USER,
