@@ -1,11 +1,13 @@
 from uuid import UUID
 
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
+from api.inventory.contracts.list_members import LIST_MEMBERS_RESPONSES
 from api.inventory.models import Inventory, InventoryMembership
 from api.inventory.permissions import IsActiveInventoryOwner
 from api.inventory.serializers.inventory_member import InventoryMemberSerializer
@@ -18,6 +20,9 @@ class ListMembersView(APIView):
 
     permission_classes = (IsAuthenticated, IsActiveInventoryOwner)
 
+    @extend_schema(
+        responses=LIST_MEMBERS_RESPONSES,
+    )
     def get(self, request):
         inventory_id = request.session.get(SESSION_ACTIVE_INVENTORY_KEY)
 

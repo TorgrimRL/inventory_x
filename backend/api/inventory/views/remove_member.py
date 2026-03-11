@@ -38,12 +38,6 @@ class RemoveMemberView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        except PermissionError as e:
-            return Response(
-                {"detail": str(e)},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         except LookupError:
             return Response(
                 {"detail": "Membership not found"},
