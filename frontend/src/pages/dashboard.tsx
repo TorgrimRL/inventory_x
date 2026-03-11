@@ -46,13 +46,23 @@ const Dashboard = () => {
         </Typography>
 
         {active && active.role.toUpperCase() === "OWNER" && (
-          <Button
-            variant="contained"
-            component={Link}
-            to={PATHS.INVITE_EMPLOYEE}
-          >
-            + Invite Employee
-          </Button>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button
+              variant="contained"
+              component={Link}
+              to={PATHS.INVENTORY_MEMBERS}
+            >
+              Manage Members
+            </Button>
+
+            <Button
+              variant="outlined"
+              component={Link}
+              to={PATHS.INVITE_EMPLOYEE}
+            >
+              + Invite Employee
+            </Button>
+          </Box>
         )}
       </Box>
 
