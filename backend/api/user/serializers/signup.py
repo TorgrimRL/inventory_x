@@ -1,5 +1,6 @@
 from typing import Any, ClassVar
 
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from api.user.models import User
@@ -18,6 +19,10 @@ class SignupSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: Any) -> User:
         return User.objects.create_user(**validated_data)
+
+    def validate_password(self, value: str) -> str:
+        validate_password(value)
+        return value
 
 
 class SignupErrorDetailSerializer(serializers.Serializer):
