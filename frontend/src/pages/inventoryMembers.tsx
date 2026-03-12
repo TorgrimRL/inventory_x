@@ -201,12 +201,13 @@ export default function InventoryMembersPage() {
                         <TableCell>{normalizeRole(member.role)}</TableCell>
                         <TableCell align="right">
                           {removable ? (
-                            <IconButton
-                              aria-label={`Remove access for ${member.email}`}
-                              onClick={() => setSelectedMember(member)}
+                            <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setSelectedMember(member)}
                             >
-                              <DeleteOutlineIcon />
-                            </IconButton>
+                            Remove
+                            </Button>
                           ) : (
                             <Typography variant="body2" color="text.secondary">
                               {normalizeRole(member.role) === "OWNER"
