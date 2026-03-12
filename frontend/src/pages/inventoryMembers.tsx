@@ -237,9 +237,7 @@ export default function InventoryMembersPage() {
           open={Boolean(selectedMember)}
           onClose={() => !removing && setSelectedMember(null)}
         >
-          <DialogTitle>
-            Are you sure you want to remove employee access?
-          </DialogTitle>
+          <DialogTitle>Remove employee access?</DialogTitle>
           <DialogContent>
             <DialogContentText>
               {selectedMember?.email} will no longer have access to this
