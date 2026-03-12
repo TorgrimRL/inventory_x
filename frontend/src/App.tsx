@@ -39,14 +39,7 @@ function App() {
       <Navbar />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
-        <Route
-          path={PATHS.HOME}
-          element={
-            <ThemeProvider theme={LightTheme}>
-              <LandingPage />
-            </ThemeProvider>
-          }
-        />
+        <Route path={PATHS.HOME} element={<LandingPage />} />
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
         <Route path={PATHS.PASSWORD_RESET} element={<ResetPassword />} />

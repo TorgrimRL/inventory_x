@@ -5,28 +5,30 @@ axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { LightTheme, DarkTheme } from "./theme";
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: "#0b1437" },
-  },
-  shape: { borderRadius: 14 },
-});
+function Root() {
+  const [mode] = React.useState<"light" | "dark">("light");
+  const theme = mode === "light" ? LightTheme : DarkTheme;
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </ThemeProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Root />
   </React.StrictMode>,
 );
