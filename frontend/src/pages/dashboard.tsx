@@ -48,7 +48,7 @@ const Dashboard = () => {
         {active && active.role.toUpperCase() === "OWNER" && (
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button
-              variant="contained"
+              variant="outlined"
               component={Link}
               to={PATHS.INVENTORY_MEMBERS}
             >
