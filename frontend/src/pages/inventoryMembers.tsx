@@ -1,4 +1,3 @@
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
   Alert,
   Box,
@@ -10,7 +9,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  IconButton,
   Paper,
   Snackbar,
   Stack,
@@ -162,11 +160,11 @@ export default function InventoryMembersPage() {
             <Stack direction="row" spacing={1.5}>
               {isOwner && (
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   component={Link}
                   to={PATHS.INVITE_EMPLOYEE}
                 >
-                  Invite employee
+                  + Invite employee
                 </Button>
               )}
 
@@ -202,16 +200,16 @@ export default function InventoryMembersPage() {
                         <TableCell align="right">
                           {removable ? (
                             <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => setSelectedMember(member)}
+                              variant="outlined"
+                              size="small"
+                              onClick={() => setSelectedMember(member)}
                             >
-                            Remove
+                              Remove access
                             </Button>
                           ) : (
                             <Typography variant="body2" color="text.secondary">
                               {normalizeRole(member.role) === "OWNER"
-                                ? "Cannot be removed"
+                                ? "Access cannot be removed"
                                 : "No access"}
                             </Typography>
                           )}
@@ -239,11 +237,13 @@ export default function InventoryMembersPage() {
           open={Boolean(selectedMember)}
           onClose={() => !removing && setSelectedMember(null)}
         >
-          <DialogTitle>Remove employee access</DialogTitle>
+          <DialogTitle>
+            Are you sure you want to remove employee access?
+          </DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Remove access for {selectedMember?.email} from the active
-              inventory?
+              {selectedMember?.email} will no longer have access to this
+              inventory.
             </DialogContentText>
           </DialogContent>
           <DialogActions>

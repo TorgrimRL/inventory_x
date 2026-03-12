@@ -90,7 +90,7 @@ describe("InventoryMembersPage", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /remove access for alice@example.com/i,
+        name: /remove/i,
       }),
     );
 
@@ -216,7 +216,7 @@ describe("InventoryMembersPage", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: /remove access for alice@example.com/i,
+        name: /remove/i,
       }),
     );
 
