@@ -11,9 +11,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
-import { LightTheme, DarkTheme } from "./theme";
+import { DarkTheme, LightTheme } from "./theme";
 
-function Root() {
+export function Root() {
   const [mode] = React.useState<"light" | "dark">("light");
   const theme = mode === "light" ? LightTheme : DarkTheme;
 

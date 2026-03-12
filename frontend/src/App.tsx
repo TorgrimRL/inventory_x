@@ -1,7 +1,6 @@
 import "./App.css";
 import "./components/utils/buttons.css";
 
-import { ThemeProvider } from "@mui/material/styles";
 import { Route, Routes } from "react-router-dom";
 
 // PAGES
@@ -18,7 +17,6 @@ import LandingPage from "./pages/landingPage";
 import ForgotPassword from "./pages/PasswordForgot.tsx";
 import ResetPassword from "./pages/PasswordReset.tsx";
 import AuthGuardLayout from "./services/authguard.tsx";
-import { LightTheme } from "./theme";
 
 export const PATHS = {
   HOME: "/",
