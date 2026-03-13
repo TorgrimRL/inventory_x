@@ -6,7 +6,9 @@ from api.inventory.views.inventory import InventoryView
 from api.inventory.views.invite_user import InviteUserView
 from api.inventory.views.item_detail import ItemDetailView
 from api.inventory.views.list_inventories import ListInventoriesView
+from api.inventory.views.list_members import ListMembersView
 from api.inventory.views.register_inventory import RegisterInventoryView
+from api.inventory.views.remove_member import RemoveMemberView
 
 urlpatterns = [
     path("", InventoryView.as_view(), name="inventory"),
@@ -32,4 +34,14 @@ urlpatterns = [
         name="inventory-invite",
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
+    path(
+        "members/",
+        ListMembersView.as_view(),
+        name="inventory-members",
+    ),
+    path(
+        "members/<uuid:membership_id>/",
+        RemoveMemberView.as_view(),
+        name="remove-member",
+    ),
 ]
