@@ -23,7 +23,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PATHS } from "../App";
-import RequireActiveInventory from "../components/inventory/requireActiveInventory";
 import {
   type ActiveInventory,
   getActiveInventory,
@@ -136,143 +135,141 @@ export default function InventoryMembersPage() {
   }
 
   return (
-    <RequireActiveInventory>
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Stack spacing={3}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            spacing={2}
-          >
-            <Box>
-              <Typography variant="h4" fontWeight={800}>
-                Inventory Members
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Stack spacing={3}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={2}
+        >
+          <Box>
+            <Typography variant="h4" fontWeight={800}>
+              Inventory Members
+            </Typography>
+
+            {active && (
+              <Typography color="text.secondary" sx={{ mt: 1 }}>
+                Active inventory: {active.name}
               </Typography>
+            )}
+          </Box>
 
-              {active && (
-                <Typography color="text.secondary" sx={{ mt: 1 }}>
-                  Active inventory: {active.name}
-                </Typography>
-              )}
-            </Box>
-
-            <Stack direction="row" spacing={1.5}>
-              {isOwner && (
-                <Button
-                  variant="outlined"
-                  component={Link}
-                  to={PATHS.INVITE_EMPLOYEE}
-                >
-                  + Invite employee
-                </Button>
-              )}
-
-              <Button variant="outlined" component={Link} to={PATHS.DASHBOARD}>
-                Back to dashboard
+          <Stack direction="row" spacing={1.5}>
+            {isOwner && (
+              <Button
+                variant="outlined"
+                component={Link}
+                to={PATHS.INVITE_EMPLOYEE}
+              >
+                + Invite employee
               </Button>
-            </Stack>
+            )}
+
+            <Button variant="outlined" component={Link} to={PATHS.DASHBOARD}>
+              Back to dashboard
+            </Button>
           </Stack>
-
-          {loading && <Alert severity="info">Loading members...</Alert>}
-
-          {!loading && error && <Alert severity="error">{error}</Alert>}
-
-          {!loading && !error && (
-            <Paper variant="outlined">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {sortedMembers.map((member) => {
-                    const removable = canRemove(member);
-
-                    return (
-                      <TableRow key={member.id}>
-                        <TableCell>{member.email}</TableCell>
-                        <TableCell>{normalizeRole(member.role)}</TableCell>
-                        <TableCell align="right">
-                          {removable ? (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => setSelectedMember(member)}
-                            >
-                              Remove access
-                            </Button>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              {normalizeRole(member.role) === "OWNER"
-                                ? "Access cannot be removed"
-                                : "No access"}
-                            </Typography>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-
-                  {sortedMembers.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <Typography color="text.secondary">
-                          No members found.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Paper>
-          )}
         </Stack>
 
-        <Dialog
-          open={Boolean(selectedMember)}
-          onClose={() => !removing && setSelectedMember(null)}
-        >
-          <DialogTitle>Remove employee access?</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              {selectedMember?.email} will no longer have access to this
-              inventory.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setSelectedMember(null)}
-              disabled={removing}
-              color="inherit"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmRemove}
-              color="error"
-              variant="contained"
-              disabled={removing}
-            >
-              {removing ? <CircularProgress size={20} /> : "Remove"}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {loading && <Alert severity="info">Loading members...</Alert>}
 
-        <Snackbar
-          open={snackOpen}
-          autoHideDuration={3500}
-          onClose={() => setSnackOpen(false)}
-        >
-          <Alert severity={snackSeverity} onClose={() => setSnackOpen(false)}>
-            {snackMessage}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </RequireActiveInventory>
+        {!loading && error && <Alert severity="error">{error}</Alert>}
+
+        {!loading && !error && (
+          <Paper variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {sortedMembers.map((member) => {
+                  const removable = canRemove(member);
+
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>{normalizeRole(member.role)}</TableCell>
+                      <TableCell align="right">
+                        {removable ? (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setSelectedMember(member)}
+                          >
+                            Remove access
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            {normalizeRole(member.role) === "OWNER"
+                              ? "Access cannot be removed"
+                              : "Only owners can remove members"}
+                          </Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+
+                {sortedMembers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3}>
+                      <Typography color="text.secondary">
+                        No members found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Paper>
+        )}
+      </Stack>
+
+      <Dialog
+        open={Boolean(selectedMember)}
+        onClose={() => !removing && setSelectedMember(null)}
+      >
+        <DialogTitle>Remove employee access?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {selectedMember?.email} will no longer have access to this
+            inventory.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setSelectedMember(null)}
+            disabled={removing}
+            color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmRemove}
+            color="error"
+            variant="contained"
+            disabled={removing}
+          >
+            {removing ? <CircularProgress size={20} /> : "Remove"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={3500}
+        onClose={() => setSnackOpen(false)}
+      >
+        <Alert severity={snackSeverity} onClose={() => setSnackOpen(false)}>
+          {snackMessage}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 }

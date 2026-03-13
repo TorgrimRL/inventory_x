@@ -24,11 +24,6 @@ jest.mock("../App", () => ({
   },
 }));
 
-jest.mock("../components/inventory/requireActiveInventory", () => ({
-  __esModule: true,
-  default: ({ children }: any) => <>{children}</>,
-}));
-
 const mockNavigate = jest.fn();
 
 jest.mock("react-router-dom", () => ({
@@ -86,11 +81,15 @@ describe("InventoryMembersPage", () => {
 
     render(<InventoryMembersPage />);
 
-    expect(await screen.findByText("alice@example.com")).toBeInTheDocument();
+    const aliceCell = await screen.findByText("alice@example.com");
+    expect(aliceCell).toBeInTheDocument();
+
+    const aliceRow = aliceCell.closest("tr");
+    expect(aliceRow).not.toBeNull();
 
     await user.click(
-      screen.getByRole("button", {
-        name: /remove/i,
+      within(aliceRow as HTMLElement).getByRole("button", {
+        name: /remove access/i,
       }),
     );
 
@@ -140,7 +139,7 @@ describe("InventoryMembersPage", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: /remove access for alice@example.com/i,
+        name: /remove access/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -174,7 +173,7 @@ describe("InventoryMembersPage", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: /remove access for other-owner@example.com/i,
+        name: /remove access/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -212,11 +211,15 @@ describe("InventoryMembersPage", () => {
 
     render(<InventoryMembersPage />);
 
-    expect(await screen.findByText("alice@example.com")).toBeInTheDocument();
+    const aliceCell = await screen.findByText("alice@example.com");
+    expect(aliceCell).toBeInTheDocument();
+
+    const aliceRow = aliceCell.closest("tr");
+    expect(aliceRow).not.toBeNull();
 
     await user.click(
-      screen.getByRole("button", {
-        name: /remove/i,
+      within(aliceRow as HTMLElement).getByRole("button", {
+        name: /remove access/i,
       }),
     );
 
