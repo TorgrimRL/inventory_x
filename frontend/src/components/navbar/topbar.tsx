@@ -1,3 +1,5 @@
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   AppBar,
@@ -11,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
@@ -21,11 +24,22 @@ import {
   getActiveInventory,
 } from "../../services/inventoryService";
 import LogoutButton from "../auth/logoutButton";
+import { ThemeSwitch } from "./themeSwitch";
 
-export default function Navbar() {
+type ThemeMode = "light" | "dark";
+
+interface NavbarProps {
+  mode: ThemeMode;
+  setMode: Dispatch<SetStateAction<ThemeMode>>;
+}
+export default function Navbar({ mode, setMode }: NavbarProps) {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const toggleTheme = () => {
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const [isValidSession, setIsValidSession] = useState(false);
   const [activeInventory, setActiveInventory] =
@@ -225,6 +239,51 @@ export default function Navbar() {
                 )}
               </>
             )}
+
+            {/* Theme switch */}
+            <Box
+              sx={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <ThemeSwitch
+                checked={mode === "dark"}
+                onChange={toggleTheme}
+                slotProps={{ input: { "aria-label": "Toggle theme" } }}
+                icon={
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      backgroundColor: theme.palette.primary.main,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <LightModeIcon sx={{ fontSize: 16, color: "white" }} />
+                  </Box>
+                }
+                checkedIcon={
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      backgroundColor: theme.palette.secondary.main,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <DarkModeIcon sx={{ fontSize: 16, color: "white" }} />
+                  </Box>
+                }
+              />
+            </Box>
           </Box>
 
           {/* MOBILE MENU */}
@@ -323,6 +382,24 @@ export default function Navbar() {
                       Forgot password
                     </MenuItem>,
                   ]}
+              <MenuItem
+                onClick={() => {
+                  toggleTheme();
+                  closeMobileMenu();
+                }}
+              >
+                {mode === "dark" ? (
+                  <>
+                    <LightModeIcon sx={{ mr: 1 }} />
+                    Light mode
+                  </>
+                ) : (
+                  <>
+                    <DarkModeIcon sx={{ mr: 1 }} />
+                    Dark mode
+                  </>
+                )}
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>
