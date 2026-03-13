@@ -14,21 +14,33 @@ import App from "./App";
 import { DarkTheme, LightTheme } from "./theme";
 
 export function Root() {
-  const [mode] = React.useState<"light" | "dark">("light");
+  const [mode, setMode] = React.useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("theme");
+    return saved === "dark" ? "dark" : "light";
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem("theme", mode);
+  }, [mode]);
+
   const theme = mode === "light" ? LightTheme : DarkTheme;
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <App />
+        <App mode={mode} setMode={setMode} />
       </BrowserRouter>
     </ThemeProvider>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <Root />
-  </React.StrictMode>,
-);
+const container = document.getElementById("root");
+
+if (container) {
+  ReactDOM.createRoot(container).render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>,
+  );
+}

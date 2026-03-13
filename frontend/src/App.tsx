@@ -1,6 +1,7 @@
 import "./App.css";
 import "./components/utils/buttons.css";
 
+import type { Dispatch, SetStateAction } from "react";
 import { Route, Routes } from "react-router-dom";
 
 // PAGES
@@ -31,10 +32,15 @@ export const PATHS = {
   INVITE_EMPLOYEE: "/invite_employee",
 } as const;
 
-function App() {
+type ThemeMode = "light" | "dark";
+interface AppProps {
+  mode: ThemeMode;
+  setMode: Dispatch<SetStateAction<ThemeMode>>;
+}
+function App({ mode, setMode }: AppProps) {
   return (
     <div>
-      <Navbar />
+      <Navbar mode={mode} setMode={setMode} />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
         <Route path={PATHS.HOME} element={<LandingPage />} />
