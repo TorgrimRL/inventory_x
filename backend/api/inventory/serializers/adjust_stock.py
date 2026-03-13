@@ -7,6 +7,6 @@ class AdjustStockSerializer(serializers.Serializer):
 
 
 class AdjustStockResponseSerializer(serializers.Serializer):
-    item_id = serializers.IntegerField()
+    item_id = serializers.UUIDField()
     stock = serializers.IntegerField()
     message = serializers.CharField()
