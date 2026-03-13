@@ -59,8 +59,18 @@ class InventoryListViewTests(BaseAPITestCase):
 
         self.assertIn("data", data)
         self.assertEqual(len(data["data"]), 2)
-        self.assertEqual(data["data"][0]["name"], "Monitor")
-        self.assertEqual(data["data"][1]["name"], "Keyboard")
+
+        # Convert the list to a dictionary
+        items_by_name = {item["name"]: item for item in data["data"]}
+
+        self.assertIn("Monitor", items_by_name)
+        self.assertIn("Keyboard", items_by_name)
+
+        self.assertEqual(items_by_name["Monitor"]["price"], 200)
+        self.assertEqual(items_by_name["Monitor"]["stock"], 1)
+
+        self.assertEqual(items_by_name["Keyboard"]["price"], 100)
+        self.assertEqual(items_by_name["Keyboard"]["stock"], 5)
 
     def test_inventory_list_empty(self):
         response = self.client.get("/api/inventory/")

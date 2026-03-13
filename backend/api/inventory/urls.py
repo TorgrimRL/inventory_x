@@ -4,21 +4,21 @@ from api.inventory.views.active_inventory import ActiveInventoryView
 from api.inventory.views.adjust_stock import AdjustStockView
 from api.inventory.views.inventory import InventoryView
 from api.inventory.views.invite_user import InviteUserView
+from api.inventory.views.item_detail import ItemDetailView
 from api.inventory.views.list_inventories import ListInventoriesView
 from api.inventory.views.list_members import ListMembersView
 from api.inventory.views.register_inventory import RegisterInventoryView
 from api.inventory.views.remove_member import RemoveMemberView
-from api.inventory.views.update_item import UpdateItemView
 
 urlpatterns = [
     path("", InventoryView.as_view(), name="inventory"),
     path(
-        "<int:item_id>/",
-        UpdateItemView.as_view(),
-        name="update-item",
+        "<uuid:item_id>/",
+        ItemDetailView.as_view(),
+        name="item-detail",
     ),
     path(
-        "<int:item_id>/adjust-stock/",
+        "<uuid:item_id>/adjust-stock/",
         AdjustStockView.as_view(),
         name="adjust-stock",
     ),
