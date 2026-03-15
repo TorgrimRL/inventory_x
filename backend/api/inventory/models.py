@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import TYPE_CHECKING, ClassVar
 
@@ -30,7 +32,7 @@ class Inventory(models.Model):
 
     # NOTE: Type hint for dynamic reverse relationship
     if TYPE_CHECKING:
-        memberships: models.Manager["InventoryMembership"]
+        memberships: models.Manager[InventoryMembership]
 
     @classmethod
     @transaction.atomic
@@ -40,7 +42,7 @@ class Inventory(models.Model):
         user,
         name: str,
         org_number: str,
-    ) -> tuple["Inventory", "InventoryMembership"]:
+    ) -> tuple[Inventory, InventoryMembership]:
         inventory = cls(name=name, org_number=org_number)
         inventory.full_clean(validate_unique=False)
 
@@ -82,14 +84,45 @@ class Inventory(models.Model):
         return f"{self.name} ({self.org_number})"
 
 
+class ItemCategory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
+        "Inventory",
+        on_delete=models.CASCADE,
+        related_name="categories",
+        db_index=True,
+    )
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["inventory", "name"],
+                name="unique_category_name_per_inventory",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class InventoryItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
         "Inventory",
         on_delete=models.CASCADE,
         related_name="items",
         db_index=True,
     )
+    categories: models.ManyToManyField[ItemCategory, InventoryItem] = (
+        models.ManyToManyField(
+            "ItemCategory",
+            related_name="items",
+            blank=True,
+        )
+    )
+    inventory_id: uuid.UUID
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
@@ -104,7 +137,7 @@ class InventoryMembership(models.Model):
         EMPLOYEE = "employee", "Employee"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
         Inventory, on_delete=models.CASCADE, related_name="memberships"
     )
     user = models.ForeignKey(

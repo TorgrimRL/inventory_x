@@ -23,6 +23,7 @@ class ItemDetailView(views.APIView):
         responses=UPDATE_ITEM_RESPONSES,
     )
     def patch(self, request: Request, item_id: UUID) -> Response:
+        membership = get_active_membership_or_raise(request)
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
@@ -33,9 +34,11 @@ class ItemDetailView(views.APIView):
 
         try:
             item = update_item(
+                inventory_id=membership.inventory.id,
                 item_id=item_id,
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
+                category_ids=serializer.validated_data.get("category_ids"),
             )
         except LookupError as exc:
             return Response(
