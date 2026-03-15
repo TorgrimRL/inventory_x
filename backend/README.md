@@ -10,9 +10,9 @@ The Django Admin panel is enabled for data inspection and management.
 
 - **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
 - **Default Superuser:**
-  - **Email:** `admin@example.com`
-  - **Password:** `adminpass123` _(Available after running
-    `python manage.py seed_users` or `make seed`)_
+    - **Email:** `admin@example.com`
+    - **Password:** `adminpass123` _(Available after running
+      `python manage.py seed_users` or `make seed`)_
 
 ## Commands
 
@@ -110,13 +110,21 @@ uv run mypy . --exclude 'migrations/'
 
 **Add Migration**
 
-> A Database schema presents as a object, crete a new table is done by
-> initialize a new class, and sets its field by sets the class attributes in
-> 'api/inventory/models.py'. Then run the command below to generate a completed
-> migrate file and sync to the database.
+A Database schema presents as a object, create a new table is done by
+initialize a new class, and sets its field by sets the class attributes in
+'api/inventory/models.py'. Then run the command below to generate a completed
+migrate file and sync to the database.
 
 ```bash
 uv run python manage.py makemigrations
+```
+
+If the migration check fails, generate the missing migration files locally, run migrations, then commit the newly
+created migration file(s) and push again.
+
+```bash
+uv run python manage.py makemigrations
+uv run python manage.py migrate
 ```
 
 ---
