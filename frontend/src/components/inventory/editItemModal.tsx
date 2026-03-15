@@ -81,6 +81,7 @@ export default function EditItemModal({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -155,15 +156,7 @@ export default function EditItemModal({
     }
   }
 
-  async function handleDelete() {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this item? This action cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
+  async function handleConfirmDelete() {
     setError(null);
     setSaving(true);
     try {
@@ -173,130 +166,167 @@ export default function EditItemModal({
         onItemDeleted(itemId);
       }
 
+      setDeleteConfirmOpen(false);
       onClose();
     } catch (err: any) {
       console.error("Delete error:", err);
       setError(extractError(err, "Failed to delete item."));
+      setDeleteConfirmOpen(false);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>Edit item</DialogTitle>
+    <>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>Edit item</DialogTitle>
 
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{error}</Alert>}
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {error && <Alert severity="error">{error}</Alert>}
 
-          {!canEditDetails && (
-            <Alert severity="info">
-              Only owners can edit name and price. Stock can still be adjusted.
-            </Alert>
-          )}
+            {!canEditDetails && (
+              <Alert severity="info">
+                Only owners can edit name and price. Stock can still be
+                adjusted.
+              </Alert>
+            )}
 
-          <Typography variant="subtitle1">Details</Typography>
+            <Typography variant="subtitle1">Details</Typography>
 
-          <TextField
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={saving || !canEditDetails}
-            fullWidth
-            required
-            error={canEditDetails && nameIsInvalid}
-            helperText={
-              canEditDetails && nameIsInvalid ? "Name is required" : " "
-            }
-          />
+            <TextField
+              label="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={saving || !canEditDetails}
+              fullWidth
+              required
+              error={canEditDetails && nameIsInvalid}
+              helperText={
+                canEditDetails && nameIsInvalid ? "Name is required" : " "
+              }
+            />
 
-          <TextField
-            label="Price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            type="number"
-            inputProps={{ step: "0.01", min: 0 }}
-            disabled={saving || !canEditDetails}
-            fullWidth
-            required
-            error={canEditDetails && priceIsInvalid}
-            helperText={
-              canEditDetails && priceIsInvalid
-                ? "Price cannot be negative"
-                : " "
-            }
-          />
+            <TextField
+              label="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              type="number"
+              inputProps={{ step: "0.01", min: 0 }}
+              disabled={saving || !canEditDetails}
+              fullWidth
+              required
+              error={canEditDetails && priceIsInvalid}
+              helperText={
+                canEditDetails && priceIsInvalid
+                  ? "Price cannot be negative"
+                  : " "
+              }
+            />
 
-          <Divider />
+            <Divider />
 
-          <Typography variant="subtitle1">Stock</Typography>
+            <Typography variant="subtitle1">Stock</Typography>
 
-          <Typography variant="body2" color="text.secondary">
-            Current stock: {currentStock}
-          </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Current stock: {currentStock}
+            </Typography>
 
-          <TextField
-            label="Amount (0 = no change)"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputProps={{ min: 0, step: 1 }}
-            disabled={saving}
-            fullWidth
-            error={amountIsInvalid}
-            helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
-          />
-
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant={direction === "increase" ? "contained" : "outlined"}
-              onClick={() => setDirection("increase")}
+            <TextField
+              label="Amount (0 = no change)"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              inputProps={{ min: 0, step: 1 }}
               disabled={saving}
               fullWidth
-            >
-              Increase
-            </Button>
+              error={amountIsInvalid}
+              helperText={
+                amountIsInvalid ? "Enter a positive whole number" : " "
+              }
+            />
 
-            <Button
-              variant={direction === "decrease" ? "contained" : "outlined"}
-              onClick={() => setDirection("decrease")}
-              disabled={saving}
-              fullWidth
-            >
-              Decrease
-            </Button>
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant={direction === "increase" ? "contained" : "outlined"}
+                onClick={() => setDirection("increase")}
+                disabled={saving}
+                fullWidth
+              >
+                Increase
+              </Button>
+
+              <Button
+                variant={direction === "decrease" ? "contained" : "outlined"}
+                onClick={() => setDirection("decrease")}
+                disabled={saving}
+                fullWidth
+              >
+                Decrease
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </DialogContent>
+        </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
-        <Box>
-          {canEditDetails && (
-            <Button color="error" onClick={handleDelete} disabled={saving}>
-              Delete Item
+        <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
+          <Box>
+            {canEditDetails && (
+              <Button
+                color="error"
+                onClick={() => setDeleteConfirmOpen(true)}
+                disabled={saving}
+              >
+                Delete Item
+              </Button>
+            )}
+          </Box>
+
+          <Box>
+            <Button onClick={handleClose} color="inherit" disabled={saving}>
+              Cancel
             </Button>
-          )}
-        </Box>
 
-        <Box>
-          <Button onClick={handleClose} color="inherit" disabled={saving}>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              disabled={
+                saving ||
+                amountIsInvalid ||
+                (canEditDetails && (nameIsInvalid || priceIsInvalid))
+              }
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this item? This action cannot be
+            undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)} disabled={saving}>
             Cancel
           </Button>
-
           <Button
-            onClick={handleSave}
+            color="error"
             variant="contained"
-            disabled={
-              saving ||
-              amountIsInvalid ||
-              (canEditDetails && (nameIsInvalid || priceIsInvalid))
-            }
+            onClick={handleConfirmDelete}
+            disabled={saving}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Deleting…" : "Delete"}
           </Button>
-        </Box>
-      </DialogActions>
-    </Dialog>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

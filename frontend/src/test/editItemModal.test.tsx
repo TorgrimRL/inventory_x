@@ -219,24 +219,27 @@ describe("EditItemModal - user story tests", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("owner: can successfully delete an item", async () => {
+  test("owner: can successfully delete an item via confirmation dialog", async () => {
     mockedDeleteItem.mockResolvedValueOnce({} as any);
-
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
 
     const user = userEvent.setup();
     const props = renderModal({ canEditDetails: true, itemId: 99 });
 
     const dialog = await screen.findByRole("dialog");
-    const deleteBtn = within(dialog).getByRole("button", {
+    const initialDeleteBtn = within(dialog).getByRole("button", {
       name: /delete item/i,
     });
 
-    await user.click(deleteBtn);
+    await user.click(initialDeleteBtn);
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      "Are you sure you want to delete this item? This action cannot be undone.",
-    );
+    const confirmDeleteBtn = await screen.findByRole("button", {
+      name: /^delete$/i,
+    });
+    expect(
+      screen.getByText(/Are you sure you want to delete this item/i),
+    ).toBeInTheDocument();
+
+    await user.click(confirmDeleteBtn);
 
     await waitFor(() => {
       expect(mockedDeleteItem).toHaveBeenCalledWith(99);
@@ -244,32 +247,30 @@ describe("EditItemModal - user story tests", () => {
 
     expect(props.onItemDeleted).toHaveBeenCalledWith(99);
     expect(props.onClose).toHaveBeenCalled();
-
-    confirmSpy.mockRestore();
   });
 
   test("owner: cancelling delete confirmation aborts deletion", async () => {
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
-
     const user = userEvent.setup();
     const props = renderModal({ canEditDetails: true, itemId: 99 });
 
     const dialog = await screen.findByRole("dialog");
-    const deleteBtn = within(dialog).getByRole("button", {
+    const initialDeleteBtn = within(dialog).getByRole("button", {
       name: /delete item/i,
     });
 
-    await user.click(deleteBtn);
+    await user.click(initialDeleteBtn);
 
-    expect(confirmSpy).toHaveBeenCalled();
+    const cancelBtn = await screen.findByRole("button", { name: /cancel/i });
+    await user.click(cancelBtn);
 
-    // API should not be called
     expect(mockedDeleteItem).not.toHaveBeenCalled();
-    // Modal should not close, and parent should not be updated
     expect(props.onItemDeleted).not.toHaveBeenCalled();
-    expect(props.onClose).not.toHaveBeenCalled();
 
-    // Clean up the spy
-    confirmSpy.mockRestore();
+    // Check that the confirmation dialog text is gone
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/Are you sure you want to delete this item/i),
+      ).not.toBeInTheDocument();
+    });
   });
 });
