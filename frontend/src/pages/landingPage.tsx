@@ -20,7 +20,6 @@ const LandingPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        width: "100%",
         bgcolor: "background.default",
       }}
     >
@@ -31,12 +30,7 @@ const LandingPage = () => {
             variant="h2"
             fontWeight={700}
             sx={{
-              background: `linear-gradient(
-                90deg,
-                ${theme.palette.primary.main},
-                ${theme.palette.secondary.main},
-                ${theme.palette.primary.light || theme.palette.primary.main}
-              )`,
+              background: theme.gradients.text,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               letterSpacing: 2,
@@ -48,11 +42,8 @@ const LandingPage = () => {
 
           <Typography
             variant="h6"
-            sx={{
-              color: "text.primary",
-              opacity: 0.85,
-              mb: 4,
-            }}
+            color="text.primary"
+            sx={{ opacity: 0.85, mb: 4 }}
           >
             Track items and manage stock for your business
           </Typography>
@@ -65,15 +56,8 @@ const LandingPage = () => {
                 py: 1.5,
                 borderRadius: 2,
                 fontWeight: 600,
-                background: `linear-gradient(
-                  90deg,
-                  ${theme.palette.secondary.main},
-                  ${theme.palette.primary.main}
-                )`,
-                color:
-                  theme.palette.mode === "dark"
-                    ? "#0f0f0f"
-                    : theme.palette.background.default,
+                background: theme.gradients.button,
+                color: "background.default",
                 boxShadow: `0 8px 20px ${theme.palette.primary.main}55`,
               }}
               onClick={() => navigate(PATHS.REGISTRATION)}
@@ -138,28 +122,11 @@ const LandingPage = () => {
               }}
             >
               <CardContent>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    background: `linear-gradient(
-                      90deg,
-                      ${theme.palette.primary.main},
-                      ${theme.palette.secondary.main}
-                    )`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    mb: 1,
-                  }}
-                >
+                <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
                   {item.title}
                 </Typography>
 
-                <Typography
-                  sx={{
-                    color: "text.secondary",
-                    opacity: 0.9,
-                  }}
-                >
+                <Typography color="text.secondary" sx={{ opacity: 0.9 }}>
                   {item.text}
                 </Typography>
               </CardContent>
@@ -170,13 +137,7 @@ const LandingPage = () => {
 
       {/* CTA */}
       <Box textAlign="center" sx={{ pb: 16 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            color: "primary.main",
-            mb: 3,
-          }}
-        >
+        <Typography variant="h5" color="primary.main" sx={{ mb: 3 }}>
           Refine Your Inventory Experience
         </Typography>
 
@@ -187,15 +148,8 @@ const LandingPage = () => {
             py: 1.8,
             borderRadius: 2,
             fontWeight: 600,
-            background: `linear-gradient(
-              90deg,
-              ${theme.palette.secondary.main},
-              ${theme.palette.primary.main}
-            )`,
-            color:
-              theme.palette.mode === "dark"
-                ? "#0f0f0f"
-                : theme.palette.background.default,
+            background: theme.gradients.button,
+            color: theme.palette.background.default,
             boxShadow: `0 10px 30px ${theme.palette.primary.main}55`,
           }}
           onClick={() => navigate(PATHS.REGISTRATION)}

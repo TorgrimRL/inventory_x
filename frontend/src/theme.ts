@@ -1,5 +1,28 @@
 import { createTheme } from "@mui/material/styles";
 
+// Extend the MUI theme to support custom variables
+declare module "@mui/material/styles" {
+  interface Theme {
+    gradients: {
+      text: string;
+      button: string;
+    };
+  }
+
+  interface ThemeOptions {
+    gradients?: {
+      text?: string;
+      button?: string;
+    };
+  }
+}
+
+// Shared design tokens
+const shape = {
+  borderRadius: 14,
+};
+
+// LIGHT THEME
 export const LightTheme = createTheme({
   palette: {
     mode: "light",
@@ -15,9 +38,16 @@ export const LightTheme = createTheme({
     },
     divider: "rgba(137,91,64,0.3)",
   },
-  shape: { borderRadius: 14 },
+
+  gradients: {
+    text: "linear-gradient(90deg,#895B40,#C4A588,#895B40)",
+    button: "linear-gradient(90deg,#C4A588,#895B40)",
+  },
+
+  shape,
 });
 
+// DARK THEME
 export const DarkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -33,5 +63,11 @@ export const DarkTheme = createTheme({
     },
     divider: "#82543A",
   },
-  shape: { borderRadius: 14 },
+
+  gradients: {
+    text: "linear-gradient(90deg,#C4A588,#895B40,#C4A588)",
+    button: "linear-gradient(90deg,#895B40,#C4A588)",
+  },
+
+  shape,
 });
