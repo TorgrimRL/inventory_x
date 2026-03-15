@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile.prod
     image: inventory-backend-prod
     env_file:
-      - ../.env
+      - ./.env.prod.test
     depends_on:
       db:
         condition: service_healthy

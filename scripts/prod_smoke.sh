@@ -4,7 +4,7 @@ set -Eeuo pipefail
 COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.prod.test.yml}"
 PROJECT_NAME="${PROJECT_NAME:-inventoryx-smoke}"
 BASE_URL="${BASE_URL:-http://localhost:8081}"
-ARTIFACT_DIR="${ARTIFACT_DIR:-.smoke-artifacts}"
+ARTIFACT_DIR="${ARTIFACT_DIR:-smoke-artifacts}"
 TEARDOWN="${TEARDOWN:-1}"
 SEED_COMMAND="${SEED_COMMAND:-}"
 
