@@ -46,6 +46,17 @@ To keep containers running for debugging after a failure:
 TEARDOWN=0 ./scripts/prod_smoke.sh
 ```
 
+## Debug output
+
+If the smoke test fails, it creates a local `smoke-artifacts/` folder with helpful debug output.
+
+Typical contents include:
+
+- `compose-ps.txt`
+- `compose-logs.txt`
+
+This makes it easier to inspect container state and startup logs after a failure.
+
 ## CI
 
 The smoke test also runs in GitHub Actions:
