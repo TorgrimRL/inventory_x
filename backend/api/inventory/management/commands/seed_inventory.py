@@ -1,4 +1,5 @@
 import random
+import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
@@ -15,6 +16,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
+
+        # Static UUIDs for manual testing
+        STATIC_INV_UUID = uuid.UUID("11111111-1111-1111-1111-111111111111")
+        STATIC_ITEM_UUID = uuid.UUID("22222222-2222-2222-2222-222222222222")
 
         required_emails = [
             "admin@example.com",
@@ -39,7 +44,6 @@ class Command(BaseCommand):
             Inventory.objects.all().delete()
 
             # --- Inventories ---
-            # Keep Ola AS + others, but add Jessica explicitly
             inv_specs = [
                 ("Ola AS", "123456789"),  # Ola's bookstore
                 ("Jessica Cookies AS", "444555666"),  # Jessica's cookie shop
@@ -53,7 +57,11 @@ class Command(BaseCommand):
             inventories_by_name: dict[str, Inventory] = {}
 
             for name, org in inv_specs:
-                inv = Inventory(name=name, org_number=org)
+                inv_kwargs = {"name": name, "org_number": org}
+                if name == "Ola AS":
+                    inv_kwargs["id"] = str(STATIC_INV_UUID)
+
+                inv = Inventory(**inv_kwargs)
                 inv.full_clean()
                 inv.save()
                 inventories.append(inv)
@@ -199,15 +207,18 @@ class Command(BaseCommand):
 
             # Ola gets Ola items
             ola_inv = inventories_by_name["Ola AS"]
-            for name, price in ola_catalog:
-                items_to_create.append(
-                    InventoryItem(
-                        inventory=ola_inv,
-                        name=name,
-                        price=price,
-                        stock=random.randint(0, 50),
-                    )
-                )
+            for index, (name, price) in enumerate(ola_catalog):
+                # Make firsts items UUID static
+                item_kwargs = {
+                    "inventory": ola_inv,
+                    "name": name,
+                    "price": price,
+                    "stock": random.randint(0, 50),
+                }
+                if index == 0:
+                    item_kwargs["id"] = STATIC_ITEM_UUID
+
+                items_to_create.append(InventoryItem(**item_kwargs))
 
             # Jessica gets Jessica items
             jessica_inv = inventories_by_name["Jessica Cookies AS"]

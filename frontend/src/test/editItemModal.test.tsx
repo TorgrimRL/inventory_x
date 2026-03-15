@@ -2,17 +2,23 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import EditItemModal from "../components/inventory/editItemModal";
-import { adjustStock, updateItem } from "../services/inventoryService";
+import {
+  adjustStock,
+  deleteItem,
+  updateItem,
+} from "../services/inventoryService";
 
 jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
   updateItem: jest.fn(),
+  deleteItem: jest.fn(),
 }));
 
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
   typeof adjustStock
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
+const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
@@ -32,6 +38,7 @@ describe("EditItemModal - user story tests", () => {
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
       onStockUpdated: jest.fn(),
+      onItemDeleted: jest.fn(),
       ...overrides,
     };
 
@@ -201,5 +208,69 @@ describe("EditItemModal - user story tests", () => {
     await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
 
     expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("employee: delete button is not visible", async () => {
+    renderModal({ canEditDetails: false });
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).queryByRole("button", { name: /delete item/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("owner: can successfully delete an item via confirmation dialog", async () => {
+    mockedDeleteItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    const props = renderModal({ canEditDetails: true, itemId: 99 });
+
+    const dialog = await screen.findByRole("dialog");
+    const initialDeleteBtn = within(dialog).getByRole("button", {
+      name: /delete item/i,
+    });
+
+    await user.click(initialDeleteBtn);
+
+    const confirmDeleteBtn = await screen.findByRole("button", {
+      name: /^delete$/i,
+    });
+    expect(
+      screen.getByText(/Are you sure you want to delete this item/i),
+    ).toBeInTheDocument();
+
+    await user.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(mockedDeleteItem).toHaveBeenCalledWith(99);
+    });
+
+    expect(props.onItemDeleted).toHaveBeenCalledWith(99);
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("owner: cancelling delete confirmation aborts deletion", async () => {
+    const user = userEvent.setup();
+    const props = renderModal({ canEditDetails: true, itemId: 99 });
+
+    const dialog = await screen.findByRole("dialog");
+    const initialDeleteBtn = within(dialog).getByRole("button", {
+      name: /delete item/i,
+    });
+
+    await user.click(initialDeleteBtn);
+
+    const cancelBtn = await screen.findByRole("button", { name: /cancel/i });
+    await user.click(cancelBtn);
+
+    expect(mockedDeleteItem).not.toHaveBeenCalled();
+    expect(props.onItemDeleted).not.toHaveBeenCalled();
+
+    // Check that the confirmation dialog text is gone
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/Are you sure you want to delete this item/i),
+      ).not.toBeInTheDocument();
+    });
   });
 });

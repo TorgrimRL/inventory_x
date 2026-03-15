@@ -83,7 +83,7 @@ class Inventory(models.Model):
 
 
 class InventoryItem(models.Model):
-    id: int
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
         "Inventory",
         on_delete=models.CASCADE,
