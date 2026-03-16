@@ -4,13 +4,13 @@ import { TextDecoder, TextEncoder } from "util";
 global.TextEncoder = TextEncoder;
 // @ts-expect-error: None
 global.TextDecoder = TextDecoder;
+
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Navbar from "../components/navbar/topbar";
 import { checkSession } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
-
 
 jest.mock("../services/authService");
 jest.mock("../services/inventoryService");
