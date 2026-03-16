@@ -1,16 +1,15 @@
 // @ts-expect-error: None
 import { TextDecoder, TextEncoder } from "util";
-// @ts-expect-error: None
-global.TextEncoder = TextEncoder;
-// @ts-expect-error: None
-global.TextDecoder = TextDecoder;
-
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Navbar from "../components/navbar/topbar";
 import { checkSession } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
+// @ts-expect-error: None
+global.TextEncoder = TextEncoder;
+// @ts-expect-error: None
+global.TextDecoder = TextDecoder;
 
 jest.mock("../services/authService");
 jest.mock("../services/inventoryService");
@@ -64,7 +63,9 @@ describe("Navbar Component", () => {
       </MemoryRouter>,
     );
 
-    expect((await screen.findAllByText("Storage")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Inventories")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Items").length).toBeGreaterThan(0);
   });
