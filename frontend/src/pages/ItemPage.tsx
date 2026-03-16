@@ -40,6 +40,7 @@ type InventoryItem = {
   stock: number;
   price: number;
   order_id?: string;
+  low_stock_threshold?: number | null;
 };
 
 function extractBackendMessage(err: any): string {
@@ -101,9 +102,9 @@ export default function ItemPage() {
   const [editOpen, setEditOpen] = useState(false);
 
   // Story #49 sort + low-stock filter controls
-  const [sortField, setSortField] = useState<"name" | "stock" | "price">(
-    "stock",
-  );
+  const [sortField, setSortField] = useState<
+    "name" | "stock" | "price" | "low_stock_threshold"
+  >("stock");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
@@ -245,7 +246,9 @@ export default function ItemPage() {
     sortField,
   ]);
 
-  function handleSort(field: "name" | "stock" | "price") {
+  function handleSort(
+    field: "name" | "stock" | "price" | "low_stock_threshold",
+  ) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
@@ -444,6 +447,21 @@ export default function ItemPage() {
                         </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableSortLabel
+                          active={sortField === "low_stock_threshold"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "low_stock_threshold"
+                              ? sortDirection
+                              : "asc"
+                          }
+                          onClick={() => handleSort("low_stock_threshold")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Low Stock Threshold
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -459,6 +477,9 @@ export default function ItemPage() {
                             style: "currency",
                             currency: "NOK",
                           }).format(Number(item.price))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {item.low_stock_threshold}
                         </TableCell>
                         <TableCell align="right">
                           <Button
@@ -559,17 +580,24 @@ export default function ItemPage() {
           initialName={selectedItem.name}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
+          initialLowStockThreshold={selectedItem.low_stock_threshold}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
             id: number | string;
             name: string;
             price: number;
+            lowStockThreshold: number | null;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
-                  ? { ...it, name: updated.name, price: updated.price }
+                  ? {
+                      ...it,
+                      name: updated.name,
+                      price: updated.price,
+                      low_stock_threshold: updated.lowStockThreshold,
+                    }
                   : it,
               ),
             );
