@@ -106,7 +106,7 @@ export default function ItemPage() {
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
@@ -250,13 +250,18 @@ export default function ItemPage() {
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
     const byCategory =
-      selectedCategoryIds.length === 0
+      selectedCategoryId.length === 0
         ? searched
         : searched.filter((item) => {
-            const ids = (item.category_ids || []).map(String);
-            return selectedCategoryIds.some((selectedId) =>
-              ids.includes(selectedId),
+            const primaryCategoryId = String(
+              (item.category_ids || [])[0] || "",
             );
+
+            if (selectedCategoryId === "__no_category__") {
+              return primaryCategoryId.length === 0;
+            }
+
+            return primaryCategoryId === selectedCategoryId;
           });
 
     const filtered = byCategory.filter(
@@ -281,7 +286,7 @@ export default function ItemPage() {
     lowStockOnly,
     lowStockThreshold,
     searchInput,
-    selectedCategoryIds,
+    selectedCategoryId,
     sortDirection,
     sortField,
   ]);
@@ -305,10 +310,10 @@ export default function ItemPage() {
     setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThresholdInput("5");
-    setSelectedCategoryIds([]);
+    setSelectedCategoryId("");
   }
 
-  const hasCategoryFilter = selectedCategoryIds.length > 0;
+  const hasCategoryFilter = selectedCategoryId.length > 0;
   const showFilteredMetrics =
     searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
@@ -362,29 +367,12 @@ export default function ItemPage() {
                 select
                 label="Category"
                 size="small"
-                value={selectedCategoryIds}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedCategoryIds(
-                    Array.isArray(value) ? value : String(value).split(","),
-                  );
-                }}
-                SelectProps={{
-                  multiple: true,
-                  renderValue: (selected) => {
-                    const ids = selected as string[];
-                    if (ids.length === 0) return "All categories";
-                    return ids
-                      .map(
-                        (id) =>
-                          categories.find((category) => category.id === id)
-                            ?.name || id,
-                      )
-                      .join(", ");
-                  },
-                }}
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
                 sx={{ minWidth: 320 }}
               >
+                <MenuItem value="">All categories</MenuItem>
+                <MenuItem value="__no_category__">No category added</MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
                     {category.name}
@@ -393,7 +381,7 @@ export default function ItemPage() {
               </TextField>
               <Button
                 variant="text"
-                onClick={() => setSelectedCategoryIds([])}
+                onClick={() => setSelectedCategoryId("")}
                 disabled={!hasCategoryFilter}
               >
                 Clear category
@@ -552,10 +540,9 @@ export default function ItemPage() {
                         <TableCell>{item.name}</TableCell>
                         <TableCell>
                           {(item.category_ids || []).length > 0
-                            ? (item.category_ids || [])
-                                .map((id) => categoryNameById.get(String(id)))
-                                .filter(Boolean)
-                                .join(", ")
+                            ? categoryNameById.get(
+                                String((item.category_ids || [])[0]),
+                              ) || "No category added"
                             : "No category added"}
                         </TableCell>
                         <TableCell align="right">{item.stock}</TableCell>

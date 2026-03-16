@@ -177,7 +177,7 @@ describe("ItemPage", () => {
     ]);
   });
 
-  test("filters items by selected categories and supports clearing filter", async () => {
+  test("filters items by selected category and supports clearing filter", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
@@ -185,10 +185,8 @@ describe("ItemPage", () => {
 
     await user.click(screen.getByRole("combobox", { name: /category/i }));
     await user.click(await screen.findByRole("option", { name: "Cookies" }));
-    await user.click(screen.getByRole("option", { name: "Dairy" }));
-    await user.keyboard("{Escape}");
 
-    // Cookies + Dairy should include Milk and Eggs, but not Bread (no category)
+    // Cookies should include Milk and Eggs, but not Bread (no category)
     expect(screen.getByText("Milk")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Bread")).not.toBeInTheDocument();
@@ -208,6 +206,22 @@ describe("ItemPage", () => {
     expect(screen.getByText("Milk")).toBeInTheDocument();
     expect(screen.getByText("Bread")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
+  });
+
+  test("can filter by 'No category added' from category dropdown", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    await user.click(screen.getByRole("combobox", { name: /category/i }));
+    await user.click(
+      await screen.findByRole("option", { name: /no category added/i }),
+    );
+
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
   });
 
   test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
