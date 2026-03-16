@@ -99,7 +99,7 @@ describe("ItemPage", () => {
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
   });
 
-  test("sorts by stock, name and price (asc/desc) via table header controls", async () => {
+  test("sorts by stock, name, price and low stock threshold (asc/desc) via table header controls", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
