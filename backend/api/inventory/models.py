@@ -35,11 +35,11 @@ class Inventory(models.Model):
     @classmethod
     @transaction.atomic
     def register_with_owner(
-        cls,
-        *,
-        user,
-        name: str,
-        org_number: str,
+            cls,
+            *,
+            user,
+            name: str,
+            org_number: str,
     ) -> tuple["Inventory", "InventoryMembership"]:
         inventory = cls(name=name, org_number=org_number)
         inventory.full_clean(validate_unique=False)
@@ -93,6 +93,7 @@ class InventoryItem(models.Model):
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
+    low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
