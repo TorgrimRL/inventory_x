@@ -30,15 +30,55 @@ describe("ItemPage", () => {
   jest.setTimeout(15000);
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        data: [
-          { id: 1, name: "Milk", stock: 10, price: 20 },
-          { id: 2, name: "Bread", stock: 3, price: 5 },
-          { id: 3, name: "Eggs", stock: 7, price: 12 },
-        ],
-      },
-    } as any);
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 1,
+                name: "Milk",
+                stock: 10,
+                price: 20,
+                category_ids: ["c1"],
+              },
+              {
+                id: 2,
+                name: "Bread",
+                stock: 3,
+                price: 5,
+                category_ids: ["c2"],
+              },
+              {
+                id: 3,
+                name: "Eggs",
+                stock: 7,
+                price: 12,
+                category_ids: ["c1", "c3"],
+              },
+            ],
+          },
+        } as any);
+      }
+
+      if (url === "/api/inventory/active/categories/") {
+        return Promise.resolve({
+          data: [
+            { id: "c1", name: "Cookies" },
+            { id: "c2", name: "Cakes" },
+            { id: "c3", name: "Dairy" },
+          ],
+        } as any);
+      }
+
+      if (url === "/api/inventory/active/") {
+        return Promise.resolve({
+          data: { id: "inv1", name: "Test", orgNumber: "123", role: "owner" },
+        } as any);
+      }
+
+      return Promise.resolve({ data: {} } as any);
+    });
   });
 
   test("add item and see 'Item added'", async () => {
@@ -134,6 +174,31 @@ describe("ItemPage", () => {
       "Eggs",
       "Bread",
     ]);
+  });
+
+  test("filters items by category with case-insensitive exact match and clear", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const categoryInput = screen.getByRole("textbox", { name: /category/i });
+
+    await user.type(categoryInput, "cookies");
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+
+    await user.clear(categoryInput);
+    await user.type(categoryInput, "bread");
+    expect(
+      await screen.findByText(/no items match your search/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /clear category/i }));
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
   });
 
   test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {

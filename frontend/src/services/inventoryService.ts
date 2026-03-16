@@ -80,6 +80,11 @@ export type ActiveInventory = {
   role: string;
 };
 
+export type ItemCategory = {
+  id: string;
+  name: string;
+};
+
 const ACTIVE_ENDPOINT = "/api/inventory/active/";
 
 export async function getActiveInventory(): Promise<ActiveInventory | null> {
@@ -98,6 +103,22 @@ export async function setActiveInventory(
     inventory_id: inventoryId,
   });
   return res.data as ActiveInventory;
+}
+
+export async function listActiveCategories(): Promise<ItemCategory[]> {
+  const res = await apiClient.get("/api/inventory/active/categories/");
+  const data: unknown = res.data;
+
+  if (!Array.isArray(data)) return [];
+
+  return data
+    .map((raw) => {
+      const obj = raw as Record<string, unknown>;
+      const id = String(obj.id ?? "");
+      const name = String(obj.name ?? "");
+      return { id, name };
+    })
+    .filter((category) => category.id && category.name);
 }
 
 export async function updateItem(

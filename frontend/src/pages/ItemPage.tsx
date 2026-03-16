@@ -32,14 +32,23 @@ import EditItemModal from "../components/inventory/editItemModal";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ApiClient from "../services/apiClient.ts";
-import { getActiveInventory } from "../services/inventoryService";
+import {
+  getActiveInventory,
+  listActiveCategories,
+} from "../services/inventoryService";
 
 type InventoryItem = {
   id: number | string;
   name: string;
   stock: number;
   price: number;
+  category_ids?: string[];
   order_id?: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
 };
 
 function extractBackendMessage(err: any): string {
@@ -96,6 +105,8 @@ export default function ItemPage() {
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -132,9 +143,19 @@ export default function ItemPage() {
     }
   }
 
+  async function loadCategories() {
+    try {
+      const allCategories = await listActiveCategories();
+      setCategories(allCategories);
+    } catch {
+      setCategories([]);
+    }
+  }
+
   useEffect(() => {
     loadItems();
     loadRole();
+    loadCategories();
   }, []);
 
   function openDialog() {
@@ -213,13 +234,29 @@ export default function ItemPage() {
 
   const displayedItems = useMemo(() => {
     const q = searchInput.trim().toLowerCase();
+    const categoryQuery = categorySearch.trim().toLowerCase();
+
+    const categoryMap = new Map(
+      categories.map((category) => [category.id, category.name.toLowerCase()]),
+    );
 
     const searched =
       q.length === 0
         ? items
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
-    const filtered = searched.filter(
+    const byCategory =
+      categoryQuery.length === 0
+        ? searched
+        : searched.filter((item) => {
+            const names = (item.category_ids || [])
+              .map((id) => categoryMap.get(String(id)))
+              .filter(Boolean) as string[];
+
+            return names.some((name) => name === categoryQuery);
+          });
+
+    const filtered = byCategory.filter(
       (item) => !lowStockOnly || item.stock <= lowStockThreshold,
     );
 
@@ -237,6 +274,8 @@ export default function ItemPage() {
       return sortDirection === "asc" ? compare : -compare;
     });
   }, [
+    categories,
+    categorySearch,
     items,
     lowStockOnly,
     lowStockThreshold,
@@ -264,9 +303,12 @@ export default function ItemPage() {
     setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThresholdInput("5");
+    setCategorySearch("");
   }
 
-  const showFilteredMetrics = searchInput.trim().length > 0 || lowStockOnly;
+  const hasCategoryFilter = categorySearch.trim().length > 0;
+  const showFilteredMetrics =
+    searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -307,6 +349,29 @@ export default function ItemPage() {
               onSearch={() => {}}
               onClear={handleClearSearch}
             />
+
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 2, mt: 1 }}
+            >
+              <TextField
+                label="Category"
+                size="small"
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder="Search by category (exact match)"
+                sx={{ maxWidth: 360 }}
+              />
+              <Button
+                variant="text"
+                onClick={() => setCategorySearch("")}
+                disabled={!hasCategoryFilter}
+              >
+                Clear category
+              </Button>
+            </Stack>
 
             <Stack
               direction={{ xs: "column", md: "row" }}
@@ -397,7 +462,11 @@ export default function ItemPage() {
               </Stack>
             ) : displayedItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
-                <Typography variant="body1">No items found.</Typography>
+                <Typography variant="body1">
+                  {hasCategoryFilter
+                    ? "No items match your search."
+                    : "No items found."}
+                </Typography>
               </Stack>
             ) : (
               <TableContainer component={Box} sx={{ overflowX: "auto" }}>
