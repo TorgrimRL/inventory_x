@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 
-import ApiClient from "../services/apiClient";
 import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
+import ApiClient from "../services/apiClient";
 
 jest.mock("../services/apiClient", () => ({
   __esModule: true,

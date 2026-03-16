@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 
 import { PATHS } from "../App";
 import LogoutButton from "../components/auth/logoutButton";
+import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
 import {
   type ActiveInventory,
   getActiveInventory,
 } from "../services/inventoryService";
-import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
 
 const Dashboard = () => {
   const [active, setActive] = useState<ActiveInventory | null>(null);
