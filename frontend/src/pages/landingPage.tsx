@@ -31,6 +31,7 @@ const LandingPage = () => {
             fontWeight={700}
             sx={{
               background: theme.gradients.text,
+              backgroundSize: "200% auto",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               letterSpacing: 2,

@@ -5,12 +5,14 @@ global.TextEncoder = TextEncoder;
 // @ts-expect-error: None
 global.TextDecoder = TextDecoder;
 
+import { ThemeProvider } from "@mui/material/styles";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Navbar from "../components/navbar/topbar";
 import { checkSession } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
+import { LightTheme } from "../theme";
 
 jest.mock("../services/authService");
 jest.mock("../services/inventoryService");
@@ -31,9 +33,12 @@ describe("Navbar Component", () => {
     setMode = jest.fn(),
   ) =>
     render(
-      <MemoryRouter>
-        <Navbar mode={mode} setMode={setMode} />
-      </MemoryRouter>,
+      <ThemeProvider theme={LightTheme}>
+        <MemoryRouter>
+          <Navbar mode={mode} setMode={setMode} />
+        </MemoryRouter>
+        ,
+      </ThemeProvider>,
     );
 
   test("Ensure the existence of navbar", async () => {

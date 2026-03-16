@@ -111,11 +111,8 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
               textDecoration: "none",
               fontWeight: 700,
               letterSpacing: 1.5,
-              background: `linear-gradient(
-                90deg,
-                ${theme.palette.primary.main},
-                ${theme.palette.secondary.main}
-              )`,
+              background: theme.gradients.text,
+              backgroundSize: "200% auto",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}
@@ -214,15 +211,12 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                       sx={{
                         borderRadius: 2,
                         fontWeight: 600,
-                        background: `linear-gradient(
-                        90deg,
-                        ${theme.palette.secondary.main},
-                        ${theme.palette.primary.main}
-                      )`,
-                        color:
-                          theme.palette.mode === "dark"
-                            ? "#0f0f0f"
-                            : theme.palette.background.default,
+                        background: theme.gradients.button,
+                        color: "background.default",
+                        "&:hover": {
+                          background: theme.gradients.button,
+                          opacity: 0.9,
+                        },
                       }}
                     >
                       Sign Up
@@ -264,7 +258,9 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                       justifyContent: "center",
                     }}
                   >
-                    <LightModeIcon sx={{ fontSize: 16, color: "white" }} />
+                    <LightModeIcon
+                      sx={{ fontSize: 16, color: "common.white" }}
+                    />
                   </Box>
                 }
                 checkedIcon={
@@ -279,7 +275,9 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                       justifyContent: "center",
                     }}
                   >
-                    <DarkModeIcon sx={{ fontSize: 16, color: "white" }} />
+                    <DarkModeIcon
+                      sx={{ fontSize: 16, color: "common.white" }}
+                    />
                   </Box>
                 }
               />
