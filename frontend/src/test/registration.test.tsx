@@ -34,12 +34,12 @@ describe("Registration Component", () => {
   test("renders registration form with all inputs", () => {
     render(<Registration />);
 
-    expect(screen.getByPlaceholderText(/full name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText(/info@inventoryx.no/i),
     ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Confirm Password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Confirm Password")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /sign up/i }),
     ).toBeInTheDocument();
@@ -82,10 +82,10 @@ describe("Registration Component", () => {
     fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
       target: { value: "test@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "secret123" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), {
+    fireEvent.change(screen.getByLabelText("Confirm Password"), {
       target: { value: "different123" },
     });
 
@@ -101,16 +101,16 @@ describe("Registration Component", () => {
 
     render(<Registration />);
 
-    fireEvent.change(screen.getByPlaceholderText(/full name/i), {
+    fireEvent.change(screen.getByLabelText(/full name/i), {
       target: { value: "Test User" },
     });
     fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
       target: { value: "test@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "secret123" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), {
+    fireEvent.change(screen.getByLabelText("Confirm Password"), {
       target: { value: "secret123" },
     });
 
@@ -125,7 +125,7 @@ describe("Registration Component", () => {
     });
 
     expect(
-      await screen.findByText("Account created successfully."),
+      await screen.findByText(/account created successfully/i),
     ).toBeInTheDocument();
 
     act(() => {
@@ -151,10 +151,10 @@ describe("Registration Component", () => {
     fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
       target: { value: "test@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "secret123" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), {
+    fireEvent.change(screen.getByLabelText("Confirm Password"), {
       target: { value: "secret123" },
     });
 
@@ -181,10 +181,10 @@ describe("Registration Component", () => {
     fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
       target: { value: "test@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "secret123" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Confirm Password"), {
+    fireEvent.change(screen.getByLabelText("Confirm Password"), {
       target: { value: "secret123" },
     });
 
