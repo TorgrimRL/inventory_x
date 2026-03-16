@@ -261,7 +261,7 @@ export default function EditItemModal({
               value={lowStockThreshold}
               onChange={(e) => setLowStockThreshold(e.target.value)}
               type="number"
-              inputProps={{ step: "1", min: 0 }}
+              inputProps={{ step: 1, min: 0 }}
               disabled={saving || !canEditDetails}
               fullWidth
               error={canEditDetails && lowStockThresholdIsInvalid}

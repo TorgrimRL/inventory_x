@@ -41,7 +41,7 @@ describe("ItemPage", () => {
       data: {
         data: [
           { id: 1, name: "Milk", stock: 10, price: 20, low_stock_threshold: 8 },
-          { id: 2, name: "Bread", stock: 3, price: 5, low_stock_threshold: 1 },
+          { id: 2, name: "Bread", stock: 2, price: 5, low_stock_threshold: 3 },
           { id: 3, name: "Eggs", stock: 7, price: 12, low_stock_threshold: 4 },
           {
             id: 4,
@@ -161,7 +161,7 @@ describe("ItemPage", () => {
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
   });
-  test("sorts by stock, name, price and low stock threshold (asc/desc) via table header controls", async () => {
+  test("sorts by stock, name, price,low stock threshold  and status(asc/desc) via table header controls", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
@@ -234,6 +234,23 @@ describe("ItemPage", () => {
       "Bread",
       "Butter",
     ]);
+
+    // Status asc, then desc
+    await user.click(screen.getByRole("button", { name: /^status$/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Butter",
+      "Eggs",
+      "Milk",
+      "Bread",
+    ]);
+
+    await user.click(screen.getByRole("button", { name: /^status$/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Butter",
+      "Eggs",
+      "Milk",
+    ]);
   });
 
   test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
@@ -272,5 +289,24 @@ describe("ItemPage", () => {
     expect(screen.getByText("Bread")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Butter")).toBeInTheDocument();
+  });
+  test("shows low stock status only for items at or below their item threshold", async () => {
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const breadRow = screen.getByText("Bread").closest("tr");
+    const butterRow = screen.getByText("Butter").closest("tr");
+
+    expect(breadRow).not.toBeNull();
+    expect(butterRow).not.toBeNull();
+
+    expect(
+      within(breadRow as HTMLElement).getByText("Low stock"),
+    ).toBeInTheDocument();
+
+    expect(
+      within(butterRow as HTMLElement).queryByText("Low stock"),
+    ).not.toBeInTheDocument();
   });
 });

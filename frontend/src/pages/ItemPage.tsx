@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   Dialog,
@@ -42,6 +43,12 @@ type InventoryItem = {
   order_id?: string;
   low_stock_threshold: number | null;
 };
+
+function isLowStock(item: InventoryItem) {
+  return (
+    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
+  );
+}
 
 function extractBackendMessage(err: any): string {
   const data = err?.response?.data;
@@ -114,7 +121,7 @@ export default function ItemPage() {
 
   // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<
-    "name" | "stock" | "price" | "low_stock_threshold"
+    "name" | "stock" | "price" | "low_stock_threshold" | "status"
   >("stock");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -254,21 +261,35 @@ export default function ItemPage() {
         const bThreshold = b.low_stock_threshold;
 
         if (aThreshold == null && bThreshold == null) {
-          compare = 0;
-        } else if (aThreshold == null) {
-          compare = 1;
-        } else if (bThreshold == null) {
-          compare = -1;
-        } else {
-          compare =
-            sortDirection === "asc"
-              ? aThreshold - bThreshold
-              : bThreshold - aThreshold;
+          return a.name.localeCompare(b.name);
         }
 
-        return compare;
-      }
+        if (aThreshold == null) {
+          return 1;
+        }
 
+        if (bThreshold == null) {
+          return -1;
+        }
+
+        if (sortDirection === "asc") {
+          return aThreshold - bThreshold;
+        }
+
+        return bThreshold - aThreshold;
+      } else if (sortField === "status") {
+        const aLow = isLowStock(a);
+        const bLow = isLowStock(b);
+
+        if (aLow !== bLow) {
+          if (sortDirection === "asc") {
+            return aLow ? 1 : -1;
+          }
+          return aLow ? -1 : 1;
+        }
+
+        return a.name.localeCompare(b.name);
+      }
       return sortDirection === "asc" ? compare : -compare;
     });
   }, [
@@ -281,7 +302,7 @@ export default function ItemPage() {
   ]);
 
   function handleSort(
-    field: "name" | "stock" | "price" | "low_stock_threshold",
+    field: "name" | "stock" | "price" | "low_stock_threshold" | "status",
   ) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -482,6 +503,19 @@ export default function ItemPage() {
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         <TableSortLabel
+                          active={sortField === "status"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "status" ? sortDirection : "asc"
+                          }
+                          onClick={() => handleSort("status")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Status
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableSortLabel
                           active={sortField === "low_stock_threshold"}
                           hideSortIcon={false}
                           direction={
@@ -511,6 +545,17 @@ export default function ItemPage() {
                             style: "currency",
                             currency: "NOK",
                           }).format(Number(item.price))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {isLowStock(item) ? (
+                            <Chip
+                              label="Low stock"
+                              color="warning"
+                              size="small"
+                            />
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                         <TableCell align="right">
                           {item.low_stock_threshold}
