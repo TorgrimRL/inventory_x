@@ -7,7 +7,12 @@ import ItemPage from "../pages/ItemPage";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-type RowItem = { name: string; stock: number; price: number };
+type RowItem = {
+  name: string;
+  stock: number;
+  price: number;
+  lowStockThreshold: number | null;
+};
 
 function getVisibleRows(): RowItem[] {
   const table = screen.getByRole("table");
@@ -15,6 +20,7 @@ function getVisibleRows(): RowItem[] {
 
   return bodyRows.map((row) => {
     const cells = within(row).getAllByRole("cell");
+    const thresholdText = cells[3].textContent?.trim() ?? "";
 
     return {
       name: cells[0].textContent?.trim() || "",
@@ -22,6 +28,7 @@ function getVisibleRows(): RowItem[] {
       price: Number(
         (cells[2].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
+      lowStockThreshold: thresholdText === "" ? null : Number(thresholdText),
     };
   });
 }
@@ -33,9 +40,9 @@ describe("ItemPage", () => {
     mockedAxios.get.mockResolvedValue({
       data: {
         data: [
-          { id: 1, name: "Milk", stock: 10, price: 20 },
-          { id: 2, name: "Bread", stock: 3, price: 5 },
-          { id: 3, name: "Eggs", stock: 7, price: 12 },
+          { id: 1, name: "Milk", stock: 10, price: 20, low_stock_threshold: 8 },
+          { id: 2, name: "Bread", stock: 3, price: 5, low_stock_threshold: 1 },
+          { id: 3, name: "Eggs", stock: 7, price: 12, low_stock_threshold: 4 },
         ],
       },
     } as any);
@@ -44,7 +51,13 @@ describe("ItemPage", () => {
   test("add item and see 'Item added'", async () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
-      data: { id: 4, name: "Keyboard", price: 100, stock: 5 },
+      data: {
+        id: 4,
+        name: "Keyboard",
+        price: 100,
+        stock: 5,
+        low_stock_threshold: null,
+      },
     } as any);
 
     const user = userEvent.setup();
@@ -100,7 +113,7 @@ describe("ItemPage", () => {
     ]);
 
     // Stock desc
-    await user.click(screen.getByRole("button", { name: /stock/i }));
+    await user.click(screen.getByRole("button", { name: /^stock$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
       "Eggs",
@@ -129,6 +142,23 @@ describe("ItemPage", () => {
       "Milk",
     ]);
     await user.click(screen.getByRole("button", { name: /price/i }));
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Bread",
+    ]);
+    // Low Stock Threshold asc, then desc
+    await user.click(
+      screen.getByRole("button", { name: /^low stock threshold$/i }),
+    );
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+    ]);
+    await user.click(
+      screen.getByRole("button", { name: /^low stock threshold$/i }),
+    );
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
       "Eggs",
