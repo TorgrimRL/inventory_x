@@ -88,262 +88,273 @@ export default function InventoriesPage() {
   const showList = !loading && !isUnauthorized && inventories.length > 0;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff", display: "flex" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
       <Box
         sx={{
           width: "100%",
+          maxWidth: 1400,
+          mx: "auto",
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 3, md: 5 },
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "520px 1fr" },
+          gridTemplateColumns: { xs: "1fr", md: "400px minmax(0, 1fr)" },
+          gap: { xs: 4, md: 8 },
+          alignItems: "stretch",
         }}
       >
         {/* LEFT */}
         <Box
           sx={{
-            px: { xs: 3, sm: 6 },
-            py: { xs: 6, sm: 8 },
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
+            justifyContent: { xs: "flex-start", md: "flex-end" },
           }}
         >
-          {/* little brand mark */}
           <Box
             sx={{
-              width: 14,
-              height: 14,
-              bgcolor: "#7cfff0",
-              borderRadius: 1,
-              mb: 2,
-            }}
-          />
-
-          <Typography
-            variant="h4"
-            fontWeight={800}
-            sx={{ letterSpacing: -0.5 }}
-          >
-            Inventories
-          </Typography>
-
-          <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 460 }}>
-            Overview of your registered inventories/businesses.
-          </Typography>
-
-          <Paper
-            elevation={0}
-            sx={{
-              mt: 3,
-              p: 0,
-              maxWidth: 460,
+              width: "100%",
+              maxWidth: 400,
+              px: { xs: 1, sm: 2 },
+              py: { xs: 4, sm: 6 },
             }}
           >
-            {/* LOADING */}
-            {loading && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Loading inventories...
-              </Alert>
-            )}
+            {/* little brand mark */}
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: "#7cfff0",
+                borderRadius: 1,
+                mb: 2,
+              }}
+            />
 
-            {/* ERROR (incl unauthorized) */}
-            {!loading && error && (
-              <Alert
-                severity="error"
-                sx={{
-                  mb: 2,
-                  "& .MuiAlert-message": { width: "100%" }, // viktig!
-                }}
-              >
-                <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
-                  <Typography>{error}</Typography>
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{ letterSpacing: -0.5 }}
+            >
+              Inventories
+            </Typography>
 
-                  {isUnauthorized && (
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      flexWrap="wrap"
-                      justifyContent="center"
-                    >
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => navigate(PATHS.HOME)}
-                        sx={{ textTransform: "none", fontWeight: 800 }}
+            <Typography sx={{ mt: 1, color: "text.secondary", maxWidth: 460 }}>
+              Overview of your registered inventories/businesses.
+            </Typography>
+
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 3,
+                p: 0,
+              }}
+            >
+              {/* LOADING */}
+              {loading && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Loading inventories...
+                </Alert>
+              )}
+
+              {/* ERROR (incl unauthorized) */}
+              {!loading && error && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    mb: 2,
+                    "& .MuiAlert-message": { width: "100%" }, // viktig!
+                  }}
+                >
+                  <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
+                    <Typography>{error}</Typography>
+
+                    {isUnauthorized && (
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        justifyContent="center"
                       >
-                        Go to login
-                      </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => navigate(PATHS.HOME)}
+                          sx={{ textTransform: "none", fontWeight: 800 }}
+                        >
+                          Go to login
+                        </Button>
 
-                      <Button
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => navigate(-1)}
+                          sx={{ textTransform: "none", fontWeight: 800 }}
+                        >
+                          Go back
+                        </Button>
+                      </Stack>
+                    )}
+                  </Stack>
+                </Alert>
+              )}
+
+              {/* NEED CHOICE (redirected from dashboard) */}
+              {!loading && !isUnauthorized && needChoice && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Please choose an inventory to continue.
+                </Alert>
+              )}
+              {/* EMPTY */}
+              {showEmpty && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  No inventories to show yet. Create one to get started.
+                </Alert>
+              )}
+
+              {/* LIST */}
+              {showList && (
+                <Stack spacing={1.5} sx={{ mb: 2, maxWidth: 380 }}>
+                  {inventories.map((inv) => {
+                    const isSelecting = selectingId === inv.id;
+                    const isActive = activeId === inv.id;
+
+                    return (
+                      <Paper
+                        key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
                         variant="outlined"
-                        size="small"
-                        onClick={() => navigate(-1)}
-                        sx={{ textTransform: "none", fontWeight: 800 }}
-                      >
-                        Go back
-                      </Button>
-                    </Stack>
-                  )}
-                </Stack>
-              </Alert>
-            )}
-
-            {/* NEED CHOICE (redirected from dashboard) */}
-            {!loading && !isUnauthorized && needChoice && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                Please choose an inventory to continue.
-              </Alert>
-            )}
-            {/* EMPTY */}
-            {showEmpty && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                No inventories to show yet. Create one to get started.
-              </Alert>
-            )}
-
-            {/* LIST */}
-            {showList && (
-              <Stack spacing={1.5} sx={{ mb: 2 }}>
-                {inventories.map((inv) => {
-                  const isSelecting = selectingId === inv.id;
-                  const isActive = activeId === inv.id;
-
-                  return (
-                    <Paper
-                      key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 3,
-                        overflow: "hidden",
-                        transition:
-                          "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
-                        borderColor: isActive
-                          ? "rgba(46, 125, 50, 0.55)" // "success-ish" uten å hardcode farger er vanskelig, men dette er mildt
-                          : isSelecting
-                            ? "rgba(11, 20, 55, 0.28)"
-                            : "rgba(11, 20, 55, 0.18)",
-                        bgcolor: isActive
-                          ? "rgba(46, 125, 50, 0.06)"
-                          : "transparent",
-                        "&:hover": {
-                          transform: "translateY(-1px)",
-                          boxShadow: "0 10px 24px rgba(11, 20, 55, 0.10)",
-                          borderColor: isActive
-                            ? "rgba(46, 125, 50, 0.75)"
-                            : "rgba(11, 20, 55, 0.35)",
-                        },
-                      }}
-                    >
-                      <ButtonBase
-                        onClick={() =>
-                          isActive
-                            ? navigate(PATHS.DASHBOARD)
-                            : onSelect(inv.id)
-                        }
-                        disabled={isSelecting}
                         sx={{
-                          width: "100%",
-                          p: 2,
-                          display: "block",
-                          textAlign: "center",
-                          cursor: isSelecting ? "default" : "pointer",
+                          borderRadius: 3,
+                          overflow: "hidden",
+                          transition:
+                            "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
+                          borderColor: isActive
+                            ? "rgba(46, 125, 50, 0.55)" // "success-ish" uten å hardcode farger er vanskelig, men dette er mildt
+                            : isSelecting
+                              ? "rgba(11, 20, 55, 0.28)"
+                              : "rgba(11, 20, 55, 0.18)",
+                          bgcolor: isActive
+                            ? "rgba(46, 125, 50, 0.06)"
+                            : "transparent",
+                          "&:hover": {
+                            transform: "translateY(-1px)",
+                            boxShadow: "0 10px 24px rgba(11, 20, 55, 0.10)",
+                            borderColor: isActive
+                              ? "rgba(46, 125, 50, 0.75)"
+                              : "rgba(11, 20, 55, 0.35)",
+                          },
                         }}
                       >
-                        <Stack spacing={0.5} alignItems="center">
-                          {/* Active chip */}
-                          {isActive && (
-                            <Chip
-                              label="Active"
-                              size="small"
-                              color="success"
-                              sx={{ fontWeight: 800 }}
-                            />
-                          )}
-
-                          <Typography fontWeight={800}>{inv.name}</Typography>
-
-                          <Typography sx={{ color: "text.secondary" }}>
-                            Org number: {inv.orgNumber}
-                          </Typography>
-
-                          <Box
-                            sx={{
-                              mt: 1,
-                              height: 20,
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {isSelecting && (
-                              <>
-                                <CircularProgress size={16} sx={{ mr: 1 }} />
-                                <Typography
-                                  sx={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: "text.secondary",
-                                  }}
-                                >
-                                  Selecting…
-                                </Typography>
-                              </>
+                        <ButtonBase
+                          onClick={() =>
+                            isActive
+                              ? navigate(PATHS.DASHBOARD)
+                              : onSelect(inv.id)
+                          }
+                          disabled={isSelecting}
+                          sx={{
+                            width: "100%",
+                            p: 2,
+                            display: "block",
+                            textAlign: "center",
+                            cursor: isSelecting ? "default" : "pointer",
+                          }}
+                        >
+                          <Stack spacing={0.5} alignItems="center">
+                            {/* Active chip */}
+                            {isActive && (
+                              <Chip
+                                label="Active"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 800 }}
+                              />
                             )}
-                          </Box>
-                        </Stack>
-                      </ButtonBase>
-                    </Paper>
-                  );
-                })}
-              </Stack>
-            )}
 
-            {/* CTA buttons (vis alltid når ikke loading, og ikke unauthorized) */}
-            {!loading && !isUnauthorized && (
-              <Stack
-                direction="row"
-                spacing={1.5}
-                sx={{ mt: 1 }}
-                flexWrap="wrap"
-                justifyContent={"center"}
-              >
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => navigate(PATHS.INVENTORIES_NEW)}
-                  sx={{
-                    height: 54,
-                    borderRadius: 3,
-                    fontWeight: 800,
-                    textTransform: "none",
-                    boxShadow: "0 14px 30px rgba(11, 20, 55, 0.22)",
-                  }}
-                >
-                  Register new
-                </Button>
+                            <Typography fontWeight={800}>{inv.name}</Typography>
 
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() => navigate(PATHS.DASHBOARD)}
-                  disabled={!activeId}
-                  sx={{
-                    height: 54,
-                    borderRadius: 3,
-                    fontWeight: 800,
-                    textTransform: "none",
-                  }}
+                            <Typography sx={{ color: "text.secondary" }}>
+                              Org number: {inv.orgNumber}
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                mt: 1,
+                                height: 20,
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              {isSelecting && (
+                                <>
+                                  <CircularProgress size={16} sx={{ mr: 1 }} />
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                      color: "text.secondary",
+                                    }}
+                                  >
+                                    Selecting…
+                                  </Typography>
+                                </>
+                              )}
+                            </Box>
+                          </Stack>
+                        </ButtonBase>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+
+              {/* CTA buttons (vis alltid når ikke loading, og ikke unauthorized) */}
+              {!loading && !isUnauthorized && (
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  sx={{ mt: 1 }}
+                  flexWrap="wrap"
+                  justifyContent={"center"}
                 >
-                  To dashboard
-                </Button>
-              </Stack>
-            )}
-          </Paper>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => navigate(PATHS.INVENTORIES_NEW)}
+                    sx={{
+                      height: 54,
+                      borderRadius: 3,
+                      fontWeight: 800,
+                      textTransform: "none",
+                      boxShadow: "0 14px 30px rgba(11, 20, 55, 0.22)",
+                    }}
+                  >
+                    Register new
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() => navigate(PATHS.DASHBOARD)}
+                    disabled={!activeId}
+                    sx={{
+                      height: 54,
+                      borderRadius: 3,
+                      fontWeight: 800,
+                      textTransform: "none",
+                    }}
+                  >
+                    To dashboard
+                  </Button>
+                </Stack>
+              )}
+            </Paper>
+          </Box>
         </Box>
-
         {/* RIGHT */}
         <Box
           sx={{
             display: { xs: "none", md: "flex" },
             alignItems: "center",
             justifyContent: "center",
+            height: 560,
             p: 3,
             bgcolor: "#fff",
           }}
@@ -354,7 +365,9 @@ export default function InventoriesPage() {
             src="/auth-illustration.png"
             alt=""
             sx={{
-              width: "min(920px, 92%)",
+              width: "100%",
+              maxWidth: 760,
+              maxHeight: "100%",
               height: "auto",
               objectFit: "contain",
               opacity: 0.95,
@@ -362,7 +375,7 @@ export default function InventoriesPage() {
               pointerEvents: "none",
             }}
           />
-        </Box>
+        </Box>{" "}
       </Box>
     </Box>
   );
