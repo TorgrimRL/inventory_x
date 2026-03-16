@@ -40,7 +40,7 @@ type InventoryItem = {
   stock: number;
   price: number;
   order_id?: string;
-  low_stock_threshold?: number | null;
+  low_stock_threshold: number | null;
 };
 
 function extractBackendMessage(err: any): string {
@@ -180,6 +180,7 @@ export default function ItemPage() {
       setError("Low stock threshold must be a whole number 0 or higher.");
       return;
     }
+    setSaving(true);
 
     const payload = {
       name: name.trim(),
@@ -417,6 +418,7 @@ export default function ItemPage() {
               allItems={items}
               visibleItems={displayedItems}
               showFilteredMetrics={showFilteredMetrics}
+              lowStockFilterThreshold={lowStockFilterThreshold}
             />
 
             {loading ? (

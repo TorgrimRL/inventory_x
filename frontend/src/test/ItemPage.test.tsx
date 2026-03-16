@@ -59,7 +59,7 @@ describe("ItemPage", () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
       data: {
-        id: 4,
+        id: 5,
         name: "Keyboard",
         price: 100,
         stock: 5,
@@ -110,7 +110,7 @@ describe("ItemPage", () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
       data: {
-        id: 5,
+        id: 6,
         name: "Keyboard",
         price: 100,
         stock: 5,
