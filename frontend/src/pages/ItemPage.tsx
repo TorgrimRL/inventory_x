@@ -13,6 +13,7 @@ import {
   Divider,
   IconButton,
   Paper,
+  MenuItem,
   Snackbar,
   Stack,
   Switch,
@@ -105,7 +106,7 @@ export default function ItemPage() {
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
-  const [categorySearch, setCategorySearch] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
@@ -232,13 +233,16 @@ export default function ItemPage() {
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
   );
 
+  const categoryNameById = useMemo(
+    () =>
+      new Map(
+        categories.map((category) => [category.id, category.name] as const),
+      ),
+    [categories],
+  );
+
   const displayedItems = useMemo(() => {
     const q = searchInput.trim().toLowerCase();
-    const categoryQuery = categorySearch.trim().toLowerCase();
-
-    const categoryMap = new Map(
-      categories.map((category) => [category.id, category.name.toLowerCase()]),
-    );
 
     const searched =
       q.length === 0
@@ -246,14 +250,13 @@ export default function ItemPage() {
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
     const byCategory =
-      categoryQuery.length === 0
+      selectedCategoryIds.length === 0
         ? searched
         : searched.filter((item) => {
-            const names = (item.category_ids || [])
-              .map((id) => categoryMap.get(String(id)))
-              .filter(Boolean) as string[];
-
-            return names.some((name) => name === categoryQuery);
+            const ids = (item.category_ids || []).map(String);
+            return selectedCategoryIds.some((selectedId) =>
+              ids.includes(selectedId),
+            );
           });
 
     const filtered = byCategory.filter(
@@ -274,12 +277,11 @@ export default function ItemPage() {
       return sortDirection === "asc" ? compare : -compare;
     });
   }, [
-    categories,
-    categorySearch,
     items,
     lowStockOnly,
     lowStockThreshold,
     searchInput,
+    selectedCategoryIds,
     sortDirection,
     sortField,
   ]);
@@ -303,10 +305,10 @@ export default function ItemPage() {
     setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThresholdInput("5");
-    setCategorySearch("");
+    setSelectedCategoryIds([]);
   }
 
-  const hasCategoryFilter = categorySearch.trim().length > 0;
+  const hasCategoryFilter = selectedCategoryIds.length > 0;
   const showFilteredMetrics =
     searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
@@ -357,16 +359,41 @@ export default function ItemPage() {
               sx={{ mb: 2, mt: 1 }}
             >
               <TextField
+                select
                 label="Category"
                 size="small"
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                placeholder="Search by category (exact match)"
-                sx={{ maxWidth: 360 }}
-              />
+                value={selectedCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "All categories";
+                    return ids
+                      .map(
+                        (id) =>
+                          categories.find((category) => category.id === id)
+                            ?.name || id,
+                      )
+                      .join(", ");
+                  },
+                }}
+                sx={{ minWidth: 320 }}
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </TextField>
               <Button
                 variant="text"
-                onClick={() => setCategorySearch("")}
+                onClick={() => setSelectedCategoryIds([])}
                 disabled={!hasCategoryFilter}
               >
                 Clear category
@@ -486,6 +513,7 @@ export default function ItemPage() {
                           Product name
                         </TableSortLabel>
                       </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
                         <TableSortLabel
                           active={sortField === "stock"}
@@ -522,6 +550,14 @@ export default function ItemPage() {
                     {displayedItems.map((item) => (
                       <TableRow key={item.id} hover>
                         <TableCell>{item.name}</TableCell>
+                        <TableCell>
+                          {(item.category_ids || []).length > 0
+                            ? (item.category_ids || [])
+                                .map((id) => categoryNameById.get(String(id)))
+                                .filter(Boolean)
+                                .join(", ")
+                            : "No category added"}
+                        </TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
                         <TableCell align="right">
                           {new Intl.NumberFormat("nb-NO", {

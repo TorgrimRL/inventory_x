@@ -18,9 +18,9 @@ function getVisibleRows(): RowItem[] {
 
     return {
       name: cells[0].textContent?.trim() || "",
-      stock: Number(cells[1].textContent?.trim() || "0"),
+      stock: Number(cells[2].textContent?.trim() || "0"),
       price: Number(
-        (cells[2].textContent || "0").replace(/[^\d.-]/g, "") || "0",
+        (cells[3].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
     };
   });
@@ -47,7 +47,7 @@ describe("ItemPage", () => {
                 name: "Bread",
                 stock: 3,
                 price: 5,
-                category_ids: ["c2"],
+                category_ids: [],
               },
               {
                 id: 3,
@@ -91,6 +91,7 @@ describe("ItemPage", () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
+    expect(screen.getByText(/no category added/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
@@ -176,26 +177,34 @@ describe("ItemPage", () => {
     ]);
   });
 
-  test("filters items by category with case-insensitive exact match and clear", async () => {
+  test("filters items by selected categories and supports clearing filter", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
     await screen.findByText("Milk");
 
-    const categoryInput = screen.getByRole("textbox", { name: /category/i });
+    await user.click(screen.getByRole("combobox", { name: /category/i }));
+    await user.click(await screen.findByRole("option", { name: "Cookies" }));
+    await user.click(screen.getByRole("option", { name: "Dairy" }));
+    await user.keyboard("{Escape}");
 
-    await user.type(categoryInput, "cookies");
+    // Cookies + Dairy should include Milk and Eggs, but not Bread (no category)
     expect(screen.getByText("Milk")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Bread")).not.toBeInTheDocument();
 
-    await user.clear(categoryInput);
-    await user.type(categoryInput, "bread");
+    // Category filter active + name search miss => category-specific empty state
+    await user.type(
+      screen.getByRole("textbox", { name: /search by name/i }),
+      "zzz",
+    );
     expect(
       await screen.findByText(/no items match your search/i),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /clear category/i }));
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
+
     expect(screen.getByText("Milk")).toBeInTheDocument();
     expect(screen.getByText("Bread")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
