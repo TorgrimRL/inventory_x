@@ -1,5 +1,4 @@
 import "./App.css";
-import "./components/utils/buttons.css";
 
 import type { Dispatch, SetStateAction } from "react";
 import { Route, Routes } from "react-router-dom";
