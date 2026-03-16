@@ -35,11 +35,11 @@ class Inventory(models.Model):
     @classmethod
     @transaction.atomic
     def register_with_owner(
-            cls,
-            *,
-            user,
-            name: str,
-            org_number: str,
+        cls,
+        *,
+        user,
+        name: str,
+        org_number: str,
     ) -> tuple["Inventory", "InventoryMembership"]:
         inventory = cls(name=name, org_number=org_number)
         inventory.full_clean(validate_unique=False)

@@ -16,18 +16,26 @@ def get_all_items(inventory_id: UUID):
     queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
         "id"
     )
-    items = queryset.values("id", "name", "price", "stock", "low_stock_threshold")
+    items = queryset.values(
+        "id", "name", "price", "stock", "low_stock_threshold"
+    )
     return list(items)
 
 
-def create_item(inventory_id: UUID, name, price, stock, low_stock_threshold=None):
+def create_item(
+    inventory_id: UUID, name, price, stock, low_stock_threshold=None
+):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
     """
     try:
         item = InventoryItem.objects.create(
-            inventory_id=inventory_id, name=name, price=price, stock=stock, low_stock_threshold=low_stock_threshold
+            inventory_id=inventory_id,
+            name=name,
+            price=price,
+            stock=stock,
+            low_stock_threshold=low_stock_threshold,
         )
         return {
             "id": item.id,
@@ -43,7 +51,7 @@ def create_item(inventory_id: UUID, name, price, stock, low_stock_threshold=None
 
 
 def adjust_stock(
-        inventory_id: UUID, item_id: UUID, direction: str, amount: int
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int
 ):
     """
     Adjusts stock for an inventory item.
@@ -78,7 +86,9 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
-def update_item(item_id: UUID, name: str, price: int, low_stock_threshold: int | None):
+def update_item(
+    item_id: UUID, name: str, price: int, low_stock_threshold: int | None
+):
     """
     Updates item fields (name, price) only. Stock is not changed here.
     """

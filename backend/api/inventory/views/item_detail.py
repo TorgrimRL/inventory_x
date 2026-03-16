@@ -36,7 +36,9 @@ class ItemDetailView(views.APIView):
                 item_id=item_id,
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
-                low_stock_threshold=serializer.validated_data.get("low_stock_threshold"),
+                low_stock_threshold=serializer.validated_data.get(
+                    "low_stock_threshold"
+                ),
             )
         except LookupError as exc:
             return Response(
@@ -58,7 +60,7 @@ class ItemDetailView(views.APIView):
 
     @extend_schema(responses=DELETE_ITEM_RESPONSES)
     def delete(
-            self, request: Request, item_id: UUID, *args, **kwargs
+        self, request: Request, item_id: UUID, *args, **kwargs
     ) -> Response:
         """
         Delete an item using the active inventory context.

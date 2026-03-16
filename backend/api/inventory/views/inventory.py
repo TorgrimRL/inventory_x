@@ -54,7 +54,9 @@ class InventoryView(APIView):
             name = serializer.validated_data["name"]
             price = serializer.validated_data["price"]
             stock = serializer.validated_data.get("stock", 0)
-            low_stock_threshold = serializer.validated_data.get("low_stock_threshold")
+            low_stock_threshold = serializer.validated_data.get(
+                "low_stock_threshold"
+            )
 
             # Attempt to create the item
             created = create_item(
