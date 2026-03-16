@@ -280,7 +280,7 @@ describe("ItemPage", () => {
 
     // Lower threshold to 2 => empty state
     await user.clear(thresholdInput);
-    await user.type(thresholdInput, "2");
+    await user.type(thresholdInput, "1");
     expect(await screen.findByText(/no items found/i)).toBeInTheDocument();
 
     // Reset => full list back
