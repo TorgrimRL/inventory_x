@@ -85,6 +85,17 @@ export default function ItemPage() {
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+  const [newItemLowStockThreshold, setNewItemLowStockThreshold] = useState("");
+
+  const newItemLowStockThresholdNumber =
+    newItemLowStockThreshold.trim() === ""
+      ? null
+      : Number(newItemLowStockThreshold);
+
+  const newItemLowStockThresholdIsInvalid =
+    newItemLowStockThresholdNumber !== null &&
+    (!Number.isInteger(newItemLowStockThresholdNumber) ||
+      newItemLowStockThresholdNumber < 0);
 
   const [stock, setStock] = useState<string>("0");
   const stockNumber = Number(stock);
@@ -165,13 +176,16 @@ export default function ItemPage() {
       setError("Stock cannot be negative.");
       return;
     }
-
-    setSaving(true);
+    if (newItemLowStockThresholdIsInvalid) {
+      setError("Low stock threshold must be a whole number 0 or higher.");
+      return;
+    }
 
     const payload = {
       name: name.trim(),
       price: Number(price),
       stock: s,
+      low_stock_threshold: newItemLowStockThresholdNumber,
     };
 
     try {
@@ -193,6 +207,7 @@ export default function ItemPage() {
       setName("");
       setPrice("0");
       setStock("0");
+      setNewItemLowStockThreshold("");
     } catch (err) {
       console.error(err);
       setError(extractBackendMessage(err));
@@ -207,7 +222,7 @@ export default function ItemPage() {
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
 
-  const lowStockThreshold = Math.max(
+  const lowStockFilterThreshold = Math.max(
     0,
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
   );
@@ -221,7 +236,7 @@ export default function ItemPage() {
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
     const filtered = searched.filter(
-      (item) => !lowStockOnly || item.stock <= lowStockThreshold,
+      (item) => !lowStockOnly || item.stock <= lowStockFilterThreshold,
     );
 
     return [...filtered].sort((a, b) => {
@@ -231,8 +246,26 @@ export default function ItemPage() {
         compare = a.name.localeCompare(b.name);
       } else if (sortField === "stock") {
         compare = a.stock - b.stock;
-      } else {
+      } else if (sortField === "price") {
         compare = Number(a.price) - Number(b.price);
+      } else if (sortField === "low_stock_threshold") {
+        const aThreshold = a.low_stock_threshold;
+        const bThreshold = b.low_stock_threshold;
+
+        if (aThreshold == null && bThreshold == null) {
+          compare = 0;
+        } else if (aThreshold == null) {
+          compare = 1;
+        } else if (bThreshold == null) {
+          compare = -1;
+        } else {
+          compare =
+            sortDirection === "asc"
+              ? aThreshold - bThreshold
+              : bThreshold - aThreshold;
+        }
+
+        return compare;
       }
 
       return sortDirection === "asc" ? compare : -compare;
@@ -240,7 +273,7 @@ export default function ItemPage() {
   }, [
     items,
     lowStockOnly,
-    lowStockThreshold,
+    lowStockFilterThreshold,
     searchInput,
     sortDirection,
     sortField,
@@ -384,7 +417,6 @@ export default function ItemPage() {
               allItems={items}
               visibleItems={displayedItems}
               showFilteredMetrics={showFilteredMetrics}
-              lowStockThreshold={lowStockThreshold}
             />
 
             {loading ? (
@@ -542,11 +574,28 @@ export default function ItemPage() {
                   error={stockIsInvalid}
                   helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
+                <TextField
+                  label="Low stock threshold"
+                  value={newItemLowStockThreshold}
+                  onChange={(e) => setNewItemLowStockThreshold(e.target.value)}
+                  type="number"
+                  inputProps={{ step: 1, min: 0 }}
+                  fullWidth
+                  disabled={saving}
+                  error={newItemLowStockThresholdIsInvalid}
+                  helperText={
+                    newItemLowStockThresholdIsInvalid
+                      ? "Threshold must be a whole number 0 or higher"
+                      : "Leave empty if no threshold should be set"
+                  }
+                />
               </Stack>
 
               {showClientHint && (
                 <Alert severity="info">
-                  Name must be set. Price/stock must be positive.
+                  Name must be set. Price and stock must be 0 or higher. Low
+                  stock threshold is optional, but must be a whole number 0 or
+                  higher if provided.
                 </Alert>
               )}
             </Stack>
@@ -564,6 +613,7 @@ export default function ItemPage() {
                 saving ||
                 stockIsInvalid ||
                 priceIsInvalid ||
+                newItemLowStockThresholdIsInvalid ||
                 name.trim().length === 0
               }
             >
