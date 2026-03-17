@@ -108,6 +108,15 @@ export default function EditItemModal({
     direction === "decrease" &&
     currentStock - amountNumber < 0;
 
+  const detailsChanged =
+    canEditDetails &&
+    (name.trim() !== initialName ||
+      Number(priceNumber) !== Number(initialPrice));
+
+  const stockChanged = wantsStockChange && direction !== null;
+
+  const hasChanges = detailsChanged || stockChanged;
+
   function handleClose() {
     if (!saving) {
       setError(null);
@@ -325,6 +334,7 @@ export default function EditItemModal({
               variant="contained"
               disabled={
                 saving ||
+                !hasChanges ||
                 amountIsInvalid ||
                 directionIsInvalid ||
                 stockWouldBeNegative ||
