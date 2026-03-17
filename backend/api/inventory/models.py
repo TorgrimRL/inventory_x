@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, ClassVar
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import IntegrityError, models, transaction
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 
 org_number_validator = RegexValidator(
     regex=r"^\d{9}$",
@@ -126,6 +128,7 @@ class InventoryItem(models.Model):
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
+    low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -158,3 +161,28 @@ class InventoryMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.inventory} as {self.role}"
+
+
+@receiver(m2m_changed, sender=InventoryItem.categories.through)
+def enforce_category_inventory_match(
+    sender, instance, action, pk_set, **kwargs
+):
+    """
+    Ensures that an InventoryItem and its ItemCategories always belong
+    to the same Inventory. This runs automatically on .set() or .add().
+    """
+    if action == "pre_add" and pk_set:
+        # pk_set contains the UUIDs of the categories being added.
+        # We query to see if ANY of these categories have a different
+        # inventory_id than the item (instance) they are being attached to.
+        invalid_count = (
+            ItemCategory.objects.filter(id__in=pk_set)
+            .exclude(inventory_id=instance.inventory_id)
+            .count()
+        )
+
+        if invalid_count > 0:
+            raise ValueError(
+                "Model Guard: Item and Category must belong "
+                "to the same inventory."
+            )

@@ -13,6 +13,19 @@ from api.inventory.models import (
 )
 
 
+def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
+    pattern = index % 4
+
+    if pattern == 0:
+        return 2, 5  # below threshold
+    if pattern == 1:
+        return 5, 5  # equal to threshold
+    if pattern == 2:
+        return 9, 5  # above threshold
+
+    return random.randint(0, 50), None  # no threshold
+
+
 class Command(BaseCommand):
     help = (
         "Seeds database with mock inventory data (items +"
@@ -243,12 +256,15 @@ class Command(BaseCommand):
             # Ola gets Ola items
             ola_inv = inventories_by_name["Ola AS"]
             for index, (name, price) in enumerate(ola_catalog):
+                stock, low_stock_threshold = seeded_stock_and_threshold(index)
+
                 # Make firsts items UUID static
                 item_kwargs = {
                     "inventory": ola_inv,
                     "name": name,
                     "price": price,
-                    "stock": random.randint(0, 50),
+                    "stock": stock,
+                    "low_stock_threshold": low_stock_threshold,
                 }
                 if index == 0:
                     item_kwargs["id"] = STATIC_ITEM_UUID
@@ -257,13 +273,17 @@ class Command(BaseCommand):
 
             # Jessica gets Jessica items
             jessica_inv = inventories_by_name["Jessica Cookies AS"]
-            for name, price in jessica_catalog:
+            for index, (name, price) in enumerate(jessica_catalog):
+                stock, low_stock_threshold = seeded_stock_and_threshold(
+                    index + 100
+                )
                 items_to_create.append(
                     InventoryItem(
                         inventory=jessica_inv,
                         name=name,
                         price=price,
-                        stock=random.randint(0, 50),
+                        stock=stock,
+                        low_stock_threshold=low_stock_threshold,
                     )
                 )
 
@@ -272,13 +292,17 @@ class Command(BaseCommand):
                 if inv.id in (ola_inv.id, jessica_inv.id):
                     continue
 
-                for name, price in generic_catalog:
+                for index, (name, price) in enumerate(generic_catalog):
+                    stock, low_stock_threshold = seeded_stock_and_threshold(
+                        index + 42
+                    )
                     items_to_create.append(
                         InventoryItem(
                             inventory=inv,
                             name=name,
                             price=price,
-                            stock=random.randint(0, 50),
+                            stock=stock,
+                            low_stock_threshold=low_stock_threshold,
                         )
                     )
 
@@ -382,6 +406,69 @@ class Command(BaseCommand):
         # Useful “persona” checks
         ola_count = counts_by_inventory_name.get("Ola AS", 0)
         jessica_count = counts_by_inventory_name.get("Jessica Cookies AS", 0)
+
+        # SEED CATEGORIES AND ASSIGN THEM TO ITEMS
+        self.stdout.write("Creating and assigning categories...")
+
+        # Clear out any old categories to maintain a clean slate
+        ItemCategory.objects.all().delete()
+
+        # Define realistic persona categories based on your inventory names
+        ola_category_names = [
+            "Electronics",
+            "Office Supplies",
+            "Furniture",
+            "Beverages",
+            "Hardware",
+            "On Sale",
+            "High Value",
+        ]
+        jessica_category_names = [
+            "Baked Goods",
+            "Raw Ingredients",
+            "Packaging",
+            "Merchandise",
+            "Vegan",
+            "Gluten-Free",
+            "Best Seller",
+        ]
+
+        db_ola_inv = Inventory.objects.get(name="Ola AS")
+        db_jessica_inv = Inventory.objects.get(name="Jessica Cookies AS")
+
+        ola_categories = [
+            ItemCategory.objects.create(inventory=db_ola_inv, name=name)
+            for name in ola_category_names
+        ]
+
+        jessica_categories = [
+            ItemCategory.objects.create(inventory=db_jessica_inv, name=name)
+            for name in jessica_category_names
+        ]
+
+        # Fetch all newly created items to assign M2M relationships
+        all_seeded_items = InventoryItem.objects.select_related(
+            "inventory"
+        ).all()
+
+        for item in all_seeded_items:
+            num_categories = random.choices(
+                [0, 1, 2, 3], weights=[15, 50, 25, 10], k=1
+            )[0]
+
+            if num_categories > 0:
+                if item.inventory.name == "Ola AS":
+                    pool = ola_categories
+                elif item.inventory.name == "Jessica Cookies AS":
+                    pool = jessica_categories
+                else:
+                    pool = []  # Other inventories get no categories for now
+
+                num_to_sample = min(num_categories, len(pool))
+
+                if pool and num_to_sample > 0:
+                    assigned_categories = random.sample(pool, k=num_to_sample)
+                    item.categories.set(assigned_categories)
 
         self.stdout.write(self.style.SUCCESS("✅ Seed completed"))
         self.stdout.write(

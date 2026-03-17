@@ -28,7 +28,7 @@ class BaseAPITestCase(APITestCase):
         response: Response,
         contract_map: dict[int, Any],
         expected_status: int,
-    ) -> dict[str, Any]:
+    ) -> Any:
         """
         Strictly validates that the response matches the definition in
         contracts.py.
@@ -41,7 +41,6 @@ class BaseAPITestCase(APITestCase):
         Returns the validated data dict for further logic checks.
         """
         errors: list[str] = []
-        validated_data: dict[str, Any] = {}
 
         if response.status_code != expected_status:
             errors.append(
@@ -78,14 +77,24 @@ class BaseAPITestCase(APITestCase):
 
         else:
             # Expect the body to be a certain format
-            serializer = serializer_cls(data=response.data)
-            if serializer.is_valid():
-                validated_data = serializer.validated_data
+            if isinstance(serializer_cls, type):
+                # It's a normal uninstantiated class
+                serializer = serializer_cls(data=response.data)
+            elif hasattr(serializer_cls, "child"):
+                # It's an instantiated ListSerializer
+                serializer = serializer_cls.child.__class__(
+                    data=response.data, many=True
+                )
             else:
+                # It's a standard instantiated serializer
+                serializer = serializer_cls.__class__(data=response.data)
+
+            if not serializer.is_valid():
                 errors.append(
                     "[Schema Violation] Response for status "
                     f"{response.status_code} "
-                    f"failed validation against {serializer_cls.__name__}.\n"
+                    "failed validation against "
+                    f"{serializer.__class__.__name__}.\n"
                     f"   Schema Errors: {serializer.errors}\n"
                     f"   Received Data: {response.data}"
                 )
@@ -95,4 +104,4 @@ class BaseAPITestCase(APITestCase):
                 "\n" + "=" * 60 + "\n" + "\n\n".join(errors) + "\n" + "=" * 60
             )
 
-        return validated_data
+        return response.data

@@ -56,7 +56,8 @@ class CategoryView(views.APIView):
             return Response(category, status=status.HTTP_201_CREATED)
         except ValueError as e:
             return Response(
-                {"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": {"non_field_errors": [str(e)]}},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 

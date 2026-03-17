@@ -7,3 +7,6 @@ class InventoryItemUpdateSerializer(serializers.Serializer):
     category_ids = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list
     )
+    low_stock_threshold = serializers.IntegerField(
+        min_value=0, required=False, allow_null=True
+    )
