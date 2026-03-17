@@ -436,6 +436,7 @@ export default function ItemPage() {
               </TextField>
               <Button
                 variant="outlined"
+                color="inherit"
                 size="small"
                 onClick={() => setSelectedCategoryId("")}
                 disabled={!hasCategoryFilter}
@@ -493,6 +494,7 @@ export default function ItemPage() {
                 <Button
                   onClick={resetListControls}
                   variant="outlined"
+                  color="inherit"
                   size="small"
                   sx={{ alignSelf: "center" }}
                 >
