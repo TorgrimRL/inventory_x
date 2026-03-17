@@ -35,6 +35,7 @@ import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ApiClient from "../services/apiClient.ts";
 import {
+  createActiveCategory,
   getActiveInventory,
   listActiveCategories,
 } from "../services/inventoryService";
@@ -92,6 +93,8 @@ export default function ItemPage() {
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
+  const [newItemCategoryId, setNewItemCategoryId] = useState("");
+  const [newItemCategoryName, setNewItemCategoryName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -163,6 +166,8 @@ export default function ItemPage() {
 
   function openDialog() {
     setError(null);
+    setNewItemCategoryId("");
+    setNewItemCategoryName("");
     setOpen(true);
   }
 
@@ -191,13 +196,23 @@ export default function ItemPage() {
 
     setSaving(true);
 
-    const payload = {
-      name: name.trim(),
-      price: Number(price),
-      stock: s,
-    };
+    let categoryIdToSave = newItemCategoryId || undefined;
 
     try {
+      const newCategoryTrimmed = newItemCategoryName.trim();
+      if (newCategoryTrimmed.length > 0) {
+        const createdCategory = await createActiveCategory(newCategoryTrimmed);
+        setCategories((prev) => [...prev, createdCategory]);
+        categoryIdToSave = createdCategory.id;
+      }
+
+      const payload = {
+        name: name.trim(),
+        price: Number(price),
+        stock: s,
+        category_ids: categoryIdToSave ? [categoryIdToSave] : [],
+      };
+
       const res = await ApiClient.post("/api/inventory/", payload);
       const created = res.data as InventoryItem;
 
@@ -214,6 +229,8 @@ export default function ItemPage() {
 
       setOpen(false);
       setName("");
+      setNewItemCategoryId("");
+      setNewItemCategoryName("");
       setPrice("0");
       setStock("0");
     } catch (err) {
@@ -650,6 +667,52 @@ export default function ItemPage() {
                 fullWidth
                 disabled={saving}
               />
+
+              <TextField
+                select
+                label="Category"
+                value={newItemCategoryId}
+                onChange={(e) => setNewItemCategoryId(e.target.value)}
+                fullWidth
+                disabled={saving}
+                helperText="Optional: choose existing category"
+              >
+                <MenuItem value="">No category added</MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <TextField
+                  label="New category"
+                  value={newItemCategoryName}
+                  onChange={(e) => setNewItemCategoryName(e.target.value)}
+                  fullWidth
+                  disabled={saving}
+                  helperText="Optional: create new category"
+                />
+                <Button
+                  variant="outlined"
+                  disabled={saving || !newItemCategoryName.trim()}
+                  onClick={async () => {
+                    try {
+                      const createdCategory = await createActiveCategory(
+                        newItemCategoryName.trim(),
+                      );
+                      setCategories((prev) => [...prev, createdCategory]);
+                      setNewItemCategoryId(createdCategory.id);
+                      setNewItemCategoryName("");
+                    } catch {
+                      setError("Failed to create category.");
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </Stack>
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField

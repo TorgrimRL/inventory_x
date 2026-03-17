@@ -120,6 +120,7 @@ describe("ItemPage", () => {
         name: "Keyboard",
         price: 100,
         stock: 5,
+        category_ids: [],
       });
     });
 
