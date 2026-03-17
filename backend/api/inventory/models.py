@@ -93,6 +93,7 @@ class InventoryItem(models.Model):
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
+    low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
