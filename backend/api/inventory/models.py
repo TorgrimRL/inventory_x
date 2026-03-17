@@ -134,7 +134,7 @@ class StockLog(models.Model):
 
     # Context
     inventory = models.ForeignKey(
-        "Inventory", on_delete=models.CASCADE, editable=False
+        Inventory, on_delete=models.CASCADE, editable=False
     )
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -156,4 +156,4 @@ class StockLog(models.Model):
     performed_by_name = models.CharField(max_length=80, null=True, blank=True)
 
     class Meta:
-        ordering = ["-timestamp"]
+        ordering = ("-timestamp",)

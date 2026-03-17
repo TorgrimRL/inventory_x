@@ -1,31 +1,29 @@
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-  Chip,
-  Box,
-  IconButton,
-  Alert,
-  Skeleton,
-  TableContainer,
-  Paper,
-} from "@mui/material";
 import {
   Close as CloseIcon,
   History as HistoryIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
   HorizontalRule as NeutralIcon,
 } from "@mui/icons-material";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
 
 export interface StockLog {
   id: string | number;
@@ -45,14 +43,20 @@ export interface StockLogDialogProps {
   onClose: () => void;
 }
 
-export default function StockLogDialog({ itemId, open, onClose }: StockLogDialogProps) {
+export default function StockLogDialog({
+  itemId,
+  open,
+  onClose,
+}: StockLogDialogProps) {
   const [logs, setLogs] = useState<StockLog[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && itemId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
+
       setError(null);
 
       fetch(`/api/inventory/${itemId}/stock-log`, {
@@ -103,14 +107,23 @@ export default function StockLogDialog({ itemId, open, onClose }: StockLogDialog
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         Item History & Logs
         <IconButton onClick={onClose} size="small" aria-label="close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ minHeight: "300px", bgcolor: "background.default" }}>
+      <DialogContent
+        dividers
+        sx={{ minHeight: "300px", bgcolor: "background.default" }}
+      >
         {loading && renderSkeletons()}
 
         {error && (
@@ -130,7 +143,9 @@ export default function StockLogDialog({ itemId, open, onClose }: StockLogDialog
               opacity: 0.6,
             }}
           >
-            <HistoryIcon sx={{ fontSize: 60, color: "text.secondary", mb: 2 }} />
+            <HistoryIcon
+              sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary">
               No logs found
             </Typography>
@@ -148,9 +163,15 @@ export default function StockLogDialog({ itemId, open, onClose }: StockLogDialog
                   <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>Change</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>Total Stock</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    Price
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600 }}>
+                    Change
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    Total Stock
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                 </TableRow>
               </TableHead>
@@ -160,8 +181,14 @@ export default function StockLogDialog({ itemId, open, onClose }: StockLogDialog
                   const isDecrease = log.direction === "decrease";
 
                   return (
-                    <TableRow key={log.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                      <TableCell sx={{ whiteSpace: "nowrap", color: "text.secondary" }}>
+                    <TableRow
+                      key={log.id}
+                      hover
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell
+                        sx={{ whiteSpace: "nowrap", color: "text.secondary" }}
+                      >
                         {formatDate(log.timestamp)}
                       </TableCell>
 
@@ -181,13 +208,13 @@ export default function StockLogDialog({ itemId, open, onClose }: StockLogDialog
                       </TableCell>
 
                       <TableCell align="center">
-                        {(isIncrease || isDecrease) ? (
+                        {isIncrease || isDecrease ? (
                           <Chip
                             size="small"
                             label={`${isIncrease ? "+" : "-"}${log.amount || 0}`}
                             color={isIncrease ? "success" : "error"}
-                            variant="soft"
-                            sx={{ fontWeight: 'bold', minWidth: "70px" }}
+                            variant="outlined"
+                            sx={{ fontWeight: "bold", minWidth: "70px" }}
                           />
                         ) : (
                           <Chip

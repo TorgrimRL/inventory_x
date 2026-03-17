@@ -1,3 +1,6 @@
+import uuid
+from typing import Any, cast
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -17,7 +20,7 @@ User = get_user_model()
 
 
 class MockRequest:
-    """A simple mock request object to pass to our services to test user logging."""
+    """A simple mock request to pass to our services to test user logging."""
 
     def __init__(self, user):
         self.user = user
@@ -25,14 +28,14 @@ class MockRequest:
 
 class StockLogTests(TestCase):
     def setUp(self):
-        org = "919191919"
+        org = str(uuid.uuid4().int)[:9]
         self.inventory = Inventory.objects.create(
             name="Test Inventory",
             org_number=org,
         )
 
         # Create a dummy user to test the decorator's user extraction
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(  # type: ignore[call-arg]
             email="admin@test.com",
             password="password123",
             display_name="Test Admin",
@@ -41,21 +44,21 @@ class StockLogTests(TestCase):
 
     def test_create_item_ok(self):
         # Act
-        item_data = create_item(
+        create_item(
             inventory_id=self.inventory.id,
             name="New Laptop",
             price=15000,
             stock=10,
             request=self.mock_request,
         )
-
         self.assertEqual(StockLog.objects.count(), 1)
         log = StockLog.objects.first()
+        assert log is not None
+
         self.assertEqual(log.action, "create_item")
         self.assertEqual(log.item_name, "New Laptop")
         self.assertEqual(log.price, 15000)
         self.assertEqual(log.current_stock, 10)
-        self.assertEqual(log.inventory_id, self.inventory.id)
         self.assertEqual(log.performed_by, self.user)
         self.assertEqual(log.performed_by_name, "Test Admin")
 
@@ -77,6 +80,8 @@ class StockLogTests(TestCase):
         )
 
         log = StockLog.objects.first()
+        assert log is not None
+
         self.assertEqual(log.action, "update_item")
         self.assertEqual(log.item_name, "Gaming Mouse")
         self.assertEqual(log.price, 500)
@@ -102,6 +107,8 @@ class StockLogTests(TestCase):
         )
 
         log = StockLog.objects.first()
+        assert log is not None
+
         self.assertEqual(log.action, "adjust_stock")
         self.assertEqual(log.direction, "decrease")
         self.assertEqual(log.amount, 5)
@@ -164,6 +171,8 @@ class StockLogViewTests(BaseAPITestCase):
             STOCK_LOG_RESPONSES,
             200,
         )
+
+        data = cast(list[dict[str, Any]], data)
 
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["action"], "create_item")

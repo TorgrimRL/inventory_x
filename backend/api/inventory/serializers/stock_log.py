@@ -5,7 +5,11 @@ from api.inventory.models import StockLog
 class StockLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockLog
-        exclude = ["id", "inventory", "performed_by"]
+        exclude = (
+            "id",
+            "inventory",
+            "performed_by",
+        )
 
 
 class StockLogSerializerList(serializers.ListSerializer):
