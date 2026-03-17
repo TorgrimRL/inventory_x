@@ -355,24 +355,18 @@ class Command(BaseCommand):
         ).all()
 
         for item in all_seeded_items:
-            # 15% of items have 0 categories
-            # 50% have 1 category
-            # 25% have 2 categories
-            # 10% have 3 categories
             num_categories = random.choices(
                 [0, 1, 2, 3], weights=[15, 50, 25, 10], k=1
             )[0]
 
             if num_categories > 0:
-                # Pick the correct category pool based on the item's inventory
-                pool = (
-                    ola_categories
-                    if item.inventory.name == "Ola AS"
-                    else jessica_categories
-                )
+                if item.inventory.name == "Ola AS":
+                    pool = ola_categories
+                elif item.inventory.name == "Jessica Cookies AS":
+                    pool = jessica_categories
+                else:
+                    pool = []  # Other inventories get no categories for now
 
-                # Prevent trying to sample more categories than
-                # exist in the pool
                 num_to_sample = min(num_categories, len(pool))
 
                 if pool and num_to_sample > 0:
