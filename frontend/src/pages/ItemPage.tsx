@@ -24,6 +24,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  TablePagination,
   TextField,
   Typography,
 } from "@mui/material";
@@ -111,6 +112,7 @@ export default function ItemPage() {
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [page, setPage] = useState(0);
 
   // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<"name" | "stock" | "price">(
@@ -291,6 +293,31 @@ export default function ItemPage() {
     sortField,
   ]);
 
+  const rowsPerPage = 30;
+  const pagedItems = displayedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
+  useEffect(() => {
+    const maxPage = Math.max(
+      0,
+      Math.ceil(displayedItems.length / rowsPerPage) - 1,
+    );
+    if (page > maxPage) setPage(maxPage);
+  }, [displayedItems.length, page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [
+    searchInput,
+    selectedCategoryId,
+    lowStockOnly,
+    lowStockThresholdInput,
+    sortField,
+    sortDirection,
+  ]);
+
   function handleSort(field: "name" | "stock" | "price") {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -348,6 +375,14 @@ export default function ItemPage() {
             </Stack>
 
             <Divider sx={{ my: 2 }} />
+
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              Search and filter
+            </Typography>
 
             <ItemSearchBar
               value={searchInput}
@@ -436,13 +471,9 @@ export default function ItemPage() {
 
                 <Button
                   onClick={resetListControls}
-                  variant="contained"
-                  color="inherit"
-                  sx={{
-                    bgcolor: "grey.300",
-                    color: "text.primary",
-                    "&:hover": { bgcolor: "grey.400" },
-                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={{ alignSelf: "center" }}
                 >
                   Reset
                 </Button>
@@ -456,6 +487,14 @@ export default function ItemPage() {
                 Add item
               </Button>
             </Stack>
+
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              Key metrics
+            </Typography>
 
             <InventoryKpiSummary
               allItems={items}
@@ -484,88 +523,99 @@ export default function ItemPage() {
                 </Typography>
               </Stack>
             ) : (
-              <TableContainer component={Box} sx={{ overflowX: "auto" }}>
-                <Table size="medium" sx={{ minWidth: 720 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "name"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "name" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("name")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Product name
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "stock"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "stock" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("stock")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Stock
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "price"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "price" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("price")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Price
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Actions
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {displayedItems.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>
-                          {(item.category_ids || []).length > 0
-                            ? categoryNameById.get(
-                                String((item.category_ids || [])[0]),
-                              ) || "No category added"
-                            : "No category added"}
-                        </TableCell>
-                        <TableCell align="right">{item.stock}</TableCell>
-                        <TableCell align="right">
-                          {new Intl.NumberFormat("nb-NO", {
-                            style: "currency",
-                            currency: "NOK",
-                          }).format(Number(item.price))}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => openEditDetails(item)}
+              <>
+                <TableContainer component={Box} sx={{ overflowX: "auto" }}>
+                  <Table size="medium" sx={{ minWidth: 720 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "name"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "name" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("name")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
-                            Edit
-                          </Button>
+                            Product name
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "stock"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "stock" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("stock")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Stock
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "price"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "price" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("price")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Price
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          Actions
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+
+                    <TableBody>
+                      {pagedItems.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {(item.category_ids || []).length > 0
+                              ? categoryNameById.get(
+                                  String((item.category_ids || [])[0]),
+                                ) || "-"
+                              : "-"}
+                          </TableCell>
+                          <TableCell align="right">{item.stock}</TableCell>
+                          <TableCell align="right">
+                            {new Intl.NumberFormat("nb-NO", {
+                              style: "currency",
+                              currency: "NOK",
+                            }).format(Number(item.price))}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => openEditDetails(item)}
+                            >
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <TablePagination
+                  component="div"
+                  count={displayedItems.length}
+                  page={page}
+                  onPageChange={(_, nextPage) => setPage(nextPage)}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[30]}
+                />
+              </>
             )}
           </Paper>
         </Stack>

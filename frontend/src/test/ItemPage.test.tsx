@@ -91,7 +91,7 @@ describe("ItemPage", () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
-    expect(screen.getByText(/no category added/i)).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
