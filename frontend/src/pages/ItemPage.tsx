@@ -384,13 +384,15 @@ export default function ItemPage() {
               Search and filter
             </Typography>
 
-            <ItemSearchBar
-              value={searchInput}
-              disabled={loading}
-              onChange={setSearchInput}
-              onSearch={() => {}}
-              onClear={handleClearSearch}
-            />
+            <Box sx={{ maxWidth: 420 }}>
+              <ItemSearchBar
+                value={searchInput}
+                disabled={loading}
+                onChange={setSearchInput}
+                onSearch={() => {}}
+                onClear={handleClearSearch}
+              />
+            </Box>
 
             <Stack
               direction="row"
@@ -404,7 +406,7 @@ export default function ItemPage() {
                 size="small"
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
-                sx={{ minWidth: 320 }}
+                sx={{ minWidth: 260 }}
               >
                 <MenuItem value="">All categories</MenuItem>
                 <MenuItem value="__no_category__">No category added</MenuItem>
@@ -415,7 +417,8 @@ export default function ItemPage() {
                 ))}
               </TextField>
               <Button
-                variant="text"
+                variant="outlined"
+                size="small"
                 onClick={() => setSelectedCategoryId("")}
                 disabled={!hasCategoryFilter}
               >
@@ -457,7 +460,7 @@ export default function ItemPage() {
                     }
                   }}
                   inputProps={{ min: 0, step: 1 }}
-                  sx={{ width: 180 }}
+                  sx={{ width: 130 }}
                 />
 
                 <Stack direction="row" alignItems="center" spacing={1}>
