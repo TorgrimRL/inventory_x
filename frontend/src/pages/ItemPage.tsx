@@ -29,6 +29,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import EditItemModal from "../components/inventory/editItemModal";
+import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import StockLog from "../components/inventory/StockLog"; // Adjust import path
 import ApiClient from "../services/apiClient.ts";
@@ -277,6 +278,8 @@ export default function ItemPage() {
     setLowStockThresholdInput("5");
   }
 
+  const showFilteredMetrics = searchInput.trim().length > 0 || lowStockOnly;
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -385,6 +388,13 @@ export default function ItemPage() {
                 Add item
               </Button>
             </Stack>
+
+            <InventoryKpiSummary
+              allItems={items}
+              visibleItems={displayedItems}
+              showFilteredMetrics={showFilteredMetrics}
+              lowStockThreshold={lowStockThreshold}
+            />
 
             {loading ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
@@ -596,6 +606,14 @@ export default function ItemPage() {
 
             setSnackMessage("Stock updated");
             setSnackOpen(true);
+          }}
+          onItemDeleted={(deletedId) => {
+            setItems((prev) => prev.filter((it) => it.id !== deletedId));
+
+            setSelectedItem(null);
+            setSnackMessage("Item deleted");
+            setSnackOpen(true);
+            setEditOpen(false);
           }}
         />
       )}

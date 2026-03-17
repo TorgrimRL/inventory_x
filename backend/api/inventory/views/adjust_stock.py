@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -24,7 +25,7 @@ class AdjustStockView(APIView):
         summary="Adjust item stock",
         responses=ADJUST_STOCK_RESPONSES,
     )
-    def post(self, request: Request, item_id: int) -> Response:
+    def post(self, request: Request, item_id: UUID) -> Response:
         serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():

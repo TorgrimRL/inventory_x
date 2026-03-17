@@ -45,7 +45,7 @@ def create_item(inventory_id: UUID, name, price, stock, request=None):
 
 @audit_logger("adjust_stock")
 def adjust_stock(
-    inventory_id: UUID, item_id: int, direction: str, amount: int, request=None
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int, request=None
 ):
     """
     Adjusts stock for an inventory item.
@@ -81,7 +81,7 @@ def adjust_stock(
 
 
 @audit_logger("update_item")
-def update_item(item_id: int, name: str, price: int, request=None):
+def update_item(item_id: UUID, name: str, price: int, request=None):
     """
     Updates item fields (name, price) only. Stock is not changed here.
     """
@@ -95,5 +95,16 @@ def update_item(item_id: int, name: str, price: int, request=None):
 
             return item
 
+    except InventoryItem.DoesNotExist as err:
+        raise LookupError("Item not found") from err
+
+
+def delete_item(inventory_id: UUID, item_id: UUID) -> None:
+    """
+    Deletes an inventory item belonging to the active inventory.
+    """
+    try:
+        item = InventoryItem.objects.get(id=item_id, inventory_id=inventory_id)
+        item.delete()
     except InventoryItem.DoesNotExist as err:
         raise LookupError("Item not found") from err

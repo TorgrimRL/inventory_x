@@ -36,10 +36,17 @@ class InventoryItemsTests(TestCase):
     def test_get_all_items_returns_correct_data(self):
         results = get_all_items(inventory_id=self.inventory.id)
 
-        # Assert
+        # Assert total length
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]["name"], "Mouse")
-        self.assertEqual(results[1]["price"], 100)
+
+        # Convert list to a dictionary
+        results_by_name = {item["name"]: item for item in results}
+
+        self.assertIn("Mouse", results_by_name)
+        self.assertIn("Keyboard", results_by_name)
+
+        self.assertEqual(results_by_name["Mouse"]["price"], 50)
+        self.assertEqual(results_by_name["Keyboard"]["price"], 100)
 
     def test_adjust_stock_increase(self):
         updated_item = adjust_stock(
@@ -72,7 +79,7 @@ class InventoryItemsTests(TestCase):
         with self.assertRaises(LookupError):
             adjust_stock(
                 inventory_id=self.inventory.id,
-                item_id=9999,
+                item_id=uuid.uuid4(),
                 direction="increase",
                 amount=1,
             )
@@ -187,7 +194,7 @@ class AdjustStockViewTests(BaseAPITestCase):
         )
 
     def test_item_not_found_returns_404(self):
-        non_existent_item_id = self.item.id + 999
+        non_existent_item_id = uuid.uuid4()
 
         url = reverse(
             "adjust-stock",
@@ -290,7 +297,7 @@ class UpdateItemViewTests(BaseAPITestCase):
         )
 
         self.url = reverse(
-            "update-item",
+            "item-detail",
             args=[self.item.id],
         )
 
@@ -358,7 +365,8 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assertEqual(self.item.price, 25)
 
     def test_update_item_not_found_returns_404(self):
-        url = reverse("update-item", args=[9999])
+        non_existent_item_id = uuid.uuid4()
+        url = reverse("item-detail", args=[non_existent_item_id])
 
         response = self.client.patch(
             url,

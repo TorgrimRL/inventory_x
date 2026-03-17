@@ -83,7 +83,7 @@ class Inventory(models.Model):
 
 
 class InventoryItem(models.Model):
-    id: int
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
         "Inventory",
         on_delete=models.CASCADE,
@@ -139,7 +139,7 @@ class StockLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     # Item State
-    item_id = models.IntegerField(null=True, blank=True)
+    item_id = models.UUIDField(null=True, blank=True)
     item_name = models.CharField(max_length=255, null=True, blank=True)
     price = models.IntegerField(null=True, blank=True)
 

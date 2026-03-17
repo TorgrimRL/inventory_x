@@ -1,6 +1,7 @@
 import apiClient from "./apiClient";
 
 export type AdjustStockDirection = "increase" | "decrease";
+export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
 type AdjustStockResponse = {
   stock: number;
@@ -107,10 +108,74 @@ export async function updateItem(
   return res.data;
 }
 
+export async function deleteItem(itemId: number | string) {
+  const res = await apiClient.delete(`/api/inventory/${itemId}/`);
+  return res.data;
+}
+
 const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
 /**
  * Invites a user to the currently active inventory via email.
  */
 export async function inviteUser(email: string): Promise<void> {
   await apiClient.post(INVITE_ENDPOINT, { email });
+}
+
+export type InventoryMember = {
+  id: string;
+  email: string;
+  role: InventoryMemberRole;
+};
+
+type RawInventoryMember = {
+  id: string;
+  role: InventoryMemberRole;
+  email?: string;
+  user?: {
+    email?: string;
+  };
+};
+
+function normalizeMember(raw: RawInventoryMember): InventoryMember {
+  return {
+    id: raw.id,
+    role: raw.role,
+    email: raw.email ?? raw.user?.email ?? "",
+  };
+}
+
+const MEMBERS_ENDPOINT = "/api/inventory/members/";
+
+export async function listInventoryMembers(): Promise<InventoryMember[]> {
+  const res = await apiClient.get(MEMBERS_ENDPOINT);
+  const data: unknown = res.data;
+
+  if (Array.isArray(data)) {
+    return (data as RawInventoryMember[]).map(normalizeMember);
+  }
+
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+
+    if (Array.isArray(obj.results)) {
+      return (obj.results as RawInventoryMember[]).map(normalizeMember);
+    }
+
+    if (Array.isArray(obj.members)) {
+      return (obj.members as RawInventoryMember[]).map(normalizeMember);
+    }
+
+    if (Array.isArray(obj.memberships)) {
+      return (obj.memberships as RawInventoryMember[]).map(normalizeMember);
+    }
+  }
+
+  return [];
+}
+
+export async function removeInventoryMember(
+  membershipId: string,
+): Promise<{ message: string }> {
+  const res = await apiClient.delete(`/api/inventory/members/${membershipId}/`);
+  return res.data;
 }

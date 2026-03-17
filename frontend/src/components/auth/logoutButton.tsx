@@ -1,53 +1,43 @@
-import type React from "react";
-import { useEffect, useState } from "react";
+import { Button } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import apiClient from "../../services/apiClient";
-import { checkSession } from "../../services/authService";
 
-const LogoutButton: React.FC = () => {
+export default function LogoutButton() {
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
-  const [isValid, setIsValid] = useState<boolean>(false);
+  const theme = useTheme();
 
-  useEffect(() => {
-    const verify = async () => {
-      try {
-        const valid = await checkSession();
-        setIsValid(valid);
-      } catch {
-        setIsValid(false);
-      } finally {
-        setChecked(true);
+  const handleLogout = async () => {
+    try {
+      const res = await apiClient.post("/api/user/logout/");
+
+      if (res.status === 200) {
+        localStorage.clear();
+        navigate(PATHS.LOGIN, { replace: true });
       }
-    };
-    verify();
-  }, []);
-  useEffect(() => {
-    if (checked && !isValid) {
-      navigate(PATHS.LOGIN, { replace: true });
-    }
-  }, [checked, isValid, navigate]);
-
-  const logoutHandler = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const res = await apiClient.post("/api/user/logout/");
-    if (res.status == 200) {
-      localStorage.clear(); // clear session storage.
-      navigate(PATHS.LOGIN);
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 
-  if (!checked || !isValid) return null;
-
   return (
-    <button onClick={logoutHandler} type="button" className="submit-button">
-      {" "}
-      logout
-    </button>
+    <Button
+      onClick={handleLogout}
+      variant="outlined"
+      sx={{
+        borderRadius: 2,
+        fontWeight: 600,
+        borderColor: "primary.main",
+        color: "primary.main",
+        textTransform: "none",
+        "&:hover": {
+          backgroundColor: `${theme.palette.primary.main}15`,
+        },
+      }}
+    >
+      Log out
+    </Button>
   );
-};
-
-export default LogoutButton;
+}
