@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from django.db import IntegrityError
+from django.db.utils import IntegrityError
 
 from api.inventory.models import ItemCategory
 

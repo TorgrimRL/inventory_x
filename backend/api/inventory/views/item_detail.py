@@ -40,6 +40,11 @@ class ItemDetailView(views.APIView):
                 price=serializer.validated_data["price"],
                 category_ids=serializer.validated_data.get("category_ids"),
             )
+        except ValueError as exc:
+            return Response(
+                {"detail": {"non_field_errors": [str(exc)]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except LookupError as exc:
             return Response(
                 {"detail": str(exc)},
@@ -52,6 +57,9 @@ class ItemDetailView(views.APIView):
                 "name": item.name,
                 "price": item.price,
                 "stock": item.stock,
+                "category_ids": [
+                    category.id for category in item.categories.all()
+                ],
                 "message": "Item updated",
             },
             status=status.HTTP_200_OK,
