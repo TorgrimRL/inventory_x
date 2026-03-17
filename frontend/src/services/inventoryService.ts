@@ -123,10 +123,19 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
 
 export async function updateItem(
   itemId: number | string,
-  payload: { name: string; price: number },
+  payload: { name: string; price: number; category_ids?: string[] },
 ) {
   const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
   return res.data;
+}
+
+export async function createActiveCategory(
+  name: string,
+): Promise<ItemCategory> {
+  const res = await apiClient.post("/api/inventory/active/categories/", {
+    name,
+  });
+  return res.data as ItemCategory;
 }
 
 export async function deleteItem(itemId: number | string) {

@@ -715,17 +715,24 @@ export default function ItemPage() {
           initialName={selectedItem.name}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
+          initialCategoryId={String((selectedItem.category_ids || [])[0] || "")}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
             id: number | string;
             name: string;
             price: number;
+            category_ids?: string[];
           }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
-                  ? { ...it, name: updated.name, price: updated.price }
+                  ? {
+                      ...it,
+                      name: updated.name,
+                      price: updated.price,
+                      category_ids: updated.category_ids,
+                    }
                   : it,
               ),
             );
