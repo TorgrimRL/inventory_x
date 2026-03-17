@@ -35,7 +35,11 @@ urlpatterns = [
         name="inventory-invite",
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
-    path("<int:item_id>/stock-log", StockLogView.as_view(), name="stock-log"),
+    path(
+        "<uuid:item_id>/stock-log/",
+        StockLogView.as_view(),
+        name="stock-log",
+    ),
     path(
         "members/",
         ListMembersView.as_view(),
