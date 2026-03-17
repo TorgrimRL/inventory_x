@@ -54,11 +54,6 @@ export default function ItemSearchBar({
           color="inherit"
           onClick={onClear}
           disabled={disabled || !canClear}
-          sx={{
-            borderColor: "text.primary",
-            color: "text.primary",
-            "&:hover": { borderColor: "text.primary" },
-          }}
         >
           Clear
         </Button>
