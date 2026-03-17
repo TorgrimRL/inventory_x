@@ -5,17 +5,18 @@ import {
   Checkbox,
   Dialog,
   DialogActions,
-  MenuItem,
   DialogContent,
   DialogTitle,
   Divider,
   ListItemText,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
+import type { ItemCategory } from "../../services/inventoryService";
 import {
   adjustStock,
   createActiveCategory,
@@ -23,7 +24,6 @@ import {
   listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
-import type { ItemCategory } from "../../services/inventoryService";
 
 type Props = {
   open: boolean;
