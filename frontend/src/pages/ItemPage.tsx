@@ -358,7 +358,9 @@ export default function ItemPage() {
               sx={{ gap: 2 }}
             >
               <Box>
-                <Typography variant="h5">Items</Typography>
+                <Typography variant="h5" fontWeight={700}>
+                  List of items
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {displayedItems.length} of {items.length} item
                   {items.length === 1 ? "" : "s"}
@@ -377,8 +379,9 @@ export default function ItemPage() {
             <Divider sx={{ my: 2 }} />
 
             <Typography
-              variant="subtitle2"
-              color="text.secondary"
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
               sx={{ mb: 1 }}
             >
               Search and filter
@@ -492,8 +495,9 @@ export default function ItemPage() {
             </Stack>
 
             <Typography
-              variant="subtitle2"
-              color="text.secondary"
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
               sx={{ mb: 1 }}
             >
               Key metrics
