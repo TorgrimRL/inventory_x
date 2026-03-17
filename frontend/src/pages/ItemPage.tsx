@@ -113,7 +113,7 @@ export default function ItemPage() {
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
@@ -288,16 +288,15 @@ export default function ItemPage() {
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
     const byCategory =
-      selectedCategoryId.length === 0
+      selectedCategoryIds.length === 0
         ? searched
         : searched.filter((item) => {
             const ids = (item.category_ids || []).map(String);
-
-            if (selectedCategoryId === "__no_category__") {
-              return ids.length === 0;
-            }
-
-            return ids.includes(selectedCategoryId);
+            return selectedCategoryIds.some((selectedId) =>
+              selectedId === "__no_category__"
+                ? ids.length === 0
+                : ids.includes(selectedId),
+            );
           });
 
     const filtered = byCategory.filter(
@@ -322,7 +321,7 @@ export default function ItemPage() {
     lowStockOnly,
     lowStockThreshold,
     searchInput,
-    selectedCategoryId,
+    selectedCategoryIds,
     sortDirection,
     sortField,
   ]);
@@ -345,7 +344,7 @@ export default function ItemPage() {
     setPage(0);
   }, [
     searchInput,
-    selectedCategoryId,
+    selectedCategoryIds,
     lowStockOnly,
     lowStockThresholdInput,
     sortField,
@@ -371,10 +370,10 @@ export default function ItemPage() {
     setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThresholdInput("5");
-    setSelectedCategoryId("");
+    setSelectedCategoryIds([]);
   }
 
-  const hasCategoryFilter = selectedCategoryId.length > 0;
+  const hasCategoryFilter = selectedCategoryIds.length > 0;
   const showFilteredMetrics =
     searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
@@ -439,15 +438,46 @@ export default function ItemPage() {
                 select
                 label="Category"
                 size="small"
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                value={selectedCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
                 sx={{ minWidth: 260 }}
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "All categories";
+                    return ids
+                      .map((id) => {
+                        if (id === "__no_category__")
+                          return "No category added";
+                        return (
+                          categories.find((category) => category.id === id)
+                            ?.name || id
+                        );
+                      })
+                      .join(", ");
+                  },
+                }}
               >
-                <MenuItem value="">All categories</MenuItem>
-                <MenuItem value="__no_category__">No category added</MenuItem>
+                <MenuItem value="__no_category__">
+                  <Checkbox
+                    size="small"
+                    checked={selectedCategoryIds.includes("__no_category__")}
+                  />
+                  <ListItemText primary="No category added" />
+                </MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
-                    {category.name}
+                    <Checkbox
+                      size="small"
+                      checked={selectedCategoryIds.includes(category.id)}
+                    />
+                    <ListItemText primary={category.name} />
                   </MenuItem>
                 ))}
               </TextField>
@@ -455,7 +485,7 @@ export default function ItemPage() {
                 variant="outlined"
                 color="inherit"
                 size="small"
-                onClick={() => setSelectedCategoryId("")}
+                onClick={() => setSelectedCategoryIds([])}
                 disabled={!hasCategoryFilter}
               >
                 Clear category

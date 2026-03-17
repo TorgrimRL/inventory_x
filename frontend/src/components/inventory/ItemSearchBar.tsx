@@ -52,6 +52,7 @@ export default function ItemSearchBar({
         <Button
           variant="outlined"
           color="inherit"
+          size="small"
           onClick={onClear}
           disabled={disabled || !canClear}
         >

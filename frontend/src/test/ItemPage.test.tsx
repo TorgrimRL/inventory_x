@@ -186,6 +186,7 @@ describe("ItemPage", () => {
 
     await user.click(screen.getByRole("combobox", { name: /category/i }));
     await user.click(await screen.findByRole("option", { name: "Cookies" }));
+    await user.keyboard("{Escape}");
 
     // Cookies should include Milk and Eggs, but not Bread (no category)
     expect(screen.getByText("Milk")).toBeInTheDocument();
