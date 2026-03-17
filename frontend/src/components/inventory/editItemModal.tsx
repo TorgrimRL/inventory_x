@@ -18,10 +18,10 @@ import {
   adjustStock,
   createActiveCategory,
   deleteItem,
-  ItemCategory,
   listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
+import type { ItemCategory } from "../../services/inventoryService";
 
 type Props = {
   open: boolean;
