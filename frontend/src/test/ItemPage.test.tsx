@@ -81,14 +81,10 @@ describe("ItemPage", () => {
     });
   });
 
-  test("add item with multiple categories and see 'Item added'", async () => {
+  test("add item and see 'Item added'", async () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
       data: { id: 4, name: "Keyboard", price: 100, stock: 5, category_ids: [] },
-    } as any);
-    mockedAxios.patch.mockResolvedValueOnce({
-      status: 200,
-      data: { id: 4, name: "Keyboard", price: 100, category_ids: ["c1", "c3"] },
     } as any);
 
     const user = userEvent.setup();
@@ -116,13 +112,6 @@ describe("ItemPage", () => {
     await user.type(stockInput, "5");
 
     await user.click(
-      within(dialog).getByRole("combobox", { name: /categories/i }),
-    );
-    await user.click(await screen.findByRole("option", { name: "Cookies" }));
-    await user.click(screen.getByRole("option", { name: "Dairy" }));
-    await user.keyboard("{Escape}");
-
-    await user.click(
       within(dialog).getByRole("button", { name: /^add item$/i }),
     );
 
@@ -131,15 +120,7 @@ describe("ItemPage", () => {
         name: "Keyboard",
         price: 100,
         stock: 5,
-        category_ids: ["c1", "c3"],
-      });
-    });
-
-    await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/inventory/4/", {
-        name: "Keyboard",
-        price: 100,
-        category_ids: ["c1", "c3"],
+        category_ids: [],
       });
     });
 

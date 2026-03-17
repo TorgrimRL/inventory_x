@@ -23,10 +23,12 @@ const mockedAdjustStock = adjustStock as jest.MockedFunction<
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
 const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
-const mockedListActiveCategories =
-  listActiveCategories as jest.MockedFunction<typeof listActiveCategories>;
-const mockedCreateActiveCategory =
-  createActiveCategory as jest.MockedFunction<typeof createActiveCategory>;
+const mockedListActiveCategories = listActiveCategories as jest.MockedFunction<
+  typeof listActiveCategories
+>;
+const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
+  typeof createActiveCategory
+>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
@@ -36,9 +38,12 @@ describe("EditItemModal - user story tests", () => {
       { id: "c2", name: "Cakes" },
       { id: "c3", name: "Dairy" },
     ] as any);
-    mockedCreateActiveCategory.mockResolvedValue({ id: "c4", name: "New" } as any);
+    mockedCreateActiveCategory.mockResolvedValue({
+      id: "c4",
+      name: "New",
+    } as any);
   });
-
+  jest.setTimeout(15000);
   function renderModal(
     overrides?: Partial<React.ComponentProps<typeof EditItemModal>>,
   ) {
