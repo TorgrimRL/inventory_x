@@ -91,7 +91,7 @@ describe("EditItemModal - user story tests", () => {
     await user.type(priceInput, "30");
 
     // Stock: amount=3, increase
-    const amountInput = within(dialog).getByRole("spinbutton", {
+    const amountInput = within(dialog).getByRole("textbox", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -142,7 +142,7 @@ describe("EditItemModal - user story tests", () => {
     expect(priceInput).toBeDisabled();
 
     // Stock: amount=2 increase
-    const amountInput = within(dialog).getByRole("spinbutton", {
+    const amountInput = within(dialog).getByRole("textbox", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -202,7 +202,7 @@ describe("EditItemModal - user story tests", () => {
     await user.type(nameInput, "New Name");
 
     // amount can stay 0 (no stock change)
-    const amountInput = within(dialog).getByRole("spinbutton", {
+    const amountInput = within(dialog).getByRole("textbox", {
       name: /amount/i,
     });
     await user.clear(amountInput);
