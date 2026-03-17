@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 import EditItemModal from "../components/inventory/editItemModal";
 import {
   adjustStock,
+  createActiveCategory,
   deleteItem,
+  listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
 
@@ -12,6 +14,8 @@ jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
   updateItem: jest.fn(),
   deleteItem: jest.fn(),
+  listActiveCategories: jest.fn(),
+  createActiveCategory: jest.fn(),
 }));
 
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
@@ -19,10 +23,20 @@ const mockedAdjustStock = adjustStock as jest.MockedFunction<
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
 const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
+const mockedListActiveCategories =
+  listActiveCategories as jest.MockedFunction<typeof listActiveCategories>;
+const mockedCreateActiveCategory =
+  createActiveCategory as jest.MockedFunction<typeof createActiveCategory>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedListActiveCategories.mockResolvedValue([
+      { id: "c1", name: "Cookies" },
+      { id: "c2", name: "Cakes" },
+      { id: "c3", name: "Dairy" },
+    ] as any);
+    mockedCreateActiveCategory.mockResolvedValue({ id: "c4", name: "New" } as any);
   });
 
   function renderModal(
@@ -87,6 +101,7 @@ describe("EditItemModal - user story tests", () => {
       expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
         name: "Skim Milk",
         price: 30,
+        category_ids: [],
       });
     });
 
@@ -99,6 +114,7 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Skim Milk",
       price: 30,
+      category_ids: [],
     });
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
