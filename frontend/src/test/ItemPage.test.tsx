@@ -115,7 +115,9 @@ describe("ItemPage", () => {
     await user.clear(stockInput);
     await user.type(stockInput, "5");
 
-    await user.click(within(dialog).getByRole("combobox", { name: /categories/i }));
+    await user.click(
+      within(dialog).getByRole("combobox", { name: /categories/i }),
+    );
     await user.click(await screen.findByRole("option", { name: "Cookies" }));
     await user.click(screen.getByRole("option", { name: "Dairy" }));
     await user.keyboard("{Escape}");
@@ -212,7 +214,9 @@ describe("ItemPage", () => {
     await user.click(within(milkRow).getByRole("button", { name: /edit/i }));
 
     const dialog = await screen.findByRole("dialog");
-    await user.click(within(dialog).getByRole("combobox", { name: /categories/i }));
+    await user.click(
+      within(dialog).getByRole("combobox", { name: /categories/i }),
+    );
     await user.click(await screen.findByRole("option", { name: "Dairy" }));
     await user.keyboard("{Escape}");
 
