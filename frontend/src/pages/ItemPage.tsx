@@ -455,6 +455,11 @@ export default function ItemPage() {
                 size="small"
                 onClick={() => setSelectedCategoryId("")}
                 disabled={!hasCategoryFilter}
+                sx={{
+                  borderColor: "text.primary",
+                  color: "text.primary",
+                  "&:hover": { borderColor: "text.primary" },
+                }}
               >
                 Clear category
               </Button>
@@ -511,7 +516,12 @@ export default function ItemPage() {
                   variant="outlined"
                   color="inherit"
                   size="small"
-                  sx={{ alignSelf: "center" }}
+                  sx={{
+                    alignSelf: "center",
+                    borderColor: "text.primary",
+                    color: "text.primary",
+                    "&:hover": { borderColor: "text.primary" },
+                  }}
                 >
                   Reset
                 </Button>
