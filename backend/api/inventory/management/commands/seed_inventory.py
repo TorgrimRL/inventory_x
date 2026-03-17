@@ -8,6 +8,19 @@ from django.db import transaction
 from api.inventory.models import Inventory, InventoryItem, InventoryMembership
 
 
+def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
+    pattern = index % 4
+
+    if pattern == 0:
+        return 2, 5  # below threshold
+    if pattern == 1:
+        return 5, 5  # equal to threshold
+    if pattern == 2:
+        return 9, 5  # above threshold
+
+    return random.randint(0, 50), None  # no threshold
+
+
 class Command(BaseCommand):
     help = (
         "Seeds database with mock inventory data (items +"
@@ -208,12 +221,15 @@ class Command(BaseCommand):
             # Ola gets Ola items
             ola_inv = inventories_by_name["Ola AS"]
             for index, (name, price) in enumerate(ola_catalog):
+                stock, low_stock_threshold = seeded_stock_and_threshold(index)
+
                 # Make firsts items UUID static
                 item_kwargs = {
                     "inventory": ola_inv,
                     "name": name,
                     "price": price,
-                    "stock": random.randint(0, 50),
+                    "stock": stock,
+                    "low_stock_threshold": low_stock_threshold,
                 }
                 if index == 0:
                     item_kwargs["id"] = STATIC_ITEM_UUID
@@ -222,13 +238,17 @@ class Command(BaseCommand):
 
             # Jessica gets Jessica items
             jessica_inv = inventories_by_name["Jessica Cookies AS"]
-            for name, price in jessica_catalog:
+            for index, (name, price) in enumerate(jessica_catalog):
+                stock, low_stock_threshold = seeded_stock_and_threshold(
+                    index + 100
+                )
                 items_to_create.append(
                     InventoryItem(
                         inventory=jessica_inv,
                         name=name,
                         price=price,
-                        stock=random.randint(0, 50),
+                        stock=stock,
+                        low_stock_threshold=low_stock_threshold,
                     )
                 )
 
@@ -237,13 +257,17 @@ class Command(BaseCommand):
                 if inv.id in (ola_inv.id, jessica_inv.id):
                     continue
 
-                for name, price in generic_catalog:
+                for index, (name, price) in enumerate(generic_catalog):
+                    stock, low_stock_threshold = seeded_stock_and_threshold(
+                        index + 42
+                    )
                     items_to_create.append(
                         InventoryItem(
                             inventory=inv,
                             name=name,
                             price=price,
-                            stock=random.randint(0, 50),
+                            stock=stock,
+                            low_stock_threshold=low_stock_threshold,
                         )
                     )
 

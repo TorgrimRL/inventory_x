@@ -28,6 +28,7 @@ class ItemDetailViewDeleteTests(BaseAPITestCase):
             name="Test Delete Item",
             price=100,
             stock=10,
+            low_stock_threshold=5,
         )
 
         self.url = reverse("item-detail", kwargs={"item_id": self.item.id})
