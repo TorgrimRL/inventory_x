@@ -75,8 +75,8 @@ export default function EditItemModal({
   const [price, setPrice] = useState(String(initialPrice));
 
   const [amount, setAmount] = useState<string>("0");
-  const [direction, setDirection] = useState<"increase" | "decrease">(
-    "increase",
+  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
+    null,
   );
 
   const [saving, setSaving] = useState(false);
@@ -88,20 +88,29 @@ export default function EditItemModal({
     setName(initialName);
     setPrice(String(initialPrice));
     setAmount("0");
-    setDirection("increase");
+    setDirection(null);
     setError(null);
   }, [open, initialName, initialPrice]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
-  const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+
+  const priceIsEmpty = price.trim() === "";
+  const priceIsNegative = Number(price) < 0;
+  const priceIsInvalid = priceIsEmpty || priceIsNegative;
+
   const nameIsInvalid = name.trim().length === 0;
 
   const amountNumber = useMemo(() => Number(amount), [amount]);
   const wantsStockChange = Number.isFinite(amountNumber) && amountNumber > 0;
   const amountIsInvalid =
-    amount.trim() === "" ||
-    !Number.isInteger(amountNumber) ||
-    amountNumber < 0;
+    amount.trim() === "" || !Number.isInteger(amountNumber) || amountNumber < 0;
+
+  const directionIsInvalid = wantsStockChange && direction === null;
+
+  const stockWouldBeNegative =
+    wantsStockChange &&
+    direction === "decrease" &&
+    currentStock - amountNumber < 0;
 
   function handleClose() {
     if (!saving) {
@@ -118,14 +127,29 @@ export default function EditItemModal({
         setError("Name is required.");
         return;
       }
-      if (priceIsInvalid) {
-        setError("Price must be a non-negative number.");
+      if (priceIsEmpty) {
+        setError("Price is required.");
+        return;
+      }
+
+      if (priceIsNegative) {
+        setError("Price cannot be negative.");
         return;
       }
     }
 
     if (amountIsInvalid) {
       setError("Amount must be a positive whole number.");
+      return;
+    }
+
+    if (directionIsInvalid) {
+      setError("Please select increase or decrease.");
+      return;
+    }
+
+    if (stockWouldBeNegative) {
+      setError("Stock cannot be negative.");
       return;
     }
 
@@ -145,7 +169,7 @@ export default function EditItemModal({
       }
 
       // 2) Adjust stock (only if amount > 0)
-      if (wantsStockChange) {
+      if (wantsStockChange && direction) {
         const res = await adjustStock(itemId, direction, amountNumber);
         onStockUpdated(res.stock);
       }
@@ -221,9 +245,11 @@ export default function EditItemModal({
               required
               error={canEditDetails && priceIsInvalid}
               helperText={
-                canEditDetails && priceIsInvalid
-                  ? "Price cannot be negative"
-                  : " "
+                canEditDetails && priceIsEmpty
+                  ? "Price is required"
+                  : canEditDetails && priceIsNegative
+                    ? "Price cannot be negative"
+                    : " "
               }
             />
 
@@ -247,28 +273,42 @@ export default function EditItemModal({
               }}
               disabled={saving}
               fullWidth
-              error={amountIsInvalid}
-              helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
+              error={amountIsInvalid || stockWouldBeNegative}
+              helperText={
+                amountIsInvalid ? "Enter a positive whole number" : " "
+              }
             />
 
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant={direction === "increase" ? "contained" : "outlined"}
-                onClick={() => setDirection("increase")}
-                disabled={saving}
-                fullWidth
-              >
-                Increase
-              </Button>
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant={direction === "increase" ? "contained" : "outlined"}
+                  onClick={() => setDirection("increase")}
+                  disabled={saving}
+                  fullWidth
+                >
+                  Increase
+                </Button>
 
-              <Button
-                variant={direction === "decrease" ? "contained" : "outlined"}
-                onClick={() => setDirection("decrease")}
-                disabled={saving}
-                fullWidth
-              >
-                Decrease
-              </Button>
+                <Button
+                  variant={direction === "decrease" ? "contained" : "outlined"}
+                  onClick={() => setDirection("decrease")}
+                  disabled={saving}
+                  fullWidth
+                >
+                  Decrease
+                </Button>
+              </Stack>
+
+              {directionIsInvalid && (
+                <Alert severity="warning">
+                  Please select increase or decrease to update stock.
+                </Alert>
+              )}
+
+              {stockWouldBeNegative && (
+                <Alert severity="error">Stock cannot be negative.</Alert>
+              )}
             </Stack>
           </Stack>
         </DialogContent>
@@ -297,6 +337,8 @@ export default function EditItemModal({
               disabled={
                 saving ||
                 amountIsInvalid ||
+                directionIsInvalid ||
+                stockWouldBeNegative ||
                 (canEditDetails && (nameIsInvalid || priceIsInvalid))
               }
             >
