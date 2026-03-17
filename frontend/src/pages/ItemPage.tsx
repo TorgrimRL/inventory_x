@@ -38,6 +38,7 @@ import {
   createActiveCategory,
   getActiveInventory,
   listActiveCategories,
+  updateItem,
 } from "../services/inventoryService";
 
 type InventoryItem = {
@@ -214,7 +215,17 @@ export default function ItemPage() {
       };
 
       const res = await ApiClient.post("/api/inventory/", payload);
-      const created = res.data as InventoryItem;
+      let created = res.data as InventoryItem;
+
+      // Backend create currently returns empty category_ids; patch once to persist selected category.
+      if (categoryIdToSave) {
+        const updated = await updateItem(created.id, {
+          name: created.name,
+          price: Number(created.price),
+          category_ids: [categoryIdToSave],
+        });
+        created = { ...created, ...updated } as InventoryItem;
+      }
 
       setItems((prev) => [
         ...prev,
