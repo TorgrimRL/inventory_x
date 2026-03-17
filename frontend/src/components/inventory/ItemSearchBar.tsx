@@ -45,7 +45,13 @@ export default function ItemSearchBar({
       />
 
       <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-        <Button variant="contained" onClick={onSearch} disabled={disabled}>
+        <Button
+          variant="outlined"
+          color="inherit"
+          size="small"
+          onClick={onSearch}
+          disabled={disabled}
+        >
           Search
         </Button>
 
