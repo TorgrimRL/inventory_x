@@ -16,7 +16,8 @@ from api.inventory.models import (
 
 
 class Command(BaseCommand):
-    help = "Seeds database with mock inventory data and realistic historical StockLog entries with randomized actors."
+    help = "Seeds database with mock inventory data and realistic historical \
+            StockLog entries with randomized actors."
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
@@ -37,7 +38,8 @@ class Command(BaseCommand):
 
         if missing:
             raise CommandError(
-                f"Missing users {missing}. Run `python manage.py seed_users` first."
+                f"Missing users {missing}. \
+                        Run `python manage.py seed_users` first."
             )
 
         admin = users["admin@example.com"]
@@ -78,7 +80,7 @@ class Command(BaseCommand):
                 )
                 inventories_by_name[name] = inv
 
-            # --- 2. Memberships (Must be created before items to pick actors) ---
+            # --- 2. Memberships (Must be created before items to pick actors)
             # Admin owns everything
             for inv in inventories_by_name.values():
                 InventoryMembership.objects.create(
@@ -141,7 +143,7 @@ class Command(BaseCommand):
             ]
 
             # --- 4. Item Creation Logic ---
-            def seed_items_with_random_actors(inventory, catalog, is_ola=False):
+            def seed_items_with_random_actor(inventory, catalog, is_ola=False):
                 # Fetch members specifically for this inventory
                 members = [
                     m.user
@@ -219,23 +221,23 @@ class Command(BaseCommand):
                         )
 
             self.stdout.write(
-                "Generating items and historical logs with randomized members..."
+                "Generating items and historical logs with randomized members."
             )
 
             # Run Ola's Catalog
-            seed_items_with_random_actors(
+            seed_items_with_random_actor(
                 inventories_by_name["Ola AS"], ola_catalog, is_ola=True
             )
 
             # Run Jessica's Catalog
-            seed_items_with_random_actors(
+            seed_items_with_random_actor(
                 inventories_by_name["Jessica Cookies AS"], jessica_catalog
             )
 
             # Run Generic Catalog for the rest
             for name, inv in inventories_by_name.items():
                 if name not in ["Ola AS", "Jessica Cookies AS"]:
-                    seed_items_with_random_actors(inv, generic_catalog)
+                    seed_items_with_random_actor(inv, generic_catalog)
 
         # --- Statistics ---
         self.stdout.write(
@@ -244,7 +246,8 @@ class Command(BaseCommand):
         self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
         self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
         self.stdout.write(
-            f"- Stock Logs: {StockLog.objects.count()} (with history & random actors)"
+            f"- Stock Logs: {StockLog.objects.count()} (with history & random \
+                    actors)"
         )
         self.stdout.write(
             f"- Memberships: {InventoryMembership.objects.count()}"
