@@ -99,7 +99,9 @@ export default function EditItemModal({
   const amountNumber = useMemo(() => Number(amount), [amount]);
   const wantsStockChange = Number.isFinite(amountNumber) && amountNumber > 0;
   const amountIsInvalid =
-    wantsStockChange && (!Number.isInteger(amountNumber) || amountNumber <= 0);
+    amount.trim() === "" ||
+    !Number.isInteger(amountNumber) ||
+    amountNumber < 0;
 
   function handleClose() {
     if (!saving) {
@@ -235,16 +237,18 @@ export default function EditItemModal({
 
             <TextField
               label="Amount (0 = no change)"
-              type="number"
+              type="text"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputProps={{ min: 0, step: 1 }}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*$/.test(value)) {
+                  setAmount(value);
+                }
+              }}
               disabled={saving}
               fullWidth
               error={amountIsInvalid}
-              helperText={
-                amountIsInvalid ? "Enter a positive whole number" : " "
-              }
+              helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
             />
 
             <Stack direction="row" spacing={2}>
