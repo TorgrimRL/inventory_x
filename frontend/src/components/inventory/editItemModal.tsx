@@ -93,11 +93,7 @@ export default function EditItemModal({
   }, [open, initialName, initialPrice]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
-
-  const priceIsEmpty = price.trim() === "";
-  const priceIsNegative = Number(price) < 0;
-  const priceIsInvalid = priceIsEmpty || priceIsNegative;
-
+  const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
   const nameIsInvalid = name.trim().length === 0;
 
   const amountNumber = useMemo(() => Number(amount), [amount]);
@@ -127,13 +123,8 @@ export default function EditItemModal({
         setError("Name is required.");
         return;
       }
-      if (priceIsEmpty) {
-        setError("Price is required.");
-        return;
-      }
-
-      if (priceIsNegative) {
-        setError("Price cannot be negative.");
+      if (priceIsInvalid) {
+        setError("Price must be a non-negative number.");
         return;
       }
     }
@@ -245,11 +236,9 @@ export default function EditItemModal({
               required
               error={canEditDetails && priceIsInvalid}
               helperText={
-                canEditDetails && priceIsEmpty
-                  ? "Price is required"
-                  : canEditDetails && priceIsNegative
-                    ? "Price cannot be negative"
-                    : " "
+                canEditDetails && priceIsInvalid
+                  ? "Price cannot be negative"
+                  : " "
               }
             />
 
