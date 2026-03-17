@@ -38,6 +38,9 @@ class ItemDetailView(views.APIView):
                 item_id=item_id,
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
+                low_stock_threshold=serializer.validated_data.get(
+                    "low_stock_threshold"
+                ),
                 category_ids=serializer.validated_data.get("category_ids"),
             )
         except ValueError as exc:
@@ -60,6 +63,7 @@ class ItemDetailView(views.APIView):
                 "category_ids": [
                     category.id for category in item.categories.all()
                 ],
+                "low_stock_threshold": item.low_stock_threshold,
                 "message": "Item updated",
             },
             status=status.HTTP_200_OK,

@@ -24,6 +24,7 @@ def get_all_items(inventory_id: UUID):
             "name": item.name,
             "price": item.price,
             "stock": item.stock,
+            "low_stock_threshold": item.low_stock_threshold,
             "category_ids": [category.id for category in item.categories.all()],
         }
         for item in items_qs
@@ -54,6 +55,7 @@ def create_item(
     name: str,
     price: int,
     stock: int,
+    low_stock_threshold=None,
     category_ids: list[UUID] | None = None,
 ):
     try:
@@ -63,7 +65,11 @@ def create_item(
             )
 
             item = InventoryItem.objects.create(
-                inventory_id=inventory_id, name=name, price=price, stock=stock
+                inventory_id=inventory_id,
+                name=name,
+                price=price,
+                stock=stock,
+                low_stock_threshold=low_stock_threshold,
             )
 
             if category_ids:
@@ -74,6 +80,7 @@ def create_item(
                 "name": item.name,
                 "price": item.price,
                 "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
                 "category_ids": category_ids or [],
             }
     except ValueError as ve:
@@ -123,8 +130,12 @@ def update_item(
     item_id: UUID,
     name: str,
     price: int,
+    low_stock_threshold: int | None,
     category_ids: list[UUID] | None = None,
 ):
+    """
+    Updates item fields. Stock is not changed here.
+    """
     try:
         with transaction.atomic():
             item = InventoryItem.objects.select_for_update().get(
@@ -138,7 +149,8 @@ def update_item(
 
             item.name = name
             item.price = price
-            item.save(update_fields=["name", "price"])
+            item.low_stock_threshold = low_stock_threshold
+            item.save(update_fields=["name", "price", "low_stock_threshold"])
 
             if category_ids is not None:
                 item.categories.set(categories)

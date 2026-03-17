@@ -41,7 +41,7 @@ class InventoryItemAdmin(ModelAdmin):
             if obj is not None:
                 # If editing an existing item, only show categories
                 # from its inventory
-                form.base_fields[
+                base_fields[
                     "categories"
                 ].queryset = ItemCategory.objects.filter(
                     inventory=obj.inventory
@@ -49,9 +49,7 @@ class InventoryItemAdmin(ModelAdmin):
             else:
                 # If creating a new item, show no categories until it is
                 # saved with an inventory
-                form.base_fields[
-                    "categories"
-                ].queryset = ItemCategory.objects.none()
+                base_fields["categories"].queryset = ItemCategory.objects.none()
 
         return form
 
