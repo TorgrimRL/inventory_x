@@ -2,12 +2,14 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   MenuItem,
   DialogContent,
   DialogTitle,
   Divider,
+  ListItemText,
   Stack,
   TextField,
   Typography,
@@ -30,7 +32,7 @@ type Props = {
   initialName: string;
   initialPrice: number;
   currentStock: number;
-  initialCategoryId?: string;
+  initialCategoryIds?: string[];
 
   // owner => true, employee => false
   canEditDetails: boolean;
@@ -71,7 +73,7 @@ export default function EditItemModal({
   initialName,
   initialPrice,
   currentStock,
-  initialCategoryId,
+  initialCategoryIds,
   canEditDetails,
   onClose,
   onItemUpdated,
@@ -87,8 +89,8 @@ export default function EditItemModal({
   );
 
   const [categories, setCategories] = useState<ItemCategory[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(
-    initialCategoryId || "",
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    initialCategoryIds || [],
   );
   const [newCategoryName, setNewCategoryName] = useState("");
 
@@ -102,14 +104,14 @@ export default function EditItemModal({
     setPrice(String(initialPrice));
     setAmount("0");
     setDirection("increase");
-    setSelectedCategoryId(initialCategoryId || "");
+    setSelectedCategoryIds(initialCategoryIds || []);
     setNewCategoryName("");
     setError(null);
 
     listActiveCategories()
       .then((list) => setCategories(list))
       .catch(() => setCategories([]));
-  }, [open, initialCategoryId, initialName, initialPrice]);
+  }, [open, initialCategoryIds, initialName, initialPrice]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -152,27 +154,32 @@ export default function EditItemModal({
       if (canEditDetails) {
         const trimmed = name.trim();
 
-        let categoryIdToSave = selectedCategoryId || undefined;
+        let categoryIdsToSave = [...selectedCategoryIds];
         const newCategoryTrimmed = newCategoryName.trim();
         if (newCategoryTrimmed.length > 0) {
           const createdCategory =
             await createActiveCategory(newCategoryTrimmed);
           setCategories((prev) => [...prev, createdCategory]);
-          categoryIdToSave = createdCategory.id;
-          setSelectedCategoryId(createdCategory.id);
+          categoryIdsToSave = [
+            ...new Set([...categoryIdsToSave, createdCategory.id]),
+          ];
+          setSelectedCategoryIds(categoryIdsToSave);
           setNewCategoryName("");
         }
+
+        const initialIds = (initialCategoryIds || []).map(String).sort();
+        const currentIds = [...categoryIdsToSave].map(String).sort();
 
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
-          (categoryIdToSave || "") !== (initialCategoryId || "");
+          initialIds.join(",") !== currentIds.join(",");
 
         if (changed) {
           const payload = {
             name: trimmed,
             price: priceNumber,
-            category_ids: categoryIdToSave ? [categoryIdToSave] : [],
+            category_ids: categoryIdsToSave,
           };
 
           await updateItem(itemId, payload);
@@ -270,17 +277,39 @@ export default function EditItemModal({
 
             <TextField
               select
-              label="Category"
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              label="Categories"
+              value={selectedCategoryIds}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCategoryIds(
+                  Array.isArray(value) ? value : String(value).split(","),
+                );
+              }}
               disabled={saving || !canEditDetails}
               fullWidth
-              helperText="Select existing category for this inventory"
+              helperText="Select one or more categories for this inventory"
+              SelectProps={{
+                multiple: true,
+                renderValue: (selected) => {
+                  const ids = selected as string[];
+                  if (ids.length === 0) return "No category added";
+                  return ids
+                    .map(
+                      (id) =>
+                        categories.find((category) => category.id === id)
+                          ?.name || id,
+                    )
+                    .join(", ");
+                },
+              }}
             >
-              <MenuItem value="">No category added</MenuItem>
               {categories.map((category) => (
                 <MenuItem key={category.id} value={category.id}>
-                  {category.name}
+                  <Checkbox
+                    checked={selectedCategoryIds.includes(category.id)}
+                    size="small"
+                  />
+                  <ListItemText primary={category.name} />
                 </MenuItem>
               ))}
             </TextField>
@@ -303,7 +332,9 @@ export default function EditItemModal({
                       newCategoryName.trim(),
                     );
                     setCategories((prev) => [...prev, created]);
-                    setSelectedCategoryId(created.id);
+                    setSelectedCategoryIds((prev) =>
+                      prev.includes(created.id) ? prev : [...prev, created.id],
+                    );
                     setNewCategoryName("");
                   } catch {
                     setError("Failed to create category.");

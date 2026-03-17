@@ -13,6 +13,8 @@ import {
   Divider,
   IconButton,
   Paper,
+  Checkbox,
+  ListItemText,
   MenuItem,
   Snackbar,
   Stack,
@@ -94,7 +96,7 @@ export default function ItemPage() {
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
-  const [newItemCategoryId, setNewItemCategoryId] = useState("");
+  const [newItemCategoryIds, setNewItemCategoryIds] = useState<string[]>([]);
   const [newItemCategoryName, setNewItemCategoryName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
@@ -167,7 +169,7 @@ export default function ItemPage() {
 
   function openDialog() {
     setError(null);
-    setNewItemCategoryId("");
+    setNewItemCategoryIds([]);
     setNewItemCategoryName("");
     setOpen(true);
   }
@@ -197,37 +199,39 @@ export default function ItemPage() {
 
     setSaving(true);
 
-    let categoryIdToSave = newItemCategoryId || undefined;
+    let categoryIdsToSave = [...newItemCategoryIds];
 
     try {
       const newCategoryTrimmed = newItemCategoryName.trim();
       if (newCategoryTrimmed.length > 0) {
         const createdCategory = await createActiveCategory(newCategoryTrimmed);
         setCategories((prev) => [...prev, createdCategory]);
-        categoryIdToSave = createdCategory.id;
+        categoryIdsToSave = [
+          ...new Set([...categoryIdsToSave, createdCategory.id]),
+        ];
       }
 
       const payload = {
         name: name.trim(),
         price: Number(price),
         stock: s,
-        category_ids: categoryIdToSave ? [categoryIdToSave] : [],
+        category_ids: categoryIdsToSave,
       };
 
       const res = await ApiClient.post("/api/inventory/", payload);
       let created = res.data as InventoryItem;
 
-      // Backend create currently returns empty category_ids; patch once to persist selected category.
-      if (categoryIdToSave) {
+      // Backend create currently returns empty category_ids; patch once to persist selected categories.
+      if (categoryIdsToSave.length > 0) {
         const updated = await updateItem(created.id, {
           name: created.name,
           price: Number(created.price),
-          category_ids: [categoryIdToSave],
+          category_ids: categoryIdsToSave,
         });
         created = {
           ...created,
           ...updated,
-          category_ids: [categoryIdToSave],
+          category_ids: categoryIdsToSave,
         } as InventoryItem;
       }
 
@@ -244,7 +248,7 @@ export default function ItemPage() {
 
       setOpen(false);
       setName("");
-      setNewItemCategoryId("");
+      setNewItemCategoryIds([]);
       setNewItemCategoryName("");
       setPrice("0");
       setStock("0");
@@ -287,15 +291,13 @@ export default function ItemPage() {
       selectedCategoryId.length === 0
         ? searched
         : searched.filter((item) => {
-            const primaryCategoryId = String(
-              (item.category_ids || [])[0] || "",
-            );
+            const ids = (item.category_ids || []).map(String);
 
             if (selectedCategoryId === "__no_category__") {
-              return primaryCategoryId.length === 0;
+              return ids.length === 0;
             }
 
-            return primaryCategoryId === selectedCategoryId;
+            return ids.includes(selectedCategoryId);
           });
 
     const filtered = byCategory.filter(
@@ -628,9 +630,10 @@ export default function ItemPage() {
                           <TableCell>{item.name}</TableCell>
                           <TableCell>
                             {(item.category_ids || []).length > 0
-                              ? categoryNameById.get(
-                                  String((item.category_ids || [])[0]),
-                                ) || "-"
+                              ? (item.category_ids || [])
+                                  .map((id) => categoryNameById.get(String(id)))
+                                  .filter(Boolean)
+                                  .join(", ")
                               : "-"}
                           </TableCell>
                           <TableCell align="right">{item.stock}</TableCell>
@@ -687,17 +690,39 @@ export default function ItemPage() {
 
               <TextField
                 select
-                label="Category"
-                value={newItemCategoryId}
-                onChange={(e) => setNewItemCategoryId(e.target.value)}
+                label="Categories"
+                value={newItemCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewItemCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
                 fullWidth
                 disabled={saving}
-                helperText="Optional: choose existing category"
+                helperText="Optional: choose one or more existing categories"
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "No category added";
+                    return ids
+                      .map(
+                        (id) =>
+                          categories.find((category) => category.id === id)
+                            ?.name || id,
+                      )
+                      .join(", ");
+                  },
+                }}
               >
-                <MenuItem value="">No category added</MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
-                    {category.name}
+                    <Checkbox
+                      checked={newItemCategoryIds.includes(category.id)}
+                      size="small"
+                    />
+                    <ListItemText primary={category.name} />
                   </MenuItem>
                 ))}
               </TextField>
@@ -720,7 +745,11 @@ export default function ItemPage() {
                         newItemCategoryName.trim(),
                       );
                       setCategories((prev) => [...prev, createdCategory]);
-                      setNewItemCategoryId(createdCategory.id);
+                      setNewItemCategoryIds((prev) =>
+                        prev.includes(createdCategory.id)
+                          ? prev
+                          : [...prev, createdCategory.id],
+                      );
                       setNewItemCategoryName("");
                     } catch {
                       setError("Failed to create category.");
@@ -795,7 +824,7 @@ export default function ItemPage() {
           initialName={selectedItem.name}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
-          initialCategoryId={String((selectedItem.category_ids || [])[0] || "")}
+          initialCategoryIds={(selectedItem.category_ids || []).map(String)}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
