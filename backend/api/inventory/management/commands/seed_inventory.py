@@ -5,7 +5,12 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from api.inventory.models import Inventory, InventoryItem, InventoryMembership
+from api.inventory.models import (
+    Inventory,
+    InventoryItem,
+    InventoryMembership,
+    ItemCategory,
+)
 
 
 class Command(BaseCommand):
@@ -304,6 +309,75 @@ class Command(BaseCommand):
         # Useful “persona” checks
         ola_count = counts_by_inventory_name.get("Ola AS", 0)
         jessica_count = counts_by_inventory_name.get("Jessica Cookies AS", 0)
+
+        # SEED CATEGORIES AND ASSIGN THEM TO ITEMS
+        self.stdout.write("Creating and assigning categories...")
+
+        # Clear out any old categories to maintain a clean slate
+        ItemCategory.objects.all().delete()
+
+        # Define realistic persona categories based on your inventory names
+        ola_category_names = [
+            "Electronics",
+            "Office Supplies",
+            "Furniture",
+            "Beverages",
+            "Hardware",
+            "On Sale",
+            "High Value",
+        ]
+        jessica_category_names = [
+            "Baked Goods",
+            "Raw Ingredients",
+            "Packaging",
+            "Merchandise",
+            "Vegan",
+            "Gluten-Free",
+            "Best Seller",
+        ]
+
+        db_ola_inv = Inventory.objects.get(name="Ola AS")
+        db_jessica_inv = Inventory.objects.get(name="Jessica Cookies AS")
+
+        ola_categories = [
+            ItemCategory.objects.create(inventory=db_ola_inv, name=name)
+            for name in ola_category_names
+        ]
+
+        jessica_categories = [
+            ItemCategory.objects.create(inventory=db_jessica_inv, name=name)
+            for name in jessica_category_names
+        ]
+
+        # Fetch all newly created items to assign M2M relationships
+        all_seeded_items = InventoryItem.objects.select_related(
+            "inventory"
+        ).all()
+
+        for item in all_seeded_items:
+            # 15% of items have 0 categories
+            # 50% have 1 category
+            # 25% have 2 categories
+            # 10% have 3 categories
+            num_categories = random.choices(
+                [0, 1, 2, 3], weights=[15, 50, 25, 10], k=1
+            )[0]
+
+            if num_categories > 0:
+                # Pick the correct category pool based on the item's inventory
+                pool = (
+                    ola_categories
+                    if item.inventory.name == "Ola AS"
+                    else jessica_categories
+                )
+
+                # Prevent trying to sample more categories than
+                # exist in the pool
+                num_to_sample = min(num_categories, len(pool))
+
+                if pool and num_to_sample > 0:
+                    assigned_categories = random.sample(pool, k=num_to_sample)
+                    item.categories.set(assigned_categories)
 
         self.stdout.write(self.style.SUCCESS("✅ Seed completed"))
         self.stdout.write(
