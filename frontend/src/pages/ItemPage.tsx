@@ -224,7 +224,11 @@ export default function ItemPage() {
           price: Number(created.price),
           category_ids: [categoryIdToSave],
         });
-        created = { ...created, ...updated } as InventoryItem;
+        created = {
+          ...created,
+          ...updated,
+          category_ids: [categoryIdToSave],
+        } as InventoryItem;
       }
 
       setItems((prev) => [
