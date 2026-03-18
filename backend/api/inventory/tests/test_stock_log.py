@@ -69,6 +69,7 @@ class StockLogTests(TestCase):
             name="Old Mouse",
             price=100,
             stock=5,
+            low_stock_threshold=5,
         )
 
         # Act: Update the item (this creates log #2)
@@ -76,6 +77,7 @@ class StockLogTests(TestCase):
             item_id=item.id,
             name="Gaming Mouse",
             price=500,
+            low_stock_threshold=10,
             request=self.mock_request,
         )
 
@@ -95,6 +97,7 @@ class StockLogTests(TestCase):
             name="Keyboard",
             price=1000,
             stock=20,
+            low_stock_threshold=5,
         )
 
         # Act: Adjust stock downwards
@@ -143,6 +146,7 @@ class StockLogViewTests(BaseAPITestCase):
             name="Milk",
             price=25,
             stock=10,
+            low_stock_threshold=5,
         )
 
         # 5. Create a manual StockLog entry for testing the GET request

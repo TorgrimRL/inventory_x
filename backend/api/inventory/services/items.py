@@ -17,25 +17,39 @@ def get_all_items(inventory_id: UUID):
     queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
         "id"
     )
-    items = queryset.values("id", "name", "price", "stock")
+    items = queryset.values(
+        "id", "name", "price", "stock", "low_stock_threshold"
+    )
     return list(items)
 
 
 @audit_logger("create_item")
-def create_item(inventory_id: UUID, name, price, stock, request=None):
+def create_item(
+    inventory_id: UUID,
+    name,
+    price,
+    stock,
+    low_stock_threshold=None,
+    request=None,
+):
     """
     Creates a new inventory item.
     Returns the created item as a dictionary.
     """
     try:
         item = InventoryItem.objects.create(
-            inventory_id=inventory_id, name=name, price=price, stock=stock
+            inventory_id=inventory_id,
+            name=name,
+            price=price,
+            stock=stock,
+            low_stock_threshold=low_stock_threshold,
         )
         return {
             "id": item.id,
             "name": item.name,
             "price": item.price,
             "stock": item.stock,
+            "low_stock_threshold": item.low_stock_threshold,
         }
     except ValueError as ve:
         raise ve
@@ -81,7 +95,13 @@ def adjust_stock(
 
 
 @audit_logger("update_item")
-def update_item(item_id: UUID, name: str, price: int, request=None):
+def update_item(
+    item_id: UUID,
+    name: str,
+    price: int,
+    low_stock_threshold: int | None,
+    request=None,
+):
     """
     Updates item fields (name, price) only. Stock is not changed here.
     """
@@ -91,7 +111,8 @@ def update_item(item_id: UUID, name: str, price: int, request=None):
 
             item.name = name
             item.price = price
-            item.save(update_fields=["name", "price"])
+            item.low_stock_threshold = low_stock_threshold
+            item.save(update_fields=["name", "price", "low_stock_threshold"])
 
             return item
 

@@ -37,6 +37,9 @@ class ItemDetailView(views.APIView):
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
                 request=request,
+                low_stock_threshold=serializer.validated_data.get(
+                    "low_stock_threshold"
+                ),
             )
         except LookupError as exc:
             return Response(
@@ -50,6 +53,7 @@ class ItemDetailView(views.APIView):
                 "name": item.name,
                 "price": item.price,
                 "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
                 "message": "Item updated",
             },
             status=status.HTTP_200_OK,

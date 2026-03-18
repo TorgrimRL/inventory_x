@@ -42,7 +42,7 @@ export default function Navbar() {
   };
 
   const authNavItems = [
-    ["Storage", PATHS.INVENTORIES],
+    ["Inventories", PATHS.INVENTORIES],
     ["Dashboard", PATHS.DASHBOARD],
     ["Items", PATHS.ADD_ITEM],
   ];
