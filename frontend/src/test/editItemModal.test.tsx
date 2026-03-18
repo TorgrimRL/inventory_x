@@ -34,6 +34,7 @@ describe("EditItemModal - user story tests", () => {
       initialName: "Milk",
       initialPrice: 25,
       currentStock: 2,
+      initialLowStockThreshold: null,
       canEditDetails: true,
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
@@ -46,47 +47,48 @@ describe("EditItemModal - user story tests", () => {
     return props;
   }
 
-  test("success (owner): updates name/price and adjusts stock, updates parent and closes", async () => {
+  test("success (owner): updates name/price/threshold and adjusts stock, updates parent and closes", async () => {
     mockedUpdateItem.mockResolvedValueOnce({} as any);
     mockedAdjustStock.mockResolvedValueOnce({ stock: 5 } as any);
 
     const user = userEvent.setup();
-    const props = renderModal({ canEditDetails: true });
+    const props = renderModal({
+      canEditDetails: true,
+      initialLowStockThreshold: 2,
+    });
 
     const dialog = await screen.findByRole("dialog");
 
-    // Prefill
     const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
-    expect(nameInput).toHaveValue("Milk");
-
     const priceInput = within(dialog).getByRole("spinbutton", {
       name: /price/i,
     });
-    expect(priceInput).toHaveValue(25);
+    const thresholdInput = within(dialog).getByRole("spinbutton", {
+      name: /low stock threshold/i,
+    });
 
-    // Change details
     await user.clear(nameInput);
     await user.type(nameInput, "Skim Milk");
 
     await user.clear(priceInput);
     await user.type(priceInput, "30");
 
-    // Stock: amount=3, increase
+    await user.clear(thresholdInput);
+    await user.type(thresholdInput, "4");
+
     const amountInput = within(dialog).getByRole("textbox", {
       name: /amount/i,
     });
     await user.clear(amountInput);
     await user.type(amountInput, "3");
-
     await user.click(within(dialog).getByRole("button", { name: /increase/i }));
-
-    // Save
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
         name: "Skim Milk",
         price: 30,
+        low_stock_threshold: 4,
       });
     });
 
@@ -94,21 +96,25 @@ describe("EditItemModal - user story tests", () => {
       expect(mockedAdjustStock).toHaveBeenCalledWith(1, "increase", 3);
     });
 
-    // Parent callbacks
     expect(props.onItemUpdated).toHaveBeenCalledWith({
       id: 1,
       name: "Skim Milk",
       price: 30,
+      lowStockThreshold: 4,
     });
+
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
   });
-
-  test("employee: name/price fields are disabled, but stock adjust still works", async () => {
+  test("employee: name/price/threshold fields are disabled, but stock adjust still works", async () => {
     mockedAdjustStock.mockResolvedValueOnce({ stock: 10 } as any);
 
     const user = userEvent.setup();
-    const props = renderModal({ canEditDetails: false, currentStock: 2 });
+    const props = renderModal({
+      canEditDetails: false,
+      currentStock: 2,
+      initialLowStockThreshold: 5,
+    });
 
     const dialog = await screen.findByRole("dialog");
 
@@ -116,21 +122,22 @@ describe("EditItemModal - user story tests", () => {
     const priceInput = within(dialog).getByRole("spinbutton", {
       name: /price/i,
     });
+    const thresholdInput = within(dialog).getByRole("spinbutton", {
+      name: /low stock threshold/i,
+    });
 
     expect(nameInput).toBeDisabled();
     expect(priceInput).toBeDisabled();
+    expect(thresholdInput).toBeDisabled();
 
-    // Stock: amount=2 increase
     const amountInput = within(dialog).getByRole("textbox", {
       name: /amount/i,
     });
     await user.clear(amountInput);
     await user.type(amountInput, "2");
-
     await user.click(within(dialog).getByRole("button", { name: /increase/i }));
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
-    // Should NOT try to update item details
     expect(mockedUpdateItem).not.toHaveBeenCalled();
 
     await waitFor(() => {
@@ -140,7 +147,6 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onStockUpdated).toHaveBeenCalledWith(10);
     expect(props.onClose).toHaveBeenCalled();
   });
-
   test("owner: invalid price blocks save and does not call backend", async () => {
     const user = userEvent.setup();
     renderModal({ canEditDetails: true });
@@ -272,5 +278,60 @@ describe("EditItemModal - user story tests", () => {
         screen.queryByText(/Are you sure you want to delete this item/i),
       ).not.toBeInTheDocument();
     });
+  });
+  test("owner: invalid low stock threshold blocks save and does not call backend", async () => {
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true, initialLowStockThreshold: 2 });
+
+    const dialog = await screen.findByRole("dialog");
+
+    const thresholdInput = within(dialog).getByRole("spinbutton", {
+      name: /low stock threshold/i,
+    });
+
+    await user.clear(thresholdInput);
+    await user.type(thresholdInput, "-1");
+
+    expect(
+      within(dialog).getByRole("button", { name: /^save$/i }),
+    ).toBeDisabled();
+
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+    expect(mockedAdjustStock).not.toHaveBeenCalled();
+  });
+  test("owner: can clear low stock threshold back to null", async () => {
+    mockedUpdateItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    const props = renderModal({
+      canEditDetails: true,
+      initialLowStockThreshold: 5,
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    const thresholdInput = within(dialog).getByRole("spinbutton", {
+      name: /low stock threshold/i,
+    });
+
+    await user.clear(thresholdInput);
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
+        name: "Milk",
+        price: 25,
+        low_stock_threshold: null,
+      });
+    });
+
+    expect(props.onItemUpdated).toHaveBeenCalledWith({
+      id: 1,
+      name: "Milk",
+      price: 25,
+      lowStockThreshold: null,
+    });
+
+    expect(props.onClose).toHaveBeenCalled();
   });
 });
