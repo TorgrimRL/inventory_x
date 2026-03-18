@@ -1,13 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import axios from "axios";
 
 import { PATHS } from "../App";
 import Dashboard from "../pages/dashboard";
 import { checkSession } from "../services/authService";
-
+import apiClient from "../services/apiClient.ts";
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();
-jest.mock("axios");
+jest.mock("../services/apiClient", () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+}));
 jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
@@ -17,6 +22,7 @@ describe("Logout Test", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     document.cookie = "";
+    (apiClient.get as jest.Mock).mockResolvedValue({ data: [] });
   });
 
   test("Ensure session is clear", async () => {
@@ -24,7 +30,7 @@ describe("Logout Test", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
 
     // Simulate server response. [200](POST)
-    (axios.post as jest.Mock).mockImplementation(async () => {
+    (apiClient.post as jest.Mock).mockImplementation(async () => {
       document.cookie =
         "inventoryToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       return { status: 200 };
@@ -57,7 +63,7 @@ describe("Logout Test", () => {
   test("Logout sends request to server", async () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
 
-    (axios.post as jest.Mock).mockResolvedValue({ status: 200 });
+    (apiClient.post as jest.Mock).mockResolvedValue({ status: 200 });
 
     render(<Dashboard />);
 
@@ -66,7 +72,7 @@ describe("Logout Test", () => {
     fireEvent.click(logoutBtn);
 
     await waitFor(() => {
-      expect(axios.post).toHaveBeenCalled();
+      expect(apiClient.post).toHaveBeenCalled();
     });
   });
 });
