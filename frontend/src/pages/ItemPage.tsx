@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   Dialog,
@@ -40,7 +41,14 @@ type InventoryItem = {
   stock: number;
   price: number;
   order_id?: string;
+  low_stock_threshold: number | null;
 };
+
+function isLowStock(item: InventoryItem) {
+  return (
+    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
+  );
+}
 
 function extractBackendMessage(err: any): string {
   const data = err?.response?.data;
@@ -84,6 +92,17 @@ export default function ItemPage() {
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+  const [newItemLowStockThreshold, setNewItemLowStockThreshold] = useState("");
+
+  const newItemLowStockThresholdNumber =
+    newItemLowStockThreshold.trim() === ""
+      ? null
+      : Number(newItemLowStockThreshold);
+
+  const newItemLowStockThresholdIsInvalid =
+    newItemLowStockThresholdNumber !== null &&
+    (!Number.isInteger(newItemLowStockThresholdNumber) ||
+      newItemLowStockThresholdNumber < 0);
 
   const [stock, setStock] = useState<string>("0");
   const stockNumber = Number(stock);
@@ -101,9 +120,9 @@ export default function ItemPage() {
   const [editOpen, setEditOpen] = useState(false);
 
   // Story #49 sort + low-stock filter controls
-  const [sortField, setSortField] = useState<"name" | "stock" | "price">(
-    "stock",
-  );
+  const [sortField, setSortField] = useState<
+    "name" | "stock" | "price" | "low_stock_threshold" | "status"
+  >("stock");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
@@ -164,13 +183,17 @@ export default function ItemPage() {
       setError("Stock cannot be negative.");
       return;
     }
-
+    if (newItemLowStockThresholdIsInvalid) {
+      setError("Low stock threshold must be a whole number 0 or higher.");
+      return;
+    }
     setSaving(true);
 
     const payload = {
       name: name.trim(),
       price: Number(price),
       stock: s,
+      low_stock_threshold: newItemLowStockThresholdNumber,
     };
 
     try {
@@ -192,6 +215,7 @@ export default function ItemPage() {
       setName("");
       setPrice("0");
       setStock("0");
+      setNewItemLowStockThreshold("");
     } catch (err) {
       console.error(err);
       setError(extractBackendMessage(err));
@@ -206,7 +230,7 @@ export default function ItemPage() {
       !Number.isFinite(Number(price)) ||
       !Number.isFinite(Number(stock)));
 
-  const lowStockThreshold = Math.max(
+  const lowStockFilterThreshold = Math.max(
     0,
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
   );
@@ -220,7 +244,7 @@ export default function ItemPage() {
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
     const filtered = searched.filter(
-      (item) => !lowStockOnly || item.stock <= lowStockThreshold,
+      (item) => !lowStockOnly || item.stock <= lowStockFilterThreshold,
     );
 
     return [...filtered].sort((a, b) => {
@@ -230,22 +254,56 @@ export default function ItemPage() {
         compare = a.name.localeCompare(b.name);
       } else if (sortField === "stock") {
         compare = a.stock - b.stock;
-      } else {
+      } else if (sortField === "price") {
         compare = Number(a.price) - Number(b.price);
-      }
+      } else if (sortField === "low_stock_threshold") {
+        const aThreshold = a.low_stock_threshold;
+        const bThreshold = b.low_stock_threshold;
 
+        if (aThreshold == null && bThreshold == null) {
+          return a.name.localeCompare(b.name);
+        }
+
+        if (aThreshold == null) {
+          return 1;
+        }
+
+        if (bThreshold == null) {
+          return -1;
+        }
+
+        if (sortDirection === "asc") {
+          return aThreshold - bThreshold;
+        }
+
+        return bThreshold - aThreshold;
+      } else if (sortField === "status") {
+        const aLow = isLowStock(a);
+        const bLow = isLowStock(b);
+
+        if (aLow !== bLow) {
+          if (sortDirection === "asc") {
+            return aLow ? 1 : -1;
+          }
+          return aLow ? -1 : 1;
+        }
+
+        return a.name.localeCompare(b.name);
+      }
       return sortDirection === "asc" ? compare : -compare;
     });
   }, [
     items,
     lowStockOnly,
-    lowStockThreshold,
+    lowStockFilterThreshold,
     searchInput,
     sortDirection,
     sortField,
   ]);
 
-  function handleSort(field: "name" | "stock" | "price") {
+  function handleSort(
+    field: "name" | "stock" | "price" | "low_stock_threshold" | "status",
+  ) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
@@ -381,7 +439,7 @@ export default function ItemPage() {
               allItems={items}
               visibleItems={displayedItems}
               showFilteredMetrics={showFilteredMetrics}
-              lowStockThreshold={lowStockThreshold}
+              lowStockFilterThreshold={lowStockFilterThreshold}
             />
 
             {loading ? (
@@ -444,6 +502,34 @@ export default function ItemPage() {
                         </TableSortLabel>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableSortLabel
+                          active={sortField === "status"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "status" ? sortDirection : "asc"
+                          }
+                          onClick={() => handleSort("status")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Status
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableSortLabel
+                          active={sortField === "low_stock_threshold"}
+                          hideSortIcon={false}
+                          direction={
+                            sortField === "low_stock_threshold"
+                              ? sortDirection
+                              : "asc"
+                          }
+                          onClick={() => handleSort("low_stock_threshold")}
+                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                        >
+                          Low Stock Threshold
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -459,6 +545,20 @@ export default function ItemPage() {
                             style: "currency",
                             currency: "NOK",
                           }).format(Number(item.price))}
+                        </TableCell>
+                        <TableCell align="right">
+                          {isLowStock(item) ? (
+                            <Chip
+                              label="Low stock"
+                              color="warning"
+                              size="small"
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          {item.low_stock_threshold}
                         </TableCell>
                         <TableCell align="right">
                           <Button
@@ -521,11 +621,28 @@ export default function ItemPage() {
                   error={stockIsInvalid}
                   helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
+                <TextField
+                  label="Low stock threshold"
+                  value={newItemLowStockThreshold}
+                  onChange={(e) => setNewItemLowStockThreshold(e.target.value)}
+                  type="number"
+                  inputProps={{ step: 1, min: 0 }}
+                  fullWidth
+                  disabled={saving}
+                  error={newItemLowStockThresholdIsInvalid}
+                  helperText={
+                    newItemLowStockThresholdIsInvalid
+                      ? "Threshold must be a whole number 0 or higher"
+                      : "Leave empty if no threshold should be set"
+                  }
+                />
               </Stack>
 
               {showClientHint && (
                 <Alert severity="info">
-                  Name must be set. Price/stock must be positive.
+                  Name must be set. Price and stock must be 0 or higher. Low
+                  stock threshold is optional, but must be a whole number 0 or
+                  higher if provided.
                 </Alert>
               )}
             </Stack>
@@ -543,6 +660,7 @@ export default function ItemPage() {
                 saving ||
                 stockIsInvalid ||
                 priceIsInvalid ||
+                newItemLowStockThresholdIsInvalid ||
                 name.trim().length === 0
               }
             >
@@ -559,17 +677,24 @@ export default function ItemPage() {
           initialName={selectedItem.name}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
+          initialLowStockThreshold={selectedItem.low_stock_threshold}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
             id: number | string;
             name: string;
             price: number;
+            lowStockThreshold: number | null;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
-                  ? { ...it, name: updated.name, price: updated.price }
+                  ? {
+                      ...it,
+                      name: updated.name,
+                      price: updated.price,
+                      low_stock_threshold: updated.lowStockThreshold,
+                    }
                   : it,
               ),
             );
