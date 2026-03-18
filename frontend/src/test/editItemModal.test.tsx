@@ -81,7 +81,7 @@ describe("EditItemModal - user story tests", () => {
     });
     await user.clear(amountInput);
     await user.type(amountInput, "3");
-
+    await user.click(within(dialog).getByRole("button", { name: /increase/i }));
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
@@ -135,7 +135,7 @@ describe("EditItemModal - user story tests", () => {
     });
     await user.clear(amountInput);
     await user.type(amountInput, "2");
-
+    await user.click(within(dialog).getByRole("button", { name: /increase/i }));
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     expect(mockedUpdateItem).not.toHaveBeenCalled();

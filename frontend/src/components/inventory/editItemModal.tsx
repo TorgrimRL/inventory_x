@@ -129,7 +129,8 @@ export default function EditItemModal({
   const detailsChanged =
     canEditDetails &&
     (name.trim() !== initialName ||
-      Number(priceNumber) !== Number(initialPrice));
+      Number(priceNumber) !== Number(initialPrice) ||
+      lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
 
   const stockChanged = wantsStockChange && direction !== null;
 
@@ -174,13 +175,13 @@ export default function EditItemModal({
       setError("Stock cannot be negative.");
       return;
     }
+    const initialThresholdValue = initialLowStockThreshold ?? null;
 
     setSaving(true);
     try {
       // 1) Update name/price (only if owner AND changed)
       if (canEditDetails) {
         const trimmed = name.trim();
-        const initialThresholdValue = initialLowStockThreshold ?? null;
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
