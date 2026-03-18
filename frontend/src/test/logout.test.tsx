@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { PATHS } from "../App";
 import Dashboard from "../pages/dashboard";
-import { checkSession } from "../services/authService";
 import apiClient from "../services/apiClient.ts";
+import { checkSession } from "../services/authService";
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();
 jest.mock("../services/apiClient", () => ({
