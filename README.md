@@ -114,6 +114,20 @@ make logs-frontend
 make logs-db
 ```
 
+## Prod-like smoke test
+
+A prod-like smoke test is available to verify that the full stack starts correctly behind nginx.
+
+Run locally with:
+
+```bash
+./scripts/prod_smoke.sh
+````
+
+For more details, see:
+
+* `docs/prod_smoke.md`
+
 ## Debugging (VS Code + Docker)
 
 ### 1) Start backend + db i debug-modus (debugpy på :5678)
