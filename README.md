@@ -122,11 +122,11 @@ Run locally with:
 
 ```bash
 ./scripts/prod_smoke.sh
-````
+```
 
 For more details, see:
 
-* `docs/prod_smoke.md`
+- `docs/prod_smoke.md`
 
 ## Debugging (VS Code + Docker)
 

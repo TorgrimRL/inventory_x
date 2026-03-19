@@ -1,4 +1,14 @@
-import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PATHS } from "../App";
@@ -67,87 +77,47 @@ export default function ResetPassword() {
   }, [navigate, token]);
 
   return (
-    <div style={styles.container}>
-      <div
-        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
-      >
-        <h2>Set New Password</h2>
+    <Container maxWidth="sm">
+      <Paper elevation={1} sx={{ p: 4, mt: 6 }}>
+        <Stack spacing={3} alignItems="center">
+          <Typography variant="h5">Set New Password</Typography>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            autoComplete="new-password"
-            required
-          />
+          <Box component="form" onSubmit={handleSubmit} width="100%" noValidate>
+            <Stack spacing={2}>
+              <TextField
+                label="New password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                fullWidth
+                required
+              />
 
-          <input
-            type="password"
-            placeholder="Confirm new password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            style={styles.input}
-            autoComplete="new-password"
-            required
-          />
+              <TextField
+                label="Confirm new password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                fullWidth
+                required
+              />
 
-          <button
-            type="submit"
-            style={styles.button}
-            disabled={loading || !password || !token}
-          >
-            {loading ? "Updating..." : "Reset Password"}
-          </button>
-        </form>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading || !password || !token}
+              >
+                {loading ? "Updating..." : "Reset Password"}
+              </Button>
+            </Stack>
+          </Box>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {message && <p style={styles.success}>{message}</p>}
-      </div>
-    </div>
+          {error && <Alert severity="error">{error}</Alert>}
+          {message && <Alert severity="success">{message}</Alert>}
+        </Stack>
+      </Paper>
+    </Container>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  input: {
-    width: "100%",
-    padding: "10px",
-    margin: "10px 0",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    boxSizing: "border-box", // Now TS knows this is a valid BoxSizing value
-  },
-
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "400px",
-  },
-  card: {
-    padding: "2rem",
-    borderRadius: "8px",
-    width: "320px",
-    textAlign: "center",
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "4px",
-    border: "none",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  error: {
-    color: "red",
-    marginTop: "10px",
-  },
-  success: {
-    color: "green",
-    marginTop: "10px",
-  },
-};

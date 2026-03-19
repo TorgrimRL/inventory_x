@@ -1,5 +1,14 @@
-import "./login.css";
-
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Link,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -77,98 +86,85 @@ const Registration: React.FC = () => {
 
   if (success) {
     return (
-      <div className="login-form">
-        <h2>Welcome!</h2>
-        <div style={{ color: "green", margin: "20px 0" }}>
-          <h3>Account created successfully.</h3>
-          <p>Redirecting to login...</p>
-        </div>
-        <button onClick={() => navigate(PATHS.LOGIN)} className="submit-button">
-          Go to Login
-        </button>
-      </div>
+      <Container maxWidth="sm">
+        <Paper sx={{ mt: 8, p: 4 }}>
+          <Stack spacing={2} alignItems="center">
+            <Typography variant="h5">Welcome!</Typography>
+
+            <Alert severity="success">
+              Account created successfully. Redirecting to login...
+            </Alert>
+
+            <Button variant="contained" onClick={() => navigate(PATHS.LOGIN)}>
+              Go to Login
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
     );
   }
 
   return (
-    <div className="login-form">
-      <h2>Create Account</h2>
+    <Container maxWidth="sm">
+      <Paper sx={{ mt: 8, p: 4 }}>
+        <Typography variant="h5" mb={3}>
+          Create Account
+        </Typography>
 
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Name Input */}
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Full Name (Optional)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2}>
+            <TextField
+              label="Full Name (Optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
 
-        {/* Email Input */}
-        <div className="input-group">
-          <input
-            type="email"
-            placeholder="info@inventoryx.no"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="info@inventoryx.no"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth
+            />
 
-        {/* Password Input */}
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
+            <TextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+            />
 
-        {/* Confirm Password Input */}
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
+            <TextField
+              label="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              fullWidth
+            />
 
-        {error && <p className="error-message">{error}</p>}
+            {error && <Alert severity="error">{error}</Alert>}
 
-        <button type="submit" className="submit-button" disabled={loading}>
-          {loading ? "Creating..." : "Sign Up"}
-        </button>
+            <Button type="submit" variant="contained" disabled={loading}>
+              {loading ? "Creating..." : "Sign Up"}
+            </Button>
 
-        <div style={{ marginTop: "1rem" }}>
-          <span style={{ color: "#666", fontSize: "0.9rem" }}>
-            Already have an account?{" "}
-          </span>
-          <button
-            onClick={() => navigate(PATHS.LOGIN)}
-            type="button"
-            style={{
-              background: "none",
-              border: "none",
-              color: "blue",
-              cursor: "pointer",
-              textDecoration: "underline",
-            }}
-          >
-            Login here
-          </button>
-        </div>
-      </form>
-    </div>
+            <Typography variant="body2" color="text.secondary">
+              Already have an account?{" "}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => navigate(PATHS.LOGIN)}
+              >
+                Login here
+              </Link>
+            </Typography>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

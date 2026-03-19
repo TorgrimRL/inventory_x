@@ -5,12 +5,14 @@ global.TextEncoder = TextEncoder;
 // @ts-expect-error: None
 global.TextDecoder = TextDecoder;
 
+import { ThemeProvider } from "@mui/material/styles";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Navbar from "../components/navbar/topbar";
 import { checkSession } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
+import { LightTheme } from "../theme";
 
 jest.mock("../services/authService");
 jest.mock("../services/inventoryService");
@@ -25,15 +27,24 @@ describe("Navbar Component", () => {
     jest.clearAllMocks();
   });
 
+  /* Helper function to render Navbar */
+  const renderNavbar = (
+    mode: "light" | "dark" = "light",
+    setMode = jest.fn(),
+  ) =>
+    render(
+      <ThemeProvider theme={LightTheme}>
+        <MemoryRouter>
+          <Navbar mode={mode} setMode={setMode} />
+        </MemoryRouter>
+        ,
+      </ThemeProvider>,
+    );
+
   test("Ensure the existence of navbar", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
-
+    renderNavbar();
     await waitFor(() => expect(checkSession).toHaveBeenCalled());
     expect(screen.getByRole("banner")).toBeInTheDocument();
   });
@@ -41,12 +52,7 @@ describe("Navbar Component", () => {
   test("Shows login options when user is logged out", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
-
+    renderNavbar();
     expect((await screen.findAllByText(/log in/i)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/sign up/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/forgot password/i).length).toBeGreaterThan(0);
@@ -58,12 +64,7 @@ describe("Navbar Component", () => {
       name: "Warehouse A",
     });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
-
+    renderNavbar();
     expect((await screen.findAllByText("Inventories")).length).toBeGreaterThan(
       0,
     );
@@ -77,11 +78,7 @@ describe("Navbar Component", () => {
       name: "Warehouse A",
     });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
+    renderNavbar();
     expect((await screen.findAllByText("Warehouse A")).length).toBeGreaterThan(
       0,
     );
@@ -91,11 +88,7 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getActiveInventory as jest.Mock).mockResolvedValue(null);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
+    renderNavbar();
     expect(
       (await screen.findAllByText(/no inventory selected/i)).length,
     ).toBeGreaterThan(0);
@@ -104,15 +97,41 @@ describe("Navbar Component", () => {
   test("Opens mobile menu when menu button is clicked", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>,
-    );
+    renderNavbar();
     const menuButton = await screen.findByRole("button");
-
     fireEvent.click(menuButton);
-
     expect((await screen.findAllByText(/log in/i)).length).toBeGreaterThan(0);
+  });
+
+  test("toggles theme when desktop switch is clicked", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    const setMode = jest.fn();
+    renderNavbar("light", setMode);
+
+    const switchInput = screen.getByRole("checkbox", { name: /toggle theme/i });
+    fireEvent.click(switchInput);
+    expect(setMode).toHaveBeenCalled();
+  });
+
+  test("toggles theme from mobile menu", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    const setMode = jest.fn();
+    renderNavbar("light", setMode);
+
+    const menuButton = await screen.findByRole("button");
+    fireEvent.click(menuButton);
+    const darkModeOption = await screen.findByText(/dark mode/i);
+    fireEvent.click(darkModeOption);
+    expect(setMode).toHaveBeenCalled();
+  });
+
+  test("switch reflects dark mode state", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    renderNavbar("dark");
+    const switchInput = screen.getByRole("checkbox", { name: /toggle theme/i });
+    expect(switchInput).toBeChecked();
   });
 });
