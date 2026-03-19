@@ -145,7 +145,7 @@ export default function InventoriesPage() {
                 severity="error"
                 sx={{
                   mb: 2,
-                  "& .MuiAlert-message": { width: "100%" }, // viktig!
+                  "& .MuiAlert-message": { width: "100%" },
                 }}
               >
                 <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
@@ -218,16 +218,17 @@ export default function InventoriesPage() {
                       sx={{
                         borderRadius: 1,
                         overflow: "hidden",
+                        height: "100%",
                         transition:
                           "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
                         borderColor: (theme) =>
                           isActive
                             ? "rgba(46, 125, 50, 0.55)"
                             : isSelecting
-                              ? "rgba(11, 20, 55, 0.28)"
+                              ? theme.palette.secondary.main
                               : theme.palette.mode === "dark"
                                 ? "rgba(255,255,255,0.12)"
-                                : "rgba(11, 20, 55, 0.18)",
+                                : theme.palette.divider,
                         bgcolor: isActive
                           ? "rgba(46, 125, 50, 0.06)"
                           : "transparent",
@@ -235,7 +236,7 @@ export default function InventoriesPage() {
                           transform: "translateY(-1px)",
                           boxShadow: (theme) =>
                             theme.palette.mode === "dark"
-                              ? "0 8px 24px rgba(0,0,0,0.5)"
+                              ? theme.shadows[9]
                               : theme.shadows[3],
                           borderColor: isActive
                             ? "success.main"
@@ -252,8 +253,10 @@ export default function InventoriesPage() {
                         disabled={isSelecting}
                         sx={{
                           width: "100%",
+                          height: "100%",
                           p: 2,
-                          display: "block",
+                          display: "flex",
+                          alignItems: "center",
                           textAlign: "center",
                           cursor: isSelecting ? "default" : "pointer",
                         }}
