@@ -10,7 +10,7 @@ type InventoryKpiSummaryProps = {
   allItems: KpiItem[];
   visibleItems: KpiItem[];
   showFilteredMetrics: boolean;
-  lowStockThreshold?: number;
+  lowStockFilterThreshold?: number;
 };
 
 function totalValue(items: KpiItem[]) {
@@ -67,12 +67,12 @@ export default function InventoryKpiSummary({
   allItems,
   visibleItems,
   showFilteredMetrics,
-  lowStockThreshold = 5,
+  lowStockFilterThreshold = 5,
 }: InventoryKpiSummaryProps) {
   const metrics = useMemo(() => {
     const total = {
       value: totalValue(allItems),
-      lowStock: lowStockCount(allItems, lowStockThreshold),
+      lowStock: lowStockCount(allItems, lowStockFilterThreshold),
       itemCount: allItems.length,
       avgPrice: averagePrice(allItems),
       units: totalUnits(allItems),
@@ -81,7 +81,7 @@ export default function InventoryKpiSummary({
 
     const filtered = {
       value: totalValue(visibleItems),
-      lowStock: lowStockCount(visibleItems, lowStockThreshold),
+      lowStock: lowStockCount(visibleItems, lowStockFilterThreshold),
       itemCount: visibleItems.length,
       avgPrice: averagePrice(visibleItems),
       units: totalUnits(visibleItems),
@@ -89,7 +89,7 @@ export default function InventoryKpiSummary({
     };
 
     return { total, filtered };
-  }, [allItems, lowStockThreshold, visibleItems]);
+  }, [allItems, lowStockFilterThreshold, visibleItems]);
 
   return (
     <Stack spacing={2} sx={{ mb: 2 }}>

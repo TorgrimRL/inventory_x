@@ -26,7 +26,7 @@ type Props = {
   initialName: string;
   initialPrice: number;
   currentStock: number;
-
+  initialLowStockThreshold?: number | null;
   // owner => true, employee => false
   canEditDetails: boolean;
 
@@ -36,6 +36,7 @@ type Props = {
     id: number | string;
     name: string;
     price: number;
+    lowStockThreshold: null | number;
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -64,6 +65,7 @@ export default function EditItemModal({
   itemId,
   initialName,
   initialPrice,
+  initialLowStockThreshold,
   currentStock,
   canEditDetails,
   onClose,
@@ -73,10 +75,13 @@ export default function EditItemModal({
 }: Props) {
   const [name, setName] = useState(initialName);
   const [price, setPrice] = useState(String(initialPrice));
+  const [lowStockThreshold, setLowStockThreshold] = useState(
+    String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
+  );
 
   const [amount, setAmount] = useState<string>("0");
-  const [direction, setDirection] = useState<"increase" | "decrease">(
-    "increase",
+  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
+    null,
   );
 
   const [saving, setSaving] = useState(false);
@@ -87,19 +92,49 @@ export default function EditItemModal({
     if (!open) return;
     setName(initialName);
     setPrice(String(initialPrice));
+    setLowStockThreshold(
+      initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
+    );
     setAmount("0");
-    setDirection("increase");
+    setDirection(null);
     setError(null);
-  }, [open, initialName, initialPrice]);
+  }, [open, initialName, initialPrice, initialLowStockThreshold]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+
+  const lowStockThresholdNumber = useMemo(() => {
+    const value = lowStockThreshold.trim();
+    return value === "" ? null : Number(value);
+  }, [lowStockThreshold]);
+
+  const lowStockThresholdIsInvalid =
+    lowStockThresholdNumber !== null &&
+    (!Number.isInteger(lowStockThresholdNumber) || lowStockThresholdNumber < 0);
+
   const nameIsInvalid = name.trim().length === 0;
 
   const amountNumber = useMemo(() => Number(amount), [amount]);
   const wantsStockChange = Number.isFinite(amountNumber) && amountNumber > 0;
   const amountIsInvalid =
-    wantsStockChange && (!Number.isInteger(amountNumber) || amountNumber <= 0);
+    amount.trim() === "" || !Number.isInteger(amountNumber) || amountNumber < 0;
+
+  const directionIsInvalid = wantsStockChange && direction === null;
+
+  const stockWouldBeNegative =
+    wantsStockChange &&
+    direction === "decrease" &&
+    currentStock - amountNumber < 0;
+
+  const detailsChanged =
+    canEditDetails &&
+    (name.trim() !== initialName ||
+      Number(priceNumber) !== Number(initialPrice) ||
+      lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
+
+  const stockChanged = wantsStockChange && direction !== null;
+
+  const hasChanges = detailsChanged || stockChanged;
 
   function handleClose() {
     if (!saving) {
@@ -120,12 +155,27 @@ export default function EditItemModal({
         setError("Price must be a non-negative number.");
         return;
       }
+      if (lowStockThresholdIsInvalid) {
+        setError("Low Stock Threshold must be a whole number 0 or higher.");
+        return;
+      }
     }
 
     if (amountIsInvalid) {
       setError("Amount must be a positive whole number.");
       return;
     }
+
+    if (directionIsInvalid) {
+      setError("Please select increase or decrease.");
+      return;
+    }
+
+    if (stockWouldBeNegative) {
+      setError("Stock cannot be negative.");
+      return;
+    }
+    const initialThresholdValue = initialLowStockThreshold ?? null;
 
     setSaving(true);
     try {
@@ -134,16 +184,25 @@ export default function EditItemModal({
         const trimmed = name.trim();
         const changed =
           trimmed !== initialName ||
-          Number(priceNumber) !== Number(initialPrice);
-
+          Number(priceNumber) !== Number(initialPrice) ||
+          lowStockThresholdNumber !== initialThresholdValue;
         if (changed) {
-          await updateItem(itemId, { name: trimmed, price: priceNumber });
-          onItemUpdated({ id: itemId, name: trimmed, price: priceNumber });
+          await updateItem(itemId, {
+            name: trimmed,
+            price: priceNumber,
+            low_stock_threshold: lowStockThresholdNumber,
+          });
+          onItemUpdated({
+            id: itemId,
+            name: trimmed,
+            price: priceNumber,
+            lowStockThreshold: lowStockThresholdNumber,
+          });
         }
       }
 
       // 2) Adjust stock (only if amount > 0)
-      if (wantsStockChange) {
+      if (wantsStockChange && direction) {
         const res = await adjustStock(itemId, direction, amountNumber);
         onStockUpdated(res.stock);
       }
@@ -224,6 +283,21 @@ export default function EditItemModal({
                   : " "
               }
             />
+            <TextField
+              label="Low stock threshold"
+              value={lowStockThreshold}
+              onChange={(e) => setLowStockThreshold(e.target.value)}
+              type="number"
+              inputProps={{ step: 1, min: 0 }}
+              disabled={saving || !canEditDetails}
+              fullWidth
+              error={canEditDetails && lowStockThresholdIsInvalid}
+              helperText={
+                canEditDetails && lowStockThresholdIsInvalid
+                  ? "Threshold must be a whole number 0 or higher"
+                  : "Leave empty if no threshold should be set"
+              }
+            />
 
             <Divider />
 
@@ -235,36 +309,52 @@ export default function EditItemModal({
 
             <TextField
               label="Amount (0 = no change)"
-              type="number"
+              type="text"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputProps={{ min: 0, step: 1 }}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*$/.test(value)) {
+                  setAmount(value);
+                }
+              }}
               disabled={saving}
               fullWidth
-              error={amountIsInvalid}
+              error={amountIsInvalid || stockWouldBeNegative}
               helperText={
                 amountIsInvalid ? "Enter a positive whole number" : " "
               }
             />
 
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant={direction === "increase" ? "contained" : "outlined"}
-                onClick={() => setDirection("increase")}
-                disabled={saving}
-                fullWidth
-              >
-                Increase
-              </Button>
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant={direction === "increase" ? "contained" : "outlined"}
+                  onClick={() => setDirection("increase")}
+                  disabled={saving}
+                  fullWidth
+                >
+                  Increase
+                </Button>
 
-              <Button
-                variant={direction === "decrease" ? "contained" : "outlined"}
-                onClick={() => setDirection("decrease")}
-                disabled={saving}
-                fullWidth
-              >
-                Decrease
-              </Button>
+                <Button
+                  variant={direction === "decrease" ? "contained" : "outlined"}
+                  onClick={() => setDirection("decrease")}
+                  disabled={saving}
+                  fullWidth
+                >
+                  Decrease
+                </Button>
+              </Stack>
+
+              {directionIsInvalid && (
+                <Alert severity="warning">
+                  Please select increase or decrease to update stock.
+                </Alert>
+              )}
+
+              {stockWouldBeNegative && (
+                <Alert severity="error">Stock cannot be negative.</Alert>
+              )}
             </Stack>
           </Stack>
         </DialogContent>
@@ -292,8 +382,14 @@ export default function EditItemModal({
               variant="contained"
               disabled={
                 saving ||
+                !hasChanges ||
                 amountIsInvalid ||
-                (canEditDetails && (nameIsInvalid || priceIsInvalid))
+                directionIsInvalid ||
+                stockWouldBeNegative ||
+                (canEditDetails &&
+                  (nameIsInvalid ||
+                    priceIsInvalid ||
+                    lowStockThresholdIsInvalid))
               }
             >
               {saving ? "Saving…" : "Save"}

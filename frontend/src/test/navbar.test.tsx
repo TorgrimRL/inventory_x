@@ -65,7 +65,9 @@ describe("Navbar Component", () => {
     });
 
     renderNavbar();
-    expect((await screen.findAllByText("Storage")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Inventories")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Items").length).toBeGreaterThan(0);
   });
