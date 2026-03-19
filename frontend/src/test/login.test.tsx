@@ -54,10 +54,8 @@ describe("Login Component", () => {
     });
 
     // Check if inputs exist
-    expect(
-      screen.getByPlaceholderText(/info@inventoryx.no/i),
-    ).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 
   // TEST : SUCCESSFUL LOGIN FLOW
@@ -71,18 +69,18 @@ describe("Login Component", () => {
     render(<Login />);
 
     // Wait for form to load
-    await waitFor(() => screen.getByPlaceholderText(/info@inventoryx.no/i));
+    await screen.findByLabelText(/email/i);
 
     // Simulate user typing
-    fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@test.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText(/Password/i), {
+    fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "secret123" },
     });
 
     // Simulate submit click
-    fireEvent.click(screen.getByRole("button", { name: /Login/i }));
+    fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
     // Assert redirect happened
     await waitFor(() => {
@@ -95,11 +93,9 @@ describe("Login Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
     render(<Login />);
-    await waitFor(() =>
-      screen.getByRole("button", { name: /Create Account/i }),
-    );
+    await screen.findByRole("button", { name: /create account/i });
 
-    fireEvent.click(screen.getByRole("button", { name: /Create Account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith(PATHS.REGISTRATION);
   });
@@ -120,13 +116,13 @@ describe("Login Component", () => {
     });
 
     render(<Login />);
-    await screen.findByPlaceholderText(/info@inventoryx.no/i);
+    await screen.findByLabelText(/email/i);
 
-    fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@test.c" },
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+    fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "secret123" },
     });
 
@@ -144,9 +140,9 @@ describe("Login Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
     render(<Login />);
 
-    await screen.findByPlaceholderText(/info@inventoryx.no/i);
+    await screen.findByLabelText(/email/i);
 
-    fireEvent.change(screen.getByPlaceholderText(/info@inventoryx.no/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@test.com" },
     });
 

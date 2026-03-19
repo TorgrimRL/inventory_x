@@ -145,7 +145,7 @@ export default function InventoriesPage() {
                 severity="error"
                 sx={{
                   mb: 2,
-                  "& .MuiAlert-message": { width: "100%" },
+                  "& .MuiAlert-message": { width: "100%" }, // viktig!
                 }}
               >
                 <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
@@ -268,7 +268,6 @@ export default function InventoriesPage() {
                               sx={{ fontWeight: 800 }}
                             />
                           )}
-
                           <Typography fontWeight={800}>{inv.name}</Typography>
 
                           <Typography sx={{ color: "text.secondary" }}>

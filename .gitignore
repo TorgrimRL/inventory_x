@@ -45,3 +45,6 @@ pyrightconfig.json
 
 # Vite cache
 .vite/
+
+# Smoke test artifacts
+smoke-artifacts/
