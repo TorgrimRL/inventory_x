@@ -263,14 +263,24 @@ export default function InventoriesPage() {
                       >
                         <Stack spacing={0.5} alignItems="center">
                           {/* Active chip */}
-                          {isActive && (
-                            <Chip
-                              label="Active"
-                              size="small"
-                              color="success"
-                              sx={{ fontWeight: 800 }}
-                            />
-                          )}
+                          <Box
+                            sx={{
+                              height: 24,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {isActive && (
+                              <Chip
+                                label="Active"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 800 }}
+                              />
+                            )}
+                          </Box>
+
                           <Typography fontWeight={800}>{inv.name}</Typography>
 
                           <Typography sx={{ color: "text.secondary" }}>
