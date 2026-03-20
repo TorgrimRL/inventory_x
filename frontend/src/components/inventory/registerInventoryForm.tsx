@@ -94,18 +94,18 @@ export default function RegisterInventoryForm() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Box
         sx={{
           width: "100%",
           maxWidth: 1400,
           mx: "auto",
-          px: { xs: 2, sm: 3, md: 4 },
-          py: { xs: 3, md: 5 },
+          px: { xs: 3, sm: 3, md: 8 },
+          py: { xs: 3, md: 3 },
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "400px minmax(0, 1fr)" },
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
           gap: { xs: 4, md: 8 },
-          alignItems: "stretch",
+          alignItems: "center",
         }}
       >
         {/* LEFT */}
@@ -118,22 +118,11 @@ export default function RegisterInventoryForm() {
           <Box
             sx={{
               width: "100%",
-              maxWidth: 400,
               minHeight: { md: 560 },
-              px: { xs: 1, sm: 2 },
+              px: { xs: 1, sm: 4 },
               py: { xs: 4, sm: 6 },
             }}
           >
-            <Box
-              sx={{
-                width: 14,
-                height: 14,
-                bgcolor: "#7cfff0",
-                borderRadius: 1,
-                mb: 2,
-              }}
-            />
-
             <Typography
               variant="h4"
               fontWeight={800}
@@ -149,8 +138,8 @@ export default function RegisterInventoryForm() {
             <Paper
               elevation={0}
               sx={{
-                mt: 3,
-                p: 0,
+                mt: 4,
+                p: { xs: 3, sm: 4, md: 5 },
               }}
             >
               {allErrors.length > 0 && (
@@ -200,11 +189,8 @@ export default function RegisterInventoryForm() {
                     size="large"
                     disabled={isSubmitting}
                     sx={{
-                      height: 54,
-                      borderRadius: 3,
-                      fontWeight: 800,
+                      fontWeight: 600,
                       textTransform: "none",
-                      boxShadow: "0 14px 30px rgba(11, 20, 55, 0.22)",
                     }}
                   >
                     {isSubmitting ? "Registering..." : "Register"}
@@ -214,34 +200,33 @@ export default function RegisterInventoryForm() {
             </Paper>
           </Box>
         </Box>
+
         {/* RIGHT (illustration) */}
         <Box
           sx={{
             display: { xs: "none", md: "flex" },
             alignItems: "center",
-            justifyContent: "center",
-            height: 560,
-            p: 3,
-            bgcolor: "#fff",
+            justifyContent: "flex-start",
+            pl: { md: 4, lg: 6 },
+            transform: { md: "translateY(-20px)", lg: "translateY(-40px)" },
           }}
           aria-hidden="true"
         >
           <Box
             component="img"
-            src="/auth-illustration.png"
+            src="/register-inventory-illustration.svg"
             alt=""
             sx={{
               width: "100%",
-              maxWidth: 760,
-              maxHeight: "100%",
+              maxWidth: 420,
               height: "auto",
               objectFit: "contain",
-              opacity: 0.95,
+              opacity: (theme) => (theme.palette.mode === "dark" ? 0.75 : 1),
               userSelect: "none",
               pointerEvents: "none",
             }}
           />
-        </Box>{" "}
+        </Box>
       </Box>
     </Box>
   );
