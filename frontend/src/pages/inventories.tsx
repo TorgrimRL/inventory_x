@@ -5,10 +5,12 @@ import {
   ButtonBase,
   Chip,
   CircularProgress,
+  Container,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -95,13 +97,7 @@ export default function InventoriesPage() {
         display: "flex",
       }}
     >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: 900,
-          mx: "auto",
-        }}
-      >
+      <Container maxWidth="lg">
         <Box
           sx={{
             px: { xs: 3, sm: 6 },
@@ -201,9 +197,15 @@ export default function InventoriesPage() {
                   display: "grid",
                   gridTemplateColumns: {
                     xs: "1fr",
-                    sm: "1fr 1fr",
+                    sm:
+                      inventories.length === 1
+                        ? "1fr"
+                        : "repeat(2, minmax(0, 400px))",
                   },
-                  gap: 2,
+                  justifyContent: "center",
+                  justifyItems: "center",
+                  columnGap: 3,
+                  rowGap: 2,
                   mb: 5,
                 }}
               >
@@ -216,6 +218,8 @@ export default function InventoriesPage() {
                       key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
                       variant="outlined"
                       sx={{
+                        width: "100%",
+                        maxWidth: 400,
                         borderRadius: 1,
                         overflow: "hidden",
                         height: "100%",
@@ -223,24 +227,26 @@ export default function InventoriesPage() {
                           "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
                         borderColor: (theme) =>
                           isActive
-                            ? "rgba(46, 125, 50, 0.55)"
+                            ? alpha(theme.palette.success.main, 0.3)
                             : isSelecting
                               ? theme.palette.secondary.main
                               : theme.palette.mode === "dark"
                                 ? "rgba(255,255,255,0.12)"
                                 : theme.palette.divider,
-                        bgcolor: isActive
-                          ? "rgba(46, 125, 50, 0.06)"
-                          : "transparent",
+                        bgcolor: (theme) =>
+                          isActive
+                            ? alpha(theme.palette.success.main, 0.04)
+                            : "transparent",
                         "&:hover": {
                           transform: "translateY(-1px)",
                           boxShadow: (theme) =>
                             theme.palette.mode === "dark"
                               ? theme.shadows[9]
                               : theme.shadows[3],
-                          borderColor: isActive
-                            ? "success.main"
-                            : "primary.main",
+                          borderColor: (theme) =>
+                            isActive
+                              ? theme.palette.success.main
+                              : theme.palette.primary.main,
                         },
                       }}
                     >
@@ -350,7 +356,7 @@ export default function InventoriesPage() {
                         xs: "100%",
                         sm: "fit-content",
                       },
-                      px: 4,
+                      px: { xs: 2, sm: 4 },
                       fontWeight: 800,
                       textTransform: "none",
                     }}
@@ -379,7 +385,7 @@ export default function InventoriesPage() {
                         xs: "100%",
                         sm: "fit-content",
                       },
-                      px: 4,
+                      px: { xs: 2, sm: 4 },
                       fontWeight: 800,
                       textTransform: "none",
                     }}
@@ -391,7 +397,7 @@ export default function InventoriesPage() {
             )}
           </Paper>
         </Box>
-      </Box>
+      </Container>
     </Box>
   );
 }
