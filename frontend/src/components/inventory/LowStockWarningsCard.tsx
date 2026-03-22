@@ -149,7 +149,9 @@ export default function LowStockWarningsCard() {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={700}>{item.name}</Typography>
+                    <Typography fontWeight={700} color="text.primary">
+                      {item.name}
+                    </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Stock: {item.stock} / Threshold:{" "}
                       {item.low_stock_threshold}
