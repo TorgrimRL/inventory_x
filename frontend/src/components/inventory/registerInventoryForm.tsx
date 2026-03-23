@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  Container,
   Paper,
   Stack,
   TextField,
@@ -94,155 +95,131 @@ export default function RegisterInventoryForm() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: 1400,
-          mx: "auto",
-          px: { xs: 2, sm: 3, md: 4 },
-          py: { xs: 3, md: 5 },
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "400px minmax(0, 1fr)" },
-          gap: { xs: 4, md: 8 },
-          alignItems: "stretch",
-        }}
-      >
-        {/* LEFT */}
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Container maxWidth="xl">
         <Box
           sx={{
-            display: "flex",
-            justifyContent: { xs: "flex-start", md: "flex-end" },
+            width: "100%",
+            py: 3,
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: { xs: 4, md: 8 },
+            alignItems: "center",
           }}
         >
+          {/* LEFT */}
           <Box
             sx={{
-              width: "100%",
-              maxWidth: 400,
-              minHeight: { md: 560 },
-              px: { xs: 1, sm: 2 },
-              py: { xs: 4, sm: 6 },
+              display: "flex",
+              justifyContent: { xs: "center", md: "flex-end" },
             }}
           >
             <Box
               sx={{
-                width: 14,
-                height: 14,
-                bgcolor: "#7cfff0",
-                borderRadius: 1,
-                mb: 2,
+                width: "100%",
+                maxWidth: 500,
+                py: 5,
+              }}
+            >
+              <Typography
+                variant="h4"
+                fontWeight={800}
+                sx={{ letterSpacing: -0.5 }}
+              >
+                Register
+              </Typography>
+
+              <Typography sx={{ mt: 1, color: "text.secondary" }}>
+                Manage all your inventory efficiently
+              </Typography>
+
+              <Paper elevation={0} sx={{ mt: 4, p: 5 }}>
+                {allErrors.length > 0 && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    <Stack spacing={0.5}>
+                      {allErrors.map((m, i) => (
+                        <div key={`${m}-${i}`}>{m}</div>
+                      ))}
+                    </Stack>
+                  </Alert>
+                )}
+
+                {success && (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    {success}
+                  </Alert>
+                )}
+
+                <Box component="form" onSubmit={onSubmit} noValidate>
+                  <Stack spacing={2}>
+                    <TextField
+                      label="Business name"
+                      placeholder="Business name"
+                      value={name}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setName(e.target.value)
+                      }
+                      fullWidth
+                    />
+
+                    <TextField
+                      label="Org Number"
+                      placeholder="Org Number"
+                      value={orgNumber}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setOrgNumber(e.target.value)
+                      }
+                      fullWidth
+                      slotProps={{
+                        htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
+                      }}
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={isSubmitting}
+                      sx={{
+                        fontWeight: 800,
+                        textTransform: "none",
+                      }}
+                    >
+                      {isSubmitting ? "Registering..." : "Register"}
+                    </Button>
+                  </Stack>
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+
+          {/* RIGHT (illustration) */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              justifyContent: "flex-start",
+              pl: { md: 4 },
+            }}
+            aria-hidden="true"
+          >
+            <Box
+              component="img"
+              src="/register-inventory-illustration.svg"
+              alt=""
+              sx={{
+                width: "100%",
+                maxWidth: 420,
+                height: "auto",
+                objectFit: "contain",
+                opacity: (theme) => (theme.palette.mode === "dark" ? 0.75 : 1),
+                userSelect: "none",
+                pointerEvents: "none",
               }}
             />
-
-            <Typography
-              variant="h4"
-              fontWeight={800}
-              sx={{ letterSpacing: -0.5 }}
-            >
-              Register
-            </Typography>
-
-            <Typography sx={{ mt: 1, color: "text.secondary" }}>
-              Manage all your inventory efficiently
-            </Typography>
-
-            <Paper
-              elevation={0}
-              sx={{
-                mt: 3,
-                p: 0,
-              }}
-            >
-              {allErrors.length > 0 && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  <Stack spacing={0.5}>
-                    {allErrors.map((m, i) => (
-                      <div key={`${m}-${i}`}>{m}</div>
-                    ))}
-                  </Stack>
-                </Alert>
-              )}
-
-              {success && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  {success}
-                </Alert>
-              )}
-
-              <Box component="form" onSubmit={onSubmit} noValidate>
-                <Stack spacing={2}>
-                  <TextField
-                    label="Business name"
-                    placeholder="Business name"
-                    value={name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setName(e.target.value)
-                    }
-                    fullWidth
-                  />
-
-                  <TextField
-                    label="Org Number"
-                    placeholder="Org Number"
-                    value={orgNumber}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setOrgNumber(e.target.value)
-                    }
-                    fullWidth
-                    slotProps={{
-                      htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
-                    }}
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={isSubmitting}
-                    sx={{
-                      height: 54,
-                      borderRadius: 3,
-                      fontWeight: 800,
-                      textTransform: "none",
-                      boxShadow: "0 14px 30px rgba(11, 20, 55, 0.22)",
-                    }}
-                  >
-                    {isSubmitting ? "Registering..." : "Register"}
-                  </Button>
-                </Stack>
-              </Box>
-            </Paper>
           </Box>
         </Box>
-        {/* RIGHT (illustration) */}
-        <Box
-          sx={{
-            display: { xs: "none", md: "flex" },
-            alignItems: "center",
-            justifyContent: "center",
-            height: 560,
-            p: 3,
-            bgcolor: "#fff",
-          }}
-          aria-hidden="true"
-        >
-          <Box
-            component="img"
-            src="/auth-illustration.png"
-            alt=""
-            sx={{
-              width: "100%",
-              maxWidth: 760,
-              maxHeight: "100%",
-              height: "auto",
-              objectFit: "contain",
-              opacity: 0.95,
-              userSelect: "none",
-              pointerEvents: "none",
-            }}
-          />
-        </Box>{" "}
-      </Box>
+      </Container>
     </Box>
   );
 }

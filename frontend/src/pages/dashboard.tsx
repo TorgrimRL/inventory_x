@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PATHS } from "../App";
-import LogoutButton from "../components/auth/logoutButton";
 import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
 import {
   type ActiveInventory,
@@ -64,10 +63,6 @@ const Dashboard = () => {
           </Stack>
           <Box sx={{ mb: 3, maxWidth: 720, ml: { md: 2 } }}>
             <LowStockWarningsCard />
-          </Box>
-
-          <Box>
-            <LogoutButton />
           </Box>
         </Stack>
       </Container>
