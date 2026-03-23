@@ -42,8 +42,8 @@ export default function AdjustStockModal({
   const [amount, setAmount] = useState<string>("1");
 
   // Direction of the stock adjustment
-  const [direction, setDirection] = useState<"increase" | "decrease">(
-    "increase",
+  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
+    null,
   );
 
   // UI state
@@ -53,6 +53,9 @@ export default function AdjustStockModal({
   // Convert amount to number and validate input
   const amountNumber = Number(amount);
   const amountIsInvalid = !Number.isInteger(amountNumber) || amountNumber <= 0;
+  const directionIsInvalid = !amountIsInvalid && direction === null;
+  const stockWouldBeNegative =
+    direction === "decrease" && currentStock - amountNumber < 0;
 
   /**
    * Called when the user clicks "Update stock".
@@ -67,10 +70,20 @@ export default function AdjustStockModal({
       return;
     }
 
+    if (directionIsInvalid) {
+      setError("Please select increase or decrease.");
+      return;
+    }
+
+    if (stockWouldBeNegative) {
+      setError("Stock cannot be negative.");
+      return;
+    }
+
     setSaving(true);
     try {
       // Call backend API to adjust stock
-      const res = await adjustStock(itemId, direction, amountNumber);
+      const res = await adjustStock(itemId, direction!, amountNumber);
 
       // Update stock in parent component only on success
       onStockUpdated(res.stock);
@@ -116,6 +129,8 @@ export default function AdjustStockModal({
   function handleClose() {
     if (!saving) {
       setError(null);
+      setAmount("1");
+      setDirection(null);
       onClose();
     }
   }
@@ -138,11 +153,16 @@ export default function AdjustStockModal({
           {/* Amount input */}
           <TextField
             label="Amount"
-            type="number"
+            type="text"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                setAmount(value);
+              }
+            }}
             inputProps={{ min: 1, step: 1 }}
-            error={amountIsInvalid}
+            error={amountIsInvalid || stockWouldBeNegative}
             helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
             disabled={saving}
             fullWidth
@@ -168,6 +188,16 @@ export default function AdjustStockModal({
               Decrease
             </Button>
           </Stack>
+
+          {directionIsInvalid && (
+            <Alert severity="warning">
+              Please select increase or decrease to update stock.
+            </Alert>
+          )}
+
+          {stockWouldBeNegative && (
+            <Alert severity="error">Stock cannot be negative.</Alert>
+          )}
         </Stack>
       </DialogContent>
 
@@ -179,7 +209,12 @@ export default function AdjustStockModal({
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={saving || amountIsInvalid}
+          disabled={
+            saving ||
+            amountIsInvalid ||
+            directionIsInvalid ||
+            stockWouldBeNegative
+          }
         >
           {saving ? "Saving…" : "Update stock"}
         </Button>
