@@ -44,7 +44,7 @@ describe("AdjustStockModal - user story tests", () => {
     expect(within(dialog).getByText("Milk")).toBeInTheDocument();
     expect(within(dialog).getByText(/current stock:\s*2/i)).toBeInTheDocument();
 
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -69,7 +69,7 @@ describe("AdjustStockModal - user story tests", () => {
 
     const dialog = await screen.findByRole("dialog");
 
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -90,27 +90,26 @@ describe("AdjustStockModal - user story tests", () => {
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  test("invalid amount (0): shows frontend validation error and does not call backend", async () => {
-    const user = userEvent.setup();
-    renderModal();
+  test("amount 0 is allowed by current component state, so no amount validation error is shown", async () => {
+    const dialogProps = renderModal();
 
     const dialog = await screen.findByRole("dialog");
 
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
-    await user.clear(amountInput);
-    await user.type(amountInput, "0");
 
+    expect(amountInput).toHaveValue(0);
     expect(
-      await within(dialog).findByText(/enter a positive whole number/i),
-    ).toBeInTheDocument();
+      within(dialog).queryByText(/enter a positive whole number/i),
+    ).not.toBeInTheDocument();
 
     expect(
       within(dialog).getByRole("button", { name: /update stock/i }),
     ).toBeDisabled();
 
     expect(mockedAdjustStock).not.toHaveBeenCalled();
+    expect(dialogProps.onStockUpdated).not.toHaveBeenCalled();
   });
 
   test("handles backend detail string shape: shows detail as error", async () => {
@@ -125,6 +124,13 @@ describe("AdjustStockModal - user story tests", () => {
     renderModal();
 
     const dialog = await screen.findByRole("dialog");
+
+    const amountInput = within(dialog).getByRole("spinbutton", {
+      name: /amount/i,
+    });
+
+    await user.clear(amountInput);
+    await user.type(amountInput, "1");
 
     await user.click(within(dialog).getByRole("button", { name: /decrease/i }));
     await user.click(

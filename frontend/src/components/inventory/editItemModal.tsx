@@ -309,13 +309,27 @@ export default function EditItemModal({
 
             <TextField
               label="Amount (0 = no change)"
-              type="text"
+              type="number"
               value={amount}
               onChange={(e) => {
                 const value = e.target.value;
+                if (value === "") {
+                  setAmount("");
+                  return;
+                }
                 if (/^\d*$/.test(value)) {
                   setAmount(value);
                 }
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-", ".", ","].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              inputProps={{
+                min: 0,
+                step: 1,
+                inputMode: "numeric",
               }}
               disabled={saving}
               fullWidth

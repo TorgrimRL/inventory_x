@@ -52,7 +52,7 @@ export default function AdjustStockModal({
 
   useEffect(() => {
     if (open) {
-      setAmount("1");
+      setAmount("0");
       setDirection(null);
       setError(null);
     }
@@ -60,7 +60,7 @@ export default function AdjustStockModal({
 
   // Convert amount to number and validate input
   const amountNumber = Number(amount);
-  const amountIsInvalid = !Number.isInteger(amountNumber) || amountNumber <= 0;
+  const amountIsInvalid = !Number.isInteger(amountNumber) || amountNumber < 0;
   const directionIsInvalid = !amountIsInvalid && direction === null;
   const stockWouldBeNegative =
     direction === "decrease" && currentStock - amountNumber < 0;
@@ -134,7 +134,7 @@ export default function AdjustStockModal({
   function handleClose() {
     if (!saving) {
       setError(null);
-      setAmount("1");
+      setAmount("0");
       setDirection(null);
       onClose();
     }
@@ -158,15 +158,30 @@ export default function AdjustStockModal({
           {/* Amount input */}
           <TextField
             label="Amount"
-            type="text"
+            type="number"
             value={amount}
             onChange={(e) => {
               const value = e.target.value;
-              if (/^\d*$/.test(value)) {
+
+              if (value === "") {
+                setAmount("");
+                return;
+              }
+
+              if (/^\d+$/.test(value)) {
                 setAmount(value);
               }
             }}
-            inputProps={{ min: 1, step: 1 }}
+            onKeyDown={(e) => {
+              if (["e", "E", "+", "-", ".", ","].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            inputProps={{
+              min: 0,
+              step: 1,
+              inputMode: "numeric",
+            }}
             error={amountIsInvalid || stockWouldBeNegative}
             helperText={amountIsInvalid ? "Enter a positive whole number" : " "}
             disabled={saving}
