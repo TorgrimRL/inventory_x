@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { adjustStock } from "../../services/inventoryService";
 
@@ -49,6 +49,14 @@ export default function AdjustStockModal({
   // UI state
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setAmount("1");
+      setDirection(null);
+      setError(null);
+    }
+  }, [open, itemId]);
 
   // Convert amount to number and validate input
   const amountNumber = Number(amount);
@@ -92,9 +100,6 @@ export default function AdjustStockModal({
       onClose();
       setAmount("1");
     } catch (err: any) {
-      // Error handling:
-      // Backend error responses can have different shapes
-
       const data = err?.response?.data;
 
       // Case 1: simple message from backend
