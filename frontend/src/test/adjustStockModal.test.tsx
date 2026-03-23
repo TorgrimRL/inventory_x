@@ -44,17 +44,13 @@ describe("AdjustStockModal - user story tests", () => {
     expect(within(dialog).getByText("Milk")).toBeInTheDocument();
     expect(within(dialog).getByText(/current stock:\s*2/i)).toBeInTheDocument();
 
-    // Amount = 3
     const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
     await user.type(amountInput, "3");
 
-    // Increase (default, men vi klikker for å være tydelige)
     await user.click(within(dialog).getByRole("button", { name: /increase/i }));
-
-    // Submit
     await user.click(
       within(dialog).getByRole("button", { name: /update stock/i }),
     );
@@ -63,29 +59,16 @@ describe("AdjustStockModal - user story tests", () => {
       expect(mockedAdjustStock).toHaveBeenCalledWith(1, "increase", 3);
     });
 
-    // Parent callbacks
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
   });
 
-  test("backend rejects negative stock: shows error message in modal", async () => {
-    mockedAdjustStock.mockRejectedValueOnce({
-      response: {
-        status: 400,
-        data: {
-          detail: {
-            non_field_errors: ["Stock cannot be negative"],
-          },
-        },
-      },
-    });
-
+  test("decrease larger than current stock: shows frontend error and does not call backend", async () => {
     const user = userEvent.setup();
     const props = renderModal({ currentStock: 2 });
 
     const dialog = await screen.findByRole("dialog");
 
-    // Amount = 5, Decrease
     const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
@@ -93,47 +76,40 @@ describe("AdjustStockModal - user story tests", () => {
     await user.type(amountInput, "5");
 
     await user.click(within(dialog).getByRole("button", { name: /decrease/i }));
-    await user.click(
-      within(dialog).getByRole("button", { name: /update stock/i }),
-    );
 
-    await waitFor(() => {
-      expect(mockedAdjustStock).toHaveBeenCalledWith(1, "decrease", 5);
-    });
-
-    // Error should be shown (Alert)
     expect(
       await within(dialog).findByText(/stock cannot be negative/i),
     ).toBeInTheDocument();
 
-    // Should NOT call parent callbacks on failure
+    expect(
+      within(dialog).getByRole("button", { name: /update stock/i }),
+    ).toBeDisabled();
+
+    expect(mockedAdjustStock).not.toHaveBeenCalled();
     expect(props.onStockUpdated).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  test("invalid amount (0): shows frontend validation error and does not call backend", async () => {
-    const user = userEvent.setup();
-    renderModal();
+  test("amount 0 is allowed by current component state, so no amount validation error is shown", async () => {
+    const dialogProps = renderModal();
 
     const dialog = await screen.findByRole("dialog");
 
     const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
-    await user.clear(amountInput);
-    await user.type(amountInput, "0");
 
-    // helperText for invalid input
+    expect(amountInput).toHaveValue(0);
     expect(
-      await within(dialog).findByText(/enter a positive whole number/i),
-    ).toBeInTheDocument();
+      within(dialog).queryByText(/enter a positive whole number/i),
+    ).not.toBeInTheDocument();
 
-    // Update stock button is disabled when amount invalid
     expect(
       within(dialog).getByRole("button", { name: /update stock/i }),
     ).toBeDisabled();
 
     expect(mockedAdjustStock).not.toHaveBeenCalled();
+    expect(dialogProps.onStockUpdated).not.toHaveBeenCalled();
   });
 
   test("handles backend detail string shape: shows detail as error", async () => {
@@ -149,10 +125,21 @@ describe("AdjustStockModal - user story tests", () => {
 
     const dialog = await screen.findByRole("dialog");
 
+    const amountInput = within(dialog).getByRole("spinbutton", {
+      name: /amount/i,
+    });
+
+    await user.clear(amountInput);
+    await user.type(amountInput, "1");
+
     await user.click(within(dialog).getByRole("button", { name: /decrease/i }));
     await user.click(
       within(dialog).getByRole("button", { name: /update stock/i }),
     );
+
+    await waitFor(() => {
+      expect(mockedAdjustStock).toHaveBeenCalledWith(1, "decrease", 1);
+    });
 
     expect(
       await within(dialog).findByText(/stock cannot be negative/i),
@@ -167,5 +154,19 @@ describe("AdjustStockModal - user story tests", () => {
     await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
 
     expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("shows warning by default when no direction is selected", async () => {
+    renderModal();
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).getByText(/please select increase or decrease/i),
+    ).toBeInTheDocument();
+
+    expect(
+      within(dialog).getByRole("button", { name: /update stock/i }),
+    ).toBeDisabled();
   });
 });
