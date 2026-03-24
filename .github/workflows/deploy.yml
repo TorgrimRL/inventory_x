@@ -95,7 +95,7 @@ jobs:
             
             echo "Waiting for web container and seed commands to be ready..."
             for i in $(seq 1 20); do
-              if docker compose -f docker-compose.prod.yml exec -T web sh -lc "uv run python manage.py seed_users && uv run python manage.py seed_inventory"; then
+              if docker compose -f docker-compose.prod.yml exec -T web sh -lc "uv run python manage.py seed_users --force && uv run python manage.py seed_inventory"; then
                 echo "Seed completed successfully."
                 break
               fi
