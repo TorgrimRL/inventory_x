@@ -7,7 +7,7 @@
 * Date:
 * Test facilitator:
 * Participant name or ID:
-* Participant role: Owner / Employee
+* Participant role: Owner / Employee / Both
 * Business context: Bookstore / Cookie shop
 * Test environment:
 * Device / browser / platform:
@@ -41,8 +41,7 @@
 
 ### Task O3 — Manage stock correctly
 
-* Task description: Increase stock, decrease stock, register a delivery, and try an invalid update that would make stock
-  negative.
+* Task description: Increase stock, decrease stock, and try an invalid update that would make stock negative.
 * Expected outcome: Valid stock changes work correctly, and negative stock is blocked.
 * Actual outcome:
 * Completed: Yes / Partly / No
@@ -51,7 +50,7 @@
 ### Task O4 — Review low-stock warnings
 
 * Task description: Set a low-stock threshold for an item and check whether the item appears in the low-stock warning
-  view when stock becomes low.
+  view when stock becomes low. Then adjust stock so the item is no longer at or below the threshold.
 * Expected outcome: The owner can identify items that need action before they run out.
 * Actual outcome:
 * Completed: Yes / Partly / No
@@ -59,8 +58,8 @@
 
 ### Task O5 — Manage employees and permissions
 
-* Task description: Invite an employee, assign access, and verify that sensitive actions remain owner-only.
-* Expected outcome: The owner can manage employee access, and restricted actions are protected.
+* Task description: Invite an employee and verify that sensitive actions remain owner-only.
+* Expected outcome: The owner can invite employees, and restricted actions are protected.
 * Actual outcome:
 * Completed: Yes / Partly / No
 * Comments:
@@ -77,25 +76,25 @@
 
 ### Task E2 — Search for an item and update stock
 
-* Task description: Search for an item by name and update stock after a sale, delivery, or damaged item.
+* Task description: Search for an item by name and update stock after a sale or other stock change.
 * Expected outcome: The employee can find items quickly and update stock correctly.
 * Actual outcome:
 * Completed: Yes / Partly / No
 * Comments:
 
-### Task E3 — Register damaged stock
+### Task E3 — Attempt restricted item actions
 
-* Task description: Mark an item as damaged so it is removed correctly from available stock.
-* Expected outcome: The employee can register damaged items without confusion.
+* Task description: Try to perform actions that should be restricted to the owner, such as adding an item or changing
+  the price.
+* Expected outcome: The employee is prevented from performing actions restricted to the owner role.
 * Actual outcome:
 * Completed: Yes / Partly / No
 * Comments:
 
-### Task E4 — Verify restricted access
+### Task E4 — Verify restricted access to admin functions
 
-* Task description: Attempt to access actions that should be restricted to the owner, such as employee management or
-  other sensitive settings.
-* Expected outcome: The employee is prevented from performing restricted actions.
+* Task description: Attempt to access owner-only functions such as employee management or other sensitive settings.
+* Expected outcome: The employee is prevented from accessing restricted areas and sensitive functions.
 * Actual outcome:
 * Completed: Yes / Partly / No
 * Comments:
@@ -158,8 +157,8 @@
 
 ### SUS items
 
-Use the **official standard SUS items unchanged** from below. MeasuringU describes SUS as a 10-item
-questionnaire with 5 response options and also provides the standard scoring method.
+Use the **official standard SUS items unchanged** from below. MeasuringU describes SUS as a 10-item questionnaire with 5
+response options and also provides the standard scoring method.
 
 SUS source link: [https://measuringu.com/sus/](https://measuringu.com/sus/)
 
@@ -191,34 +190,34 @@ SUS source link: [https://measuringu.com/sus/](https://measuringu.com/sus/)
 
 Example responses from one participant:
 
-- Q1 = 4
-- Q2 = 2
-- Q3 = 5
-- Q4 = 2
-- Q5 = 4
-- Q6 = 2
-- Q7 = 4
-- Q8 = 1
-- Q9 = 5
-- Q10 = 2
+* Q1 = 4
+* Q2 = 2
+* Q3 = 5
+* Q4 = 2
+* Q5 = 4
+* Q6 = 2
+* Q7 = 4
+* Q8 = 1
+* Q9 = 5
+* Q10 = 2
 
 #### Step 1: Adjust the scores
 
 Odd-numbered items:
 
-- Q1: 4 - 1 = 3
-- Q3: 5 - 1 = 4
-- Q5: 4 - 1 = 3
-- Q7: 4 - 1 = 3
-- Q9: 5 - 1 = 4
+* Q1: 4 - 1 = 3
+* Q3: 5 - 1 = 4
+* Q5: 4 - 1 = 3
+* Q7: 4 - 1 = 3
+* Q9: 5 - 1 = 4
 
 Even-numbered items:
 
-- Q2: 5 - 2 = 3
-- Q4: 5 - 2 = 3
-- Q6: 5 - 2 = 3
-- Q8: 5 - 1 = 4
-- Q10: 5 - 2 = 3
+* Q2: 5 - 2 = 3
+* Q4: 5 - 2 = 3
+* Q6: 5 - 2 = 3
+* Q8: 5 - 1 = 4
+* Q10: 5 - 2 = 3
 
 #### Step 2: Add the adjusted values
 
