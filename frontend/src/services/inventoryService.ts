@@ -123,7 +123,12 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
 
 export async function updateItem(
   itemId: number | string,
-  payload: { name: string; price: number; category_ids?: string[] },
+  payload: {
+    name: string;
+    price: number;
+    low_stock_threshold?: null | number;
+    category_ids?: string[];
+  },
 ) {
   const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
   return res.data;
@@ -144,6 +149,7 @@ export async function deleteItem(itemId: number | string) {
 }
 
 const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
+
 /**
  * Invites a user to the currently active inventory via email.
  */

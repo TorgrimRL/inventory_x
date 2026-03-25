@@ -5,10 +5,12 @@ import {
   ButtonBase,
   Chip,
   CircularProgress,
+  Container,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -88,15 +90,14 @@ export default function InventoriesPage() {
   const showList = !loading && !isUnauthorized && inventories.length > 0;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff", display: "flex" }}>
-      <Box
-        sx={{
-          width: "100%",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "520px 1fr" },
-        }}
-      >
-        {/* LEFT */}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        display: "flex",
+      }}
+    >
+      <Container maxWidth="lg">
         <Box
           sx={{
             px: { xs: 3, sm: 6 },
@@ -106,17 +107,6 @@ export default function InventoriesPage() {
             justifyContent: "center",
           }}
         >
-          {/* little brand mark */}
-          <Box
-            sx={{
-              width: 14,
-              height: 14,
-              bgcolor: "#7cfff0",
-              borderRadius: 1,
-              mb: 2,
-            }}
-          />
-
           <Typography
             variant="h4"
             fontWeight={800}
@@ -133,8 +123,9 @@ export default function InventoriesPage() {
             elevation={0}
             sx={{
               mt: 3,
-              p: 0,
-              maxWidth: 460,
+              p: 4,
+              maxWidth: "100%",
+              borderRadius: 1,
             }}
           >
             {/* LOADING */}
@@ -150,7 +141,7 @@ export default function InventoriesPage() {
                 severity="error"
                 sx={{
                   mb: 2,
-                  "& .MuiAlert-message": { width: "100%" }, // viktig!
+                  "& .MuiAlert-message": { width: "100%" },
                 }}
               >
                 <Stack spacing={1} sx={{ width: "100%" }} alignItems="center">
@@ -201,7 +192,23 @@ export default function InventoriesPage() {
 
             {/* LIST */}
             {showList && (
-              <Stack spacing={1.5} sx={{ mb: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm:
+                      inventories.length === 1
+                        ? "1fr"
+                        : "repeat(2, minmax(0, 400px))",
+                  },
+                  justifyContent: "center",
+                  justifyItems: "center",
+                  columnGap: 3,
+                  rowGap: 2,
+                  mb: 5,
+                }}
+              >
                 {inventories.map((inv) => {
                   const isSelecting = selectingId === inv.id;
                   const isActive = activeId === inv.id;
@@ -211,24 +218,35 @@ export default function InventoriesPage() {
                       key={inv.id ?? `${inv.name}-${inv.orgNumber}`}
                       variant="outlined"
                       sx={{
-                        borderRadius: 3,
+                        width: "100%",
+                        maxWidth: 400,
+                        borderRadius: 1,
                         overflow: "hidden",
+                        height: "100%",
                         transition:
                           "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
-                        borderColor: isActive
-                          ? "rgba(46, 125, 50, 0.55)" // "success-ish" uten å hardcode farger er vanskelig, men dette er mildt
-                          : isSelecting
-                            ? "rgba(11, 20, 55, 0.28)"
-                            : "rgba(11, 20, 55, 0.18)",
-                        bgcolor: isActive
-                          ? "rgba(46, 125, 50, 0.06)"
-                          : "transparent",
+                        borderColor: (theme) =>
+                          isActive
+                            ? alpha(theme.palette.success.main, 0.3)
+                            : isSelecting
+                              ? theme.palette.secondary.main
+                              : theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.12)"
+                                : theme.palette.divider,
+                        bgcolor: (theme) =>
+                          isActive
+                            ? alpha(theme.palette.success.main, 0.04)
+                            : "transparent",
                         "&:hover": {
                           transform: "translateY(-1px)",
-                          boxShadow: "0 10px 24px rgba(11, 20, 55, 0.10)",
-                          borderColor: isActive
-                            ? "rgba(46, 125, 50, 0.75)"
-                            : "rgba(11, 20, 55, 0.35)",
+                          boxShadow: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? theme.shadows[9]
+                              : theme.shadows[3],
+                          borderColor: (theme) =>
+                            isActive
+                              ? theme.palette.success.main
+                              : theme.palette.primary.main,
                         },
                       }}
                     >
@@ -241,22 +259,33 @@ export default function InventoriesPage() {
                         disabled={isSelecting}
                         sx={{
                           width: "100%",
+                          height: "100%",
                           p: 2,
-                          display: "block",
+                          display: "flex",
+                          alignItems: "center",
                           textAlign: "center",
                           cursor: isSelecting ? "default" : "pointer",
                         }}
                       >
                         <Stack spacing={0.5} alignItems="center">
                           {/* Active chip */}
-                          {isActive && (
-                            <Chip
-                              label="Active"
-                              size="small"
-                              color="success"
-                              sx={{ fontWeight: 800 }}
-                            />
-                          )}
+                          <Box
+                            sx={{
+                              height: 24,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {isActive && (
+                              <Chip
+                                label="Active"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 800 }}
+                              />
+                            )}
+                          </Box>
 
                           <Typography fontWeight={800}>{inv.name}</Typography>
 
@@ -292,78 +321,83 @@ export default function InventoriesPage() {
                     </Paper>
                   );
                 })}
-              </Stack>
+              </Box>
             )}
 
             {/* CTA buttons (vis alltid når ikke loading, og ikke unauthorized) */}
             {!loading && !isUnauthorized && (
-              <Stack
-                direction="row"
-                spacing={1.5}
-                sx={{ mt: 1 }}
-                flexWrap="wrap"
-                justifyContent={"center"}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "1fr 1fr",
+                  },
+                  gap: 2,
+                  mt: 3,
+                }}
               >
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => navigate(PATHS.INVENTORIES_NEW)}
+                {/* Placement of "Register new" button */}
+                <Box
                   sx={{
-                    height: 54,
-                    borderRadius: 3,
-                    fontWeight: 800,
-                    textTransform: "none",
-                    boxShadow: "0 14px 30px rgba(11, 20, 55, 0.22)",
+                    display: "flex",
+                    justifyContent: {
+                      xs: "center",
+                      sm: "flex-end",
+                    },
                   }}
                 >
-                  Register new
-                </Button>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => navigate(PATHS.INVENTORIES_NEW)}
+                    sx={{
+                      width: {
+                        xs: "100%",
+                        sm: "fit-content",
+                      },
+                      px: { xs: 2, sm: 4 },
+                      fontWeight: 800,
+                      textTransform: "none",
+                    }}
+                  >
+                    Register new
+                  </Button>
+                </Box>
 
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() => navigate(PATHS.DASHBOARD)}
-                  disabled={!activeId}
+                {/* Placement of "To dashboard" button */}
+                <Box
                   sx={{
-                    height: 54,
-                    borderRadius: 3,
-                    fontWeight: 800,
-                    textTransform: "none",
+                    display: "flex",
+                    justifyContent: {
+                      xs: "center",
+                      sm: "flex-start",
+                    },
                   }}
                 >
-                  To dashboard
-                </Button>
-              </Stack>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() => navigate(PATHS.DASHBOARD)}
+                    disabled={!activeId}
+                    sx={{
+                      width: {
+                        xs: "100%",
+                        sm: "fit-content",
+                      },
+                      px: { xs: 2, sm: 4 },
+                      fontWeight: 800,
+                      textTransform: "none",
+                    }}
+                  >
+                    To dashboard
+                  </Button>
+                </Box>
+              </Box>
             )}
           </Paper>
         </Box>
-
-        {/* RIGHT */}
-        <Box
-          sx={{
-            display: { xs: "none", md: "flex" },
-            alignItems: "center",
-            justifyContent: "center",
-            p: 3,
-            bgcolor: "#fff",
-          }}
-          aria-hidden="true"
-        >
-          <Box
-            component="img"
-            src="/auth-illustration.png"
-            alt=""
-            sx={{
-              width: "min(920px, 92%)",
-              height: "auto",
-              objectFit: "contain",
-              opacity: 0.95,
-              userSelect: "none",
-              pointerEvents: "none",
-            }}
-          />
-        </Box>
-      </Box>
+      </Container>
     </Box>
   );
 }

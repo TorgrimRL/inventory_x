@@ -1,9 +1,9 @@
-import { Alert, Box, Button, Typography } from "@mui/material";
+import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PATHS } from "../App";
-import LogoutButton from "../components/auth/logoutButton";
+import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
 import {
   type ActiveInventory,
   getActiveInventory,
@@ -26,51 +26,46 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <Box sx={{ p: 4 }}>
-      {active && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          Active inventory: <strong>{active.name}</strong> ({active.orgNumber})
-        </Alert>
-      )}
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack spacing={2.5}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", md: "center" }}
+            spacing={2}
+          >
+            <Box>
+              <Typography variant="h4" fontWeight={800}>
+                Inventory Dashboard
+              </Typography>
+            </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4" fontWeight={800}>
-          Inventory Dashboard
-        </Typography>
+            {active && active.role === "owner" && (
+              <Stack direction="row" spacing={1.5}>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to={PATHS.INVENTORY_MEMBERS}
+                >
+                  Manage Members
+                </Button>
 
-        {active && active.role.toUpperCase() === "OWNER" && (
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button
-              variant="outlined"
-              component={Link}
-              to={PATHS.INVENTORY_MEMBERS}
-            >
-              Manage Members
-            </Button>
-
-            <Button
-              variant="outlined"
-              component={Link}
-              to={PATHS.INVITE_EMPLOYEE}
-            >
-              + Invite Employee
-            </Button>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to={PATHS.INVITE_EMPLOYEE}
+                >
+                  + Invite Employee
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+          <Box sx={{ mb: 3, maxWidth: 720, ml: { md: 2 } }}>
+            <LowStockWarningsCard />
           </Box>
-        )}
-      </Box>
-
-      <Typography sx={{ mb: 3 }}>
-        If you see this, your login redirect worked!
-      </Typography>
-
-      <LogoutButton />
+        </Stack>
+      </Container>
     </Box>
   );
 };

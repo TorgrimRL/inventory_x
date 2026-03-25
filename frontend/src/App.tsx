@@ -1,7 +1,6 @@
 import "./App.css";
-import "./components/utils/buttons.css";
 
-import { ThemeProvider } from "@mui/material/styles";
+import type { Dispatch, SetStateAction } from "react";
 import { Route, Routes } from "react-router-dom";
 
 // PAGES
@@ -19,7 +18,6 @@ import LandingPage from "./pages/landingPage";
 import ForgotPassword from "./pages/PasswordForgot.tsx";
 import ResetPassword from "./pages/PasswordReset.tsx";
 import AuthGuardLayout from "./services/authguard.tsx";
-import { LightTheme } from "./theme";
 
 export const PATHS = {
   HOME: "/",
@@ -35,20 +33,18 @@ export const PATHS = {
   INVENTORY_MEMBERS: "/inventory_members",
 } as const;
 
-function App() {
+type ThemeMode = "light" | "dark";
+interface AppProps {
+  mode: ThemeMode;
+  setMode: Dispatch<SetStateAction<ThemeMode>>;
+}
+function App({ mode, setMode }: AppProps) {
   return (
     <div>
-      <Navbar />
+      <Navbar mode={mode} setMode={setMode} />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
-        <Route
-          path={PATHS.HOME}
-          element={
-            <ThemeProvider theme={LightTheme}>
-              <LandingPage />
-            </ThemeProvider>
-          }
-        />
+        <Route path={PATHS.HOME} element={<LandingPage />} />
         <Route path={PATHS.LOGIN} element={<Login />} />
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
         <Route path={PATHS.PASSWORD_RESET} element={<ResetPassword />} />
