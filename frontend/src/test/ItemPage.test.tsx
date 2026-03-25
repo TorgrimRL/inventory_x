@@ -41,8 +41,22 @@ function getVisibleRows(): RowItem[] {
 
 describe("ItemPage", () => {
   jest.setTimeout(15000);
+  let consoleWarnSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    consoleWarnSpy = jest
+      .spyOn(console, "warn")
+      .mockImplementation((...args: unknown[]) => {
+        const first = String(args[0] ?? "");
+        const second = String(args[1] ?? "");
+        const combined = `${first} ${second}`;
+        if (combined.includes("MUI: The `anchorEl` prop provided to the component is invalid.")) {
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.info(...args);
+      });
     mockedAxios.get.mockImplementation((url) => {
       if (url === "/api/inventory/") {
         return Promise.resolve({
@@ -449,6 +463,10 @@ describe("ItemPage", () => {
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Butter")).toBeInTheDocument();
   });
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
   test("shows low stock status only for items at or below their item threshold", async () => {
     render(<ItemPage />);
 
