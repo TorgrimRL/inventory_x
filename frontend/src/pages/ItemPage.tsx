@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Container,
@@ -13,6 +14,8 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  ListItemText,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
@@ -22,6 +25,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   TextField,
@@ -33,30 +37,33 @@ import EditItemModal from "../components/inventory/editItemModal";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ApiClient from "../services/apiClient.ts";
-import { getActiveInventory } from "../services/inventoryService";
+import {
+  createActiveCategory,
+  getActiveInventory,
+  listActiveCategories,
+  updateItem,
+} from "../services/inventoryService";
 
 type InventoryItem = {
   id: number | string;
   name: string;
   stock: number;
   price: number;
-  order_id?: string;
   low_stock_threshold: number | null;
+  category_ids?: string[];
+  order_id?: string;
 };
 
-function isLowStock(item: InventoryItem) {
-  return (
-    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
-  );
-}
+type Category = {
+  id: string;
+  name: string;
+};
 
 function extractBackendMessage(err: any): string {
   const data = err?.response?.data;
 
   if (!data) return "Failed to add item.";
-
   if (typeof data === "string") return data;
-
   if (typeof data?.detail === "string") return data.detail;
   if (typeof data?.message === "string") return data.message;
 
@@ -64,11 +71,9 @@ function extractBackendMessage(err: any): string {
     const parts: string[] = [];
 
     for (const [key, value] of Object.entries(data)) {
-      if (Array.isArray(value)) {
-        parts.push(`${key}: ${value.join(" ")}`);
-      } else if (typeof value === "string") {
-        parts.push(`${key}: ${value}`);
-      } else if (value && typeof value === "object") {
+      if (Array.isArray(value)) parts.push(`${key}: ${value.join(" ")}`);
+      else if (typeof value === "string") parts.push(`${key}: ${value}`);
+      else if (value && typeof value === "object") {
         parts.push(`${key}: ${JSON.stringify(value)}`);
       }
     }
@@ -79,47 +84,54 @@ function extractBackendMessage(err: any): string {
   return "Failed to add item.";
 }
 
+function isLowStock(item: InventoryItem) {
+  return (
+    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
+  );
+}
+
 export default function ItemPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
-
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
+  const [newItemCategoryIds, setNewItemCategoryIds] = useState<string[]>([]);
+  const [newItemCategoryName, setNewItemCategoryName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
-  const [newItemLowStockThreshold, setNewItemLowStockThreshold] = useState("");
-
-  const newItemLowStockThresholdNumber =
-    newItemLowStockThreshold.trim() === ""
-      ? null
-      : Number(newItemLowStockThreshold);
-
-  const newItemLowStockThresholdIsInvalid =
-    newItemLowStockThresholdNumber !== null &&
-    (!Number.isInteger(newItemLowStockThresholdNumber) ||
-      newItemLowStockThresholdNumber < 0);
 
   const [stock, setStock] = useState<string>("0");
   const stockNumber = Number(stock);
   const stockIsInvalid = !Number.isFinite(stockNumber) || stockNumber < 0;
 
+  const [newItemLowStockThreshold, setNewItemLowStockThreshold] =
+    useState<string>("");
+  const newItemLowStockThresholdNumber =
+    newItemLowStockThreshold.trim() === ""
+      ? null
+      : Number(newItemLowStockThreshold);
+  const newItemLowStockThresholdInvalid =
+    newItemLowStockThreshold.trim() !== "" &&
+    (newItemLowStockThresholdNumber === null ||
+      !Number.isInteger(newItemLowStockThresholdNumber) ||
+      newItemLowStockThresholdNumber < 0);
+
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
 
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-
-  // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [page, setPage] = useState(0);
 
-  // Story #49 sort + low-stock filter controls
   const [sortField, setSortField] = useState<
     "name" | "stock" | "price" | "low_stock_threshold" | "status"
   >("stock");
@@ -151,13 +163,26 @@ export default function ItemPage() {
     }
   }
 
+  async function loadCategories() {
+    try {
+      const allCategories = await listActiveCategories();
+      setCategories(allCategories);
+    } catch {
+      setCategories([]);
+    }
+  }
+
   useEffect(() => {
     loadItems();
     loadRole();
+    loadCategories();
   }, []);
 
   function openDialog() {
     setError(null);
+    setNewItemCategoryIds([]);
+    setNewItemCategoryName("");
+    setNewItemLowStockThreshold("");
     setOpen(true);
   }
 
@@ -172,6 +197,7 @@ export default function ItemPage() {
 
   function closeEditDetails() {
     setEditOpen(false);
+    setSelectedItem(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -183,22 +209,50 @@ export default function ItemPage() {
       setError("Stock cannot be negative.");
       return;
     }
-    if (newItemLowStockThresholdIsInvalid) {
-      setError("Low stock threshold must be a whole number 0 or higher.");
+
+    if (newItemLowStockThresholdInvalid) {
+      setError("Low stock threshold must be a whole number or empty.");
       return;
     }
+
     setSaving(true);
 
-    const payload = {
-      name: name.trim(),
-      price: Number(price),
-      stock: s,
-      low_stock_threshold: newItemLowStockThresholdNumber,
-    };
+    let categoryIdsToSave = [...newItemCategoryIds];
 
     try {
+      const newCategoryTrimmed = newItemCategoryName.trim();
+      if (newCategoryTrimmed.length > 0) {
+        const createdCategory = await createActiveCategory(newCategoryTrimmed);
+        setCategories((prev) => [...prev, createdCategory]);
+        categoryIdsToSave = [
+          ...new Set([...categoryIdsToSave, createdCategory.id]),
+        ];
+      }
+
+      const payload = {
+        name: name.trim(),
+        price: Number(price),
+        stock: s,
+        low_stock_threshold: newItemLowStockThresholdNumber,
+        category_ids: categoryIdsToSave,
+      };
+
       const res = await ApiClient.post("/api/inventory/", payload);
-      const created = res.data as InventoryItem;
+      let created = res.data as InventoryItem;
+
+      if (categoryIdsToSave.length > 0) {
+        const updated = await updateItem(created.id, {
+          name: created.name,
+          price: Number(created.price),
+          low_stock_threshold: created.low_stock_threshold ?? null,
+          category_ids: categoryIdsToSave,
+        });
+        created = {
+          ...created,
+          ...updated,
+          category_ids: categoryIdsToSave,
+        } as InventoryItem;
+      }
 
       setItems((prev) => [
         ...prev,
@@ -213,6 +267,8 @@ export default function ItemPage() {
 
       setOpen(false);
       setName("");
+      setNewItemCategoryIds([]);
+      setNewItemCategoryName("");
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
@@ -224,15 +280,18 @@ export default function ItemPage() {
     }
   }
 
-  const showClientHint =
-    !saving &&
-    (name.trim().length === 0 ||
-      !Number.isFinite(Number(price)) ||
-      !Number.isFinite(Number(stock)));
-
-  const lowStockFilterThreshold = Math.max(
+  const lowStockThreshold = Math.max(
     0,
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
+  );
+  const lowStockFilterThreshold = lowStockThreshold;
+
+  const categoryNameById = useMemo(
+    () =>
+      new Map(
+        categories.map((category) => [category.id, category.name] as const),
+      ),
+    [categories],
   );
 
   const displayedItems = useMemo(() => {
@@ -243,62 +302,72 @@ export default function ItemPage() {
         ? items
         : items.filter((it) => (it.name ?? "").toLowerCase().includes(q));
 
-    const filtered = searched.filter(
+    const byCategory =
+      selectedCategoryIds.length === 0
+        ? searched
+        : searched.filter((item) => {
+            const ids = (item.category_ids || []).map(String);
+            return selectedCategoryIds.every((selectedId) =>
+              selectedId === "__no_category__"
+                ? ids.length === 0
+                : ids.includes(selectedId),
+            );
+          });
+
+    const filtered = byCategory.filter(
       (item) => !lowStockOnly || item.stock <= lowStockFilterThreshold,
     );
 
     return [...filtered].sort((a, b) => {
       let compare = 0;
 
-      if (sortField === "name") {
-        compare = a.name.localeCompare(b.name);
-      } else if (sortField === "stock") {
-        compare = a.stock - b.stock;
-      } else if (sortField === "price") {
+      if (sortField === "name") compare = a.name.localeCompare(b.name);
+      else if (sortField === "stock") compare = a.stock - b.stock;
+      else if (sortField === "price")
         compare = Number(a.price) - Number(b.price);
-      } else if (sortField === "low_stock_threshold") {
-        const aThreshold = a.low_stock_threshold;
-        const bThreshold = b.low_stock_threshold;
-
-        if (aThreshold == null && bThreshold == null) {
-          return a.name.localeCompare(b.name);
-        }
-
-        if (aThreshold == null) {
-          return 1;
-        }
-
-        if (bThreshold == null) {
-          return -1;
-        }
-
-        if (sortDirection === "asc") {
-          return aThreshold - bThreshold;
-        }
-
-        return bThreshold - aThreshold;
+      else if (sortField === "low_stock_threshold") {
+        compare =
+          (a.low_stock_threshold ?? Number.MAX_SAFE_INTEGER) -
+          (b.low_stock_threshold ?? Number.MAX_SAFE_INTEGER);
       } else if (sortField === "status") {
-        const aLow = isLowStock(a);
-        const bLow = isLowStock(b);
-
-        if (aLow !== bLow) {
-          if (sortDirection === "asc") {
-            return aLow ? 1 : -1;
-          }
-          return aLow ? -1 : 1;
-        }
-
-        return a.name.localeCompare(b.name);
+        compare = Number(isLowStock(a)) - Number(isLowStock(b));
       }
+
       return sortDirection === "asc" ? compare : -compare;
     });
   }, [
     items,
+    searchInput,
+    selectedCategoryIds,
     lowStockOnly,
     lowStockFilterThreshold,
-    searchInput,
-    sortDirection,
     sortField,
+    sortDirection,
+  ]);
+
+  const rowsPerPage = 30;
+  const pagedItems = displayedItems.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
+  useEffect(() => {
+    const maxPage = Math.max(
+      0,
+      Math.ceil(displayedItems.length / rowsPerPage) - 1,
+    );
+    if (page > maxPage) setPage(maxPage);
+  }, [displayedItems.length, page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [
+    searchInput,
+    selectedCategoryIds,
+    lowStockOnly,
+    lowStockThresholdInput,
+    sortField,
+    sortDirection,
   ]);
 
   function handleSort(
@@ -308,7 +377,6 @@ export default function ItemPage() {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
     }
-
     setSortField(field);
     setSortDirection("asc");
   }
@@ -322,9 +390,12 @@ export default function ItemPage() {
     setSortDirection("asc");
     setLowStockOnly(false);
     setLowStockThresholdInput("5");
+    setSelectedCategoryIds([]);
   }
 
-  const showFilteredMetrics = searchInput.trim().length > 0 || lowStockOnly;
+  const hasCategoryFilter = selectedCategoryIds.length > 0;
+  const showFilteredMetrics =
+    searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -358,13 +429,88 @@ export default function ItemPage() {
 
             <Divider sx={{ my: 2 }} />
 
-            <ItemSearchBar
-              value={searchInput}
-              disabled={loading}
-              onChange={setSearchInput}
-              onSearch={() => {}}
-              onClear={handleClearSearch}
-            />
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ mb: 1 }}
+            >
+              Search and filter
+            </Typography>
+
+            <Box sx={{ maxWidth: 420 }}>
+              <ItemSearchBar
+                value={searchInput}
+                disabled={loading}
+                onChange={setSearchInput}
+                onSearch={() => {}}
+                onClear={handleClearSearch}
+              />
+            </Box>
+
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 2, mt: 1 }}
+            >
+              <TextField
+                select
+                label="Category"
+                size="small"
+                value={selectedCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
+                sx={{ minWidth: 260 }}
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "All categories";
+                    return ids
+                      .map((id) => {
+                        if (id === "__no_category__")
+                          return "No category added";
+                        return (
+                          categories.find((category) => category.id === id)
+                            ?.name || id
+                        );
+                      })
+                      .join(", ");
+                  },
+                }}
+              >
+                <MenuItem value="__no_category__">
+                  <Checkbox
+                    size="small"
+                    checked={selectedCategoryIds.includes("__no_category__")}
+                  />
+                  <ListItemText primary="No category added" />
+                </MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    <Checkbox
+                      size="small"
+                      checked={selectedCategoryIds.includes(category.id)}
+                    />
+                    <ListItemText primary={category.name} />
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={() => setSelectedCategoryIds([])}
+                disabled={!hasCategoryFilter}
+              >
+                Clear category
+              </Button>
+            </Stack>
 
             <Stack
               direction={{ xs: "column", md: "row" }}
@@ -388,7 +534,6 @@ export default function ItemPage() {
                       setLowStockThresholdInput("");
                       return;
                     }
-
                     if (!/^\d+$/.test(next)) return;
                     setLowStockThresholdInput(
                       String(Number.parseInt(next, 10)),
@@ -400,7 +545,7 @@ export default function ItemPage() {
                     }
                   }}
                   inputProps={{ min: 0, step: 1 }}
-                  sx={{ width: 180 }}
+                  sx={{ width: 130 }}
                 />
 
                 <Stack direction="row" alignItems="center" spacing={1}>
@@ -414,8 +559,10 @@ export default function ItemPage() {
 
                 <Button
                   onClick={resetListControls}
-                  variant="contained"
+                  variant="outlined"
                   color="inherit"
+                  size="small"
+                  sx={{ alignSelf: "center" }}
                 >
                   Reset
                 </Button>
@@ -430,12 +577,30 @@ export default function ItemPage() {
               </Button>
             </Stack>
 
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ mb: 1 }}
+            >
+              Key metrics
+            </Typography>
+
             <InventoryKpiSummary
               allItems={items}
               visibleItems={displayedItems}
               showFilteredMetrics={showFilteredMetrics}
               lowStockFilterThreshold={lowStockFilterThreshold}
             />
+
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ mb: 1 }}
+            >
+              List of items
+            </Typography>
 
             {loading ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
@@ -450,125 +615,149 @@ export default function ItemPage() {
               </Stack>
             ) : displayedItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
-                <Typography variant="body1">No items found.</Typography>
+                <Typography variant="body1">
+                  {hasCategoryFilter
+                    ? "No items match your search."
+                    : "No items found."}
+                </Typography>
               </Stack>
             ) : (
-              <TableContainer component={Box} sx={{ overflowX: "auto" }}>
-                <Table size="medium" sx={{ minWidth: 720 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "name"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "name" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("name")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Product name
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "stock"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "stock" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("stock")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Stock
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "price"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "price" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("price")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Price
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "status"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "status" ? sortDirection : "asc"
-                          }
-                          onClick={() => handleSort("status")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Status
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        <TableSortLabel
-                          active={sortField === "low_stock_threshold"}
-                          hideSortIcon={false}
-                          direction={
-                            sortField === "low_stock_threshold"
-                              ? sortDirection
-                              : "asc"
-                          }
-                          onClick={() => handleSort("low_stock_threshold")}
-                          sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                        >
-                          Low Stock Threshold
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        Actions
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {displayedItems.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell align="right">{item.stock}</TableCell>
-                        <TableCell align="right">
-                          {new Intl.NumberFormat("nb-NO", {
-                            style: "currency",
-                            currency: "NOK",
-                          }).format(Number(item.price))}
-                        </TableCell>
-                        <TableCell align="right">
-                          {isLowStock(item) ? (
-                            <Chip
-                              label="Low stock"
-                              color="warning"
-                              size="small"
-                            />
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                        <TableCell align="right">
-                          {item.low_stock_threshold}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => openEditDetails(item)}
+              <>
+                <TableContainer component={Box} sx={{ overflowX: "auto" }}>
+                  <Table size="medium" sx={{ minWidth: 900 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "name"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "name" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("name")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
-                            Edit
-                          </Button>
+                            Product name
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "stock"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "stock" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("stock")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Stock
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "price"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "price" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("price")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Price
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "status"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "status" ? sortDirection : "asc"
+                            }
+                            onClick={() => handleSort("status")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Status
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          <TableSortLabel
+                            active={sortField === "low_stock_threshold"}
+                            hideSortIcon={false}
+                            direction={
+                              sortField === "low_stock_threshold"
+                                ? sortDirection
+                                : "asc"
+                            }
+                            onClick={() => handleSort("low_stock_threshold")}
+                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                          >
+                            Low Stock Threshold
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          Actions
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+
+                    <TableBody>
+                      {pagedItems.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {(item.category_ids || []).length > 0
+                              ? (item.category_ids || [])
+                                  .map((id) => categoryNameById.get(String(id)))
+                                  .filter(Boolean)
+                                  .join(", ")
+                              : "-"}
+                          </TableCell>
+                          <TableCell align="right">{item.stock}</TableCell>
+                          <TableCell align="right">
+                            {new Intl.NumberFormat("nb-NO", {
+                              style: "currency",
+                              currency: "NOK",
+                            }).format(Number(item.price))}
+                          </TableCell>
+                          <TableCell align="right">
+                            {isLowStock(item) ? (
+                              <Chip
+                                label="Low stock"
+                                color="warning"
+                                size="small"
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                          <TableCell align="right">
+                            {item.low_stock_threshold ?? "—"}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => openEditDetails(item)}
+                            >
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <TablePagination
+                  component="div"
+                  count={displayedItems.length}
+                  page={page}
+                  onPageChange={(_, nextPage) => setPage(nextPage)}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[30]}
+                />
+              </>
             )}
           </Paper>
         </Stack>
@@ -577,7 +766,6 @@ export default function ItemPage() {
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
           <DialogTitle>Add new item</DialogTitle>
-
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <TextField
@@ -589,6 +777,78 @@ export default function ItemPage() {
                 fullWidth
                 disabled={saving}
               />
+
+              <TextField
+                select
+                label="Categories"
+                value={newItemCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewItemCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
+                fullWidth
+                disabled={saving}
+                helperText="Optional: choose one or more existing categories"
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "No category added";
+                    return ids
+                      .map(
+                        (id) =>
+                          categories.find((category) => category.id === id)
+                            ?.name || id,
+                      )
+                      .join(", ");
+                  },
+                }}
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    <Checkbox
+                      checked={newItemCategoryIds.includes(category.id)}
+                      size="small"
+                    />
+                    <ListItemText primary={category.name} />
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <TextField
+                  label="New category"
+                  value={newItemCategoryName}
+                  onChange={(e) => setNewItemCategoryName(e.target.value)}
+                  fullWidth
+                  disabled={saving}
+                  helperText="Optional: create new category"
+                />
+                <Button
+                  variant="outlined"
+                  disabled={saving || !newItemCategoryName.trim()}
+                  onClick={async () => {
+                    try {
+                      const createdCategory = await createActiveCategory(
+                        newItemCategoryName.trim(),
+                      );
+                      setCategories((prev) => [...prev, createdCategory]);
+                      setNewItemCategoryIds((prev) =>
+                        prev.includes(createdCategory.id)
+                          ? prev
+                          : [...prev, createdCategory.id],
+                      );
+                      setNewItemCategoryName("");
+                    } catch {
+                      setError("Failed to create category.");
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </Stack>
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
@@ -616,30 +876,23 @@ export default function ItemPage() {
                   error={stockIsInvalid}
                   helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
-                <TextField
-                  label="Low stock threshold"
-                  value={newItemLowStockThreshold}
-                  onChange={(e) => setNewItemLowStockThreshold(e.target.value)}
-                  type="number"
-                  inputProps={{ step: 1, min: 0 }}
-                  fullWidth
-                  disabled={saving}
-                  error={newItemLowStockThresholdIsInvalid}
-                  helperText={
-                    newItemLowStockThresholdIsInvalid
-                      ? "Threshold must be a whole number 0 or higher"
-                      : "Leave empty if no threshold should be set"
-                  }
-                />
               </Stack>
 
-              {showClientHint && (
-                <Alert severity="info">
-                  Name must be set. Price and stock must be 0 or higher. Low
-                  stock threshold is optional, but must be a whole number 0 or
-                  higher if provided.
-                </Alert>
-              )}
+              <TextField
+                label="Low stock threshold"
+                value={newItemLowStockThreshold}
+                onChange={(e) => setNewItemLowStockThreshold(e.target.value)}
+                type="number"
+                inputProps={{ step: "1", min: 0 }}
+                fullWidth
+                disabled={saving}
+                error={newItemLowStockThresholdInvalid}
+                helperText={
+                  newItemLowStockThresholdInvalid
+                    ? "Threshold must be a whole number or empty"
+                    : "Leave empty for no threshold"
+                }
+              />
             </Stack>
           </DialogContent>
 
@@ -647,7 +900,6 @@ export default function ItemPage() {
             <Button onClick={closeDialog} color="inherit" disabled={saving}>
               Cancel
             </Button>
-
             <Button
               type="submit"
               variant="contained"
@@ -655,7 +907,7 @@ export default function ItemPage() {
                 saving ||
                 stockIsInvalid ||
                 priceIsInvalid ||
-                newItemLowStockThresholdIsInvalid ||
+                newItemLowStockThresholdInvalid ||
                 name.trim().length === 0
               }
             >
@@ -672,15 +924,11 @@ export default function ItemPage() {
           initialName={selectedItem.name}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
-          initialLowStockThreshold={selectedItem.low_stock_threshold}
+          initialCategoryIds={(selectedItem.category_ids || []).map(String)}
+          initialLowStockThreshold={selectedItem.low_stock_threshold ?? null}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
-          onItemUpdated={(updated: {
-            id: number | string;
-            name: string;
-            price: number;
-            lowStockThreshold: number | null;
-          }) => {
+          onItemUpdated={(updated) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
@@ -689,31 +937,27 @@ export default function ItemPage() {
                       name: updated.name,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
+                      category_ids: updated.category_ids,
                     }
                   : it,
               ),
             );
-
             setSnackMessage("Item updated");
             setSnackOpen(true);
           }}
-          onStockUpdated={(newStock: number) => {
+          onStockUpdated={(newStock) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === selectedItem.id ? { ...it, stock: newStock } : it,
               ),
             );
-
             setSnackMessage("Stock updated");
             setSnackOpen(true);
           }}
-          onItemDeleted={(deletedId) => {
-            setItems((prev) => prev.filter((it) => it.id !== deletedId));
-
-            setSelectedItem(null);
+          onItemDeleted={(id) => {
+            setItems((prev) => prev.filter((it) => it.id !== id));
             setSnackMessage("Item deleted");
             setSnackOpen(true);
-            setEditOpen(false);
           }}
         />
       )}

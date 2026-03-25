@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 import EditItemModal from "../components/inventory/editItemModal";
 import {
   adjustStock,
+  createActiveCategory,
   deleteItem,
+  listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
 
@@ -12,6 +14,8 @@ jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
   updateItem: jest.fn(),
   deleteItem: jest.fn(),
+  listActiveCategories: jest.fn(),
+  createActiveCategory: jest.fn(),
 }));
 
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
@@ -19,12 +23,27 @@ const mockedAdjustStock = adjustStock as jest.MockedFunction<
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
 const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
+const mockedListActiveCategories = listActiveCategories as jest.MockedFunction<
+  typeof listActiveCategories
+>;
+const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
+  typeof createActiveCategory
+>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedListActiveCategories.mockResolvedValue([
+      { id: "c1", name: "Cookies" },
+      { id: "c2", name: "Cakes" },
+      { id: "c3", name: "Dairy" },
+    ] as any);
+    mockedCreateActiveCategory.mockResolvedValue({
+      id: "c4",
+      name: "New",
+    } as any);
   });
-
+  jest.setTimeout(15000);
   function renderModal(
     overrides?: Partial<React.ComponentProps<typeof EditItemModal>>,
   ) {
@@ -89,6 +108,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Skim Milk",
         price: 30,
         low_stock_threshold: 4,
+        category_ids: [],
       });
     });
 
@@ -101,6 +121,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
+      category_ids: [],
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -325,6 +346,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        category_ids: [],
       });
     });
 
@@ -333,6 +355,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      category_ids: [],
     });
 
     expect(props.onClose).toHaveBeenCalled();

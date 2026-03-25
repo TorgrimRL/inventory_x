@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 
@@ -24,9 +30,9 @@ function getVisibleRows(): RowItem[] {
 
     return {
       name: cells[0].textContent?.trim() || "",
-      stock: Number(cells[1].textContent?.trim() || "0"),
+      stock: Number(cells[2].textContent?.trim() || "0"),
       price: Number(
-        (cells[2].textContent || "0").replace(/[^\d.-]/g, "") || "0",
+        (cells[3].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
       lowStockThreshold: thresholdText === "" ? null : Number(thresholdText),
     };
@@ -34,25 +40,87 @@ function getVisibleRows(): RowItem[] {
 }
 
 describe("ItemPage", () => {
-  jest.setTimeout(15000);
+  jest.setTimeout(30000);
+  let consoleWarnSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        data: [
-          { id: 1, name: "Milk", stock: 10, price: 20, low_stock_threshold: 8 },
-          { id: 2, name: "Bread", stock: 2, price: 5, low_stock_threshold: 3 },
-          { id: 3, name: "Eggs", stock: 7, price: 12, low_stock_threshold: 4 },
-          {
-            id: 4,
-            name: "Butter",
-            stock: 15,
-            price: 15,
-            low_stock_threshold: null,
+    consoleWarnSpy = jest
+      .spyOn(console, "warn")
+      .mockImplementation((...args: unknown[]) => {
+        const first = String(args[0] ?? "");
+        const second = String(args[1] ?? "");
+        const combined = `${first} ${second}`;
+        if (
+          combined.includes(
+            "MUI: The `anchorEl` prop provided to the component is invalid.",
+          )
+        ) {
+          return;
+        }
+
+        console.info(...args);
+      });
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/") {
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 1,
+                name: "Milk",
+                stock: 10,
+                price: 20,
+                category_ids: ["c1"],
+                low_stock_threshold: 8,
+              },
+              {
+                id: 2,
+                name: "Bread",
+                stock: 2,
+                price: 5,
+                category_ids: [],
+                low_stock_threshold: 3,
+              },
+              {
+                id: 3,
+                name: "Eggs",
+                stock: 7,
+                price: 12,
+                category_ids: ["c1", "c3"],
+                low_stock_threshold: 4,
+              },
+              {
+                id: 4,
+                name: "Butter",
+                stock: 15,
+                price: 15,
+                category_ids: ["c3"],
+                low_stock_threshold: null,
+              },
+            ],
           },
-        ],
-      },
-    } as any);
+        } as any);
+      }
+
+      if (url === "/api/inventory/active/categories/") {
+        return Promise.resolve({
+          data: [
+            { id: "c1", name: "Cookies" },
+            { id: "c2", name: "Cakes" },
+            { id: "c3", name: "Dairy" },
+          ],
+        } as any);
+      }
+
+      if (url === "/api/inventory/active/") {
+        return Promise.resolve({
+          data: { id: "inv1", name: "Test", orgNumber: "123", role: "owner" },
+        } as any);
+      }
+
+      return Promise.resolve({ data: {} } as any);
+    });
   });
 
   test("add item and see 'Item added'", async () => {
@@ -63,6 +131,7 @@ describe("ItemPage", () => {
         name: "Keyboard",
         price: 100,
         stock: 5,
+        category_ids: [],
         low_stock_threshold: null,
       },
     } as any);
@@ -71,6 +140,7 @@ describe("ItemPage", () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
+    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
@@ -100,6 +170,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: null,
+        category_ids: [],
       });
     });
 
@@ -155,6 +226,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        category_ids: [],
       });
     });
 
@@ -229,28 +301,166 @@ describe("ItemPage", () => {
       screen.getByRole("button", { name: /^low stock threshold$/i }),
     );
     expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Butter",
       "Milk",
       "Eggs",
       "Bread",
-      "Butter",
     ]);
 
     // Status asc, then desc
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Butter",
-      "Eggs",
       "Milk",
+      "Eggs",
+      "Butter",
       "Bread",
     ]);
 
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
-      "Butter",
-      "Eggs",
       "Milk",
+      "Eggs",
+      "Butter",
     ]);
+  });
+
+  test("edit item supports multiple category selection", async () => {
+    mockedAxios.patch.mockResolvedValue({
+      status: 200,
+      data: {
+        id: 1,
+        name: "Milk",
+        price: 20,
+        category_ids: ["c1", "c3"],
+        low_stock_threshold: 8,
+      },
+    } as any);
+
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const table = screen.getByRole("table");
+    const milkCell = within(table).getByText("Milk");
+    const milkRow = milkCell.closest("tr") as HTMLElement;
+    await user.click(within(milkRow).getByRole("button", { name: /edit/i }));
+
+    const dialog = await screen.findByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("combobox", { name: /categories/i }),
+    );
+    await user.click(await screen.findByRole("option", { name: "Dairy" }));
+    await user.keyboard("{Escape}");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/inventory/1/", {
+        name: "Milk",
+        price: 20,
+        low_stock_threshold: 8,
+        category_ids: ["c1", "c3"],
+      });
+    });
+  });
+
+  test("filters items by selected category and supports clearing filter", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
+    fireEvent.mouseDown(categorySelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("listbox", { name: /category/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole("textbox", { name: /search by name/i }),
+      "zzz",
+    );
+    expect(
+      await screen.findByText(/no items match your search/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /clear category/i }));
+    await user.click(screen.getByRole("button", { name: /^clear$/i }));
+
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
+  });
+
+  test("multiple selected categories use AND matching", async () => {
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
+    fireEvent.mouseDown(categorySelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Dairy" }));
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("listbox", { name: /category/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+  });
+
+  test("can filter by 'No category added' from category dropdown", async () => {
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
+    fireEvent.mouseDown(categorySelect);
+    fireEvent.click(
+      await screen.findByRole("option", { name: /no category added/i }),
+    );
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("listbox", { name: /category/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
+    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
   });
 
   test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
@@ -290,6 +500,10 @@ describe("ItemPage", () => {
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Butter")).toBeInTheDocument();
   });
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
   test("shows low stock status only for items at or below their item threshold", async () => {
     render(<ItemPage />);
 

@@ -2,20 +2,26 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  ListItemText,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
+import type { ItemCategory } from "../../services/inventoryService";
 import {
   adjustStock,
+  createActiveCategory,
   deleteItem,
+  listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
 
@@ -26,6 +32,7 @@ type Props = {
   initialName: string;
   initialPrice: number;
   currentStock: number;
+  initialCategoryIds?: string[];
   initialLowStockThreshold?: number | null;
   // owner => true, employee => false
   canEditDetails: boolean;
@@ -37,6 +44,7 @@ type Props = {
     name: string;
     price: number;
     lowStockThreshold: null | number;
+    category_ids?: string[];
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -67,6 +75,7 @@ export default function EditItemModal({
   initialPrice,
   initialLowStockThreshold,
   currentStock,
+  initialCategoryIds,
   canEditDetails,
   onClose,
   onItemUpdated,
@@ -80,9 +89,15 @@ export default function EditItemModal({
   );
 
   const [amount, setAmount] = useState<string>("0");
-  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
-    null,
+  const [direction, setDirection] = useState<"increase" | "decrease">(
+    "increase",
   );
+
+  const [categories, setCategories] = useState<ItemCategory[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    initialCategoryIds || [],
+  );
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +111,21 @@ export default function EditItemModal({
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
     setAmount("0");
-    setDirection(null);
+    setDirection("increase");
+    setSelectedCategoryIds(initialCategoryIds || []);
+    setNewCategoryName("");
     setError(null);
-  }, [open, initialName, initialPrice, initialLowStockThreshold]);
+
+    listActiveCategories()
+      .then((list) => setCategories(list))
+      .catch(() => setCategories([]));
+  }, [
+    open,
+    initialCategoryIds,
+    initialName,
+    initialPrice,
+    initialLowStockThreshold,
+  ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -126,10 +153,21 @@ export default function EditItemModal({
     direction === "decrease" &&
     currentStock - amountNumber < 0;
 
+  const initialCategoryKey = (initialCategoryIds || [])
+    .map(String)
+    .sort()
+    .join(",");
+  const selectedCategoryKey = [...selectedCategoryIds]
+    .map(String)
+    .sort()
+    .join(",");
+
   const detailsChanged =
     canEditDetails &&
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
+      initialCategoryKey !== selectedCategoryKey ||
+      newCategoryName.trim().length > 0 ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
 
   const stockChanged = wantsStockChange && direction !== null;
@@ -182,21 +220,44 @@ export default function EditItemModal({
       // 1) Update name/price (only if owner AND changed)
       if (canEditDetails) {
         const trimmed = name.trim();
+
+        let categoryIdsToSave = [...selectedCategoryIds];
+        const newCategoryTrimmed = newCategoryName.trim();
+        if (newCategoryTrimmed.length > 0) {
+          const createdCategory =
+            await createActiveCategory(newCategoryTrimmed);
+          setCategories((prev) => [...prev, createdCategory]);
+          categoryIdsToSave = [
+            ...new Set([...categoryIdsToSave, createdCategory.id]),
+          ];
+          setSelectedCategoryIds(categoryIdsToSave);
+          setNewCategoryName("");
+        }
+
+        const initialIds = (initialCategoryIds || []).map(String).sort();
+        const currentIds = [...categoryIdsToSave].map(String).sort();
+
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
+          initialIds.join(",") !== currentIds.join(",") ||
           lowStockThresholdNumber !== initialThresholdValue;
+
         if (changed) {
-          await updateItem(itemId, {
+          const payload = {
             name: trimmed,
             price: priceNumber,
             low_stock_threshold: lowStockThresholdNumber,
-          });
+            category_ids: categoryIdsToSave,
+          };
+
+          await updateItem(itemId, payload);
           onItemUpdated({
             id: itemId,
             name: trimmed,
             price: priceNumber,
             lowStockThreshold: lowStockThresholdNumber,
+            category_ids: payload.category_ids,
           });
         }
       }
@@ -298,6 +359,76 @@ export default function EditItemModal({
                   : "Leave empty if no threshold should be set"
               }
             />
+
+            <TextField
+              select
+              label="Categories"
+              value={selectedCategoryIds}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCategoryIds(
+                  Array.isArray(value) ? value : String(value).split(","),
+                );
+              }}
+              disabled={saving || !canEditDetails}
+              fullWidth
+              helperText="Select one or more categories for this inventory"
+              SelectProps={{
+                multiple: true,
+                renderValue: (selected) => {
+                  const ids = selected as string[];
+                  if (ids.length === 0) return "No category added";
+                  return ids
+                    .map(
+                      (id) =>
+                        categories.find((category) => category.id === id)
+                          ?.name || id,
+                    )
+                    .join(", ");
+                },
+              }}
+            >
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  <Checkbox
+                    checked={selectedCategoryIds.includes(category.id)}
+                    size="small"
+                  />
+                  <ListItemText primary={category.name} />
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <TextField
+                label="New category"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                disabled={saving || !canEditDetails}
+                fullWidth
+                helperText="Create category if it does not exist"
+              />
+              <Button
+                variant="outlined"
+                disabled={saving || !canEditDetails || !newCategoryName.trim()}
+                onClick={async () => {
+                  try {
+                    const created = await createActiveCategory(
+                      newCategoryName.trim(),
+                    );
+                    setCategories((prev) => [...prev, created]);
+                    setSelectedCategoryIds((prev) =>
+                      prev.includes(created.id) ? prev : [...prev, created.id],
+                    );
+                    setNewCategoryName("");
+                  } catch {
+                    setError("Failed to create category.");
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </Stack>
 
             <Divider />
 

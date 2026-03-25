@@ -5,7 +5,12 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from api.inventory.models import Inventory, InventoryItem, InventoryMembership
+from api.inventory.models import (
+    Inventory,
+    InventoryItem,
+    InventoryMembership,
+    ItemCategory,
+)
 
 
 def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
@@ -54,6 +59,7 @@ class Command(BaseCommand):
             # Delete in safe order for FK changes
             InventoryMembership.objects.all().delete()
             InventoryItem.objects.all().delete()
+            ItemCategory.objects.all().delete()
             Inventory.objects.all().delete()
 
             # --- Inventories ---
@@ -79,6 +85,35 @@ class Command(BaseCommand):
                 inv.save()
                 inventories.append(inv)
                 inventories_by_name[name] = inv
+
+            # --- Categories (inventory-specific) ---
+            categories_by_inventory: dict[str, dict[str, ItemCategory]] = {}
+
+            for inv in inventories:
+                if inv.name == "Jessica Cookies AS":
+                    category_names = [
+                        "Frozen",
+                        "Bread",
+                        "Loaf",
+                        "Milk",
+                        "Dairy",
+                        "Snacks",
+                        "Drinks",
+                    ]
+                elif inv.name == "Ola AS":
+                    category_names = ["Books", "Crime", "Non-fiction"]
+                else:
+                    category_names = ["General", "Supplies"]
+
+                categories_for_inv: dict[str, ItemCategory] = {}
+                for category_name in category_names:
+                    created_category = ItemCategory.objects.create(
+                        inventory=inv,
+                        name=category_name,
+                    )
+                    categories_for_inv[category_name] = created_category
+
+                categories_by_inventory[str(inv.id)] = categories_for_inv
 
             # --- Items ---
             # Ola: bookstore / author event (Jo Nesbø)
@@ -273,6 +308,96 @@ class Command(BaseCommand):
 
             InventoryItem.objects.bulk_create(items_to_create)
 
+            # --- Category assignment for items ---
+            for item in InventoryItem.objects.select_related("inventory").all():
+                inv_name = item.inventory.name
+                inv_categories = categories_by_inventory.get(
+                    str(item.inventory_id), {}
+                )
+
+                # Keep some uncategorized to support "No category added" testing
+                if item.name in {
+                    "Tape (6-pack)",
+                    "Label Roll",
+                    "Disposable Gloves (100 pcs)",
+                }:
+                    continue
+
+                if inv_name == "Jessica Cookies AS":
+                    lower_name = item.name.lower()
+                    if any(
+                        keyword in lower_name
+                        for keyword in ["milk", "white chocolate"]
+                    ):
+                        category = inv_categories.get("Milk")
+                    elif any(
+                        keyword in lower_name for keyword in ["bread", "roll"]
+                    ):
+                        category = inv_categories.get("Bread")
+                    elif any(
+                        keyword in lower_name for keyword in ["frozen", "ice"]
+                    ):
+                        category = inv_categories.get("Frozen")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "cookie",
+                            "brownie",
+                            "blondie",
+                            "brookie",
+                        ]
+                    ):
+                        category = inv_categories.get("Snacks")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "vanilla",
+                            "dairy",
+                            "butter",
+                            "yogurt",
+                            "cream",
+                        ]
+                    ):
+                        category = inv_categories.get("Dairy")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "drink",
+                            "soda",
+                            "juice",
+                            "coffee",
+                            "tea",
+                        ]
+                    ):
+                        category = inv_categories.get("Drinks")
+                    else:
+                        category = inv_categories.get("Loaf")
+                elif inv_name == "Ola AS":
+                    lower_name = item.name.lower()
+                    if any(
+                        keyword in lower_name
+                        for keyword in ["nesbø", "kepler", "engman", "holt"]
+                    ):
+                        category = inv_categories.get("Crime")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "quiz",
+                            "juleroser",
+                            "den fantastiske bussen",
+                        ]
+                    ):
+                        category = inv_categories.get("Books")
+                    else:
+                        category = inv_categories.get("Non-fiction")
+                else:
+                    category = inv_categories.get(
+                        "Supplies"
+                    ) or inv_categories.get("General")
+
+                if category:
+                    item.categories.set([category])
+
             # --- Memberships ---
             admin = users["admin@example.com"]
             alice = users["alice@example.com"]
@@ -328,6 +453,69 @@ class Command(BaseCommand):
         # Useful “persona” checks
         ola_count = counts_by_inventory_name.get("Ola AS", 0)
         jessica_count = counts_by_inventory_name.get("Jessica Cookies AS", 0)
+
+        # SEED CATEGORIES AND ASSIGN THEM TO ITEMS
+        self.stdout.write("Creating and assigning categories...")
+
+        # Clear out any old categories to maintain a clean slate
+        ItemCategory.objects.all().delete()
+
+        # Define realistic persona categories based on your inventory names
+        ola_category_names = [
+            "Electronics",
+            "Office Supplies",
+            "Furniture",
+            "Beverages",
+            "Hardware",
+            "On Sale",
+            "High Value",
+        ]
+        jessica_category_names = [
+            "Baked Goods",
+            "Raw Ingredients",
+            "Packaging",
+            "Merchandise",
+            "Vegan",
+            "Gluten-Free",
+            "Best Seller",
+        ]
+
+        db_ola_inv = Inventory.objects.get(name="Ola AS")
+        db_jessica_inv = Inventory.objects.get(name="Jessica Cookies AS")
+
+        ola_categories = [
+            ItemCategory.objects.create(inventory=db_ola_inv, name=name)
+            for name in ola_category_names
+        ]
+
+        jessica_categories = [
+            ItemCategory.objects.create(inventory=db_jessica_inv, name=name)
+            for name in jessica_category_names
+        ]
+
+        # Fetch all newly created items to assign M2M relationships
+        all_seeded_items = InventoryItem.objects.select_related(
+            "inventory"
+        ).all()
+
+        for item in all_seeded_items:
+            num_categories = random.choices(
+                [0, 1, 2, 3], weights=[15, 50, 25, 10], k=1
+            )[0]
+
+            if num_categories > 0:
+                if item.inventory.name == "Ola AS":
+                    pool = ola_categories
+                elif item.inventory.name == "Jessica Cookies AS":
+                    pool = jessica_categories
+                else:
+                    pool = []  # Other inventories get no categories for now
+
+                num_to_sample = min(num_categories, len(pool))
+
+                if pool and num_to_sample > 0:
+                    assigned_categories = random.sample(pool, k=num_to_sample)
+                    item.categories.set(assigned_categories)
 
         self.stdout.write(self.style.SUCCESS("✅ Seed completed"))
         self.stdout.write(

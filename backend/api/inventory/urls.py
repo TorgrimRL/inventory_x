@@ -2,6 +2,7 @@ from django.urls import path
 
 from api.inventory.views.active_inventory import ActiveInventoryView
 from api.inventory.views.adjust_stock import AdjustStockView
+from api.inventory.views.categories import CategoryDetailView, CategoryView
 from api.inventory.views.inventory import InventoryView
 from api.inventory.views.invite_user import InviteUserView
 from api.inventory.views.item_detail import ItemDetailView
@@ -43,5 +44,15 @@ urlpatterns = [
         "members/<uuid:membership_id>/",
         RemoveMemberView.as_view(),
         name="remove-member",
+    ),
+    path(
+        "active/categories/",
+        CategoryView.as_view(),
+        name="inventory-categories",
+    ),
+    path(
+        "active/categories/<uuid:category_id>/",
+        CategoryDetailView.as_view(),
+        name="inventory-category-detail",
     ),
 ]
