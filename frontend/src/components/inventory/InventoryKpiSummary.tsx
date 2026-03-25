@@ -123,37 +123,43 @@ export default function InventoryKpiSummary({
       </Paper>
 
       {showFilteredMetrics && (
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+        <Stack spacing={0.75}>
+          <Typography
+            variant="subtitle2"
+            color="text.primary"
+            fontWeight={700}
+          >
             Information based on filter
           </Typography>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <MetricBlock
-              title="Total inventory value"
-              value={formatCurrency(metrics.filtered.value)}
-            />
-            <MetricBlock
-              title="Items with low stock"
-              value={formatCount(metrics.filtered.lowStock)}
-            />
-            <MetricBlock
-              title="Item count"
-              value={formatCount(metrics.filtered.itemCount)}
-            />
-            <MetricBlock
-              title="Average price"
-              value={formatCurrency(metrics.filtered.avgPrice)}
-            />
-            <MetricBlock
-              title="Total units in stock"
-              value={formatCount(metrics.filtered.units)}
-            />
-            <MetricBlock
-              title="Out of stock"
-              value={formatCount(metrics.filtered.outOfStock)}
-            />
-          </Stack>
-        </Paper>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+              <MetricBlock
+                title="Total inventory value"
+                value={formatCurrency(metrics.filtered.value)}
+              />
+              <MetricBlock
+                title="Items with low stock"
+                value={formatCount(metrics.filtered.lowStock)}
+              />
+              <MetricBlock
+                title="Item count"
+                value={formatCount(metrics.filtered.itemCount)}
+              />
+              <MetricBlock
+                title="Average price"
+                value={formatCurrency(metrics.filtered.avgPrice)}
+              />
+              <MetricBlock
+                title="Total units in stock"
+                value={formatCount(metrics.filtered.units)}
+              />
+              <MetricBlock
+                title="Out of stock"
+                value={formatCount(metrics.filtered.outOfStock)}
+              />
+            </Stack>
+          </Paper>
+        </Stack>
       )}
     </Stack>
   );
