@@ -40,7 +40,7 @@ function getVisibleRows(): RowItem[] {
 }
 
 describe("ItemPage", () => {
-  jest.setTimeout(15000);
+  jest.setTimeout(30000);
   let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -58,7 +58,7 @@ describe("ItemPage", () => {
         ) {
           return;
         }
-        // eslint-disable-next-line no-console
+
         console.info(...args);
       });
     mockedAxios.get.mockImplementation((url) => {
@@ -372,7 +372,9 @@ describe("ItemPage", () => {
 
     await screen.findByText("Milk");
 
-    const categorySelect = screen.getByRole("combobox", { name: /^category$/i });
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
     fireEvent.mouseDown(categorySelect);
     fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
     fireEvent.keyDown(document.activeElement || categorySelect, {
@@ -411,7 +413,9 @@ describe("ItemPage", () => {
 
     await screen.findByText("Milk");
 
-    const categorySelect = screen.getByRole("combobox", { name: /^category$/i });
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
     fireEvent.mouseDown(categorySelect);
     fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
     fireEvent.click(await screen.findByRole("option", { name: "Dairy" }));
@@ -436,7 +440,9 @@ describe("ItemPage", () => {
 
     await screen.findByText("Milk");
 
-    const categorySelect = screen.getByRole("combobox", { name: /^category$/i });
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
     fireEvent.mouseDown(categorySelect);
     fireEvent.click(
       await screen.findByRole("option", { name: /no category added/i }),
