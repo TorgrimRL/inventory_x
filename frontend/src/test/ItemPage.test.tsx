@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 
@@ -342,22 +348,30 @@ describe("ItemPage", () => {
     });
   });
 
-  test.skip("filters items by selected category and supports clearing filter", async () => {
+  test("filters items by selected category and supports clearing filter", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
     await screen.findByText("Milk");
 
-    await user.click(screen.getByRole("combobox", { name: /category/i }));
-    await user.click(await screen.findByRole("option", { name: "Cookies" }));
-    await user.keyboard("{Escape}");
+    const categorySelect = screen.getByRole("combobox", { name: /category/i });
+    fireEvent.mouseDown(categorySelect);
+    const cookiesOption = await screen.findByRole("option", {
+      name: "Cookies",
+    });
+    fireEvent.click(cookiesOption);
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox", { name: /category/i })).not.toBeInTheDocument();
+    });
 
-    // Cookies should include Milk and Eggs, but not Bread (no category)
     expect(screen.getByText("Milk")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Bread")).not.toBeInTheDocument();
 
-    // Category filter active + name search miss => category-specific empty state
     await user.type(
       screen.getByRole("textbox", { name: /search by name/i }),
       "zzz",
@@ -374,16 +388,24 @@ describe("ItemPage", () => {
     expect(screen.getByText("Eggs")).toBeInTheDocument();
   });
 
-  test.skip("can filter by 'No category added' from category dropdown", async () => {
-    const user = userEvent.setup();
+  test("can filter by 'No category added' from category dropdown", async () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
 
-    await user.click(screen.getByRole("combobox", { name: /category/i }));
-    await user.click(
-      await screen.findByRole("option", { name: /no category added/i }),
-    );
+    const categorySelect = screen.getByRole("combobox", { name: /category/i });
+    fireEvent.mouseDown(categorySelect);
+    const uncategorizedOption = await screen.findByRole("option", {
+      name: /no category added/i,
+    });
+    fireEvent.click(uncategorizedOption);
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox", { name: /category/i })).not.toBeInTheDocument();
+    });
 
     expect(screen.getByText("Bread")).toBeInTheDocument();
     expect(screen.queryByText("Milk")).not.toBeInTheDocument();
