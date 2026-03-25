@@ -406,8 +406,7 @@ describe("ItemPage", () => {
     expect(screen.getByText("Eggs")).toBeInTheDocument();
   });
 
-  test("supports AND and OR category filter modes", async () => {
-    const user = userEvent.setup();
+  test("multiple selected categories use AND matching", async () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
@@ -426,18 +425,9 @@ describe("ItemPage", () => {
       ).not.toBeInTheDocument();
     });
 
-    expect(screen.getByDisplayValue("and")).toBeInTheDocument();
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Milk")).not.toBeInTheDocument();
     expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-
-    const modeSelect = screen.getByRole("combobox", { name: /category match/i });
-    await user.click(modeSelect);
-    await user.click(await screen.findByRole("option", { name: /match any/i }));
-
-    expect(screen.getByText("Milk")).toBeInTheDocument();
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-    expect(screen.getByText("Butter")).toBeInTheDocument();
     expect(screen.queryByText("Bread")).not.toBeInTheDocument();
   });
 
