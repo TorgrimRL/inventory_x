@@ -126,6 +126,9 @@ export default function ItemPage() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [categoryFilterMode, setCategoryFilterMode] = useState<"or" | "and">(
+    "and",
+  );
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
@@ -307,11 +310,15 @@ export default function ItemPage() {
         ? searched
         : searched.filter((item) => {
             const ids = (item.category_ids || []).map(String);
-            return selectedCategoryIds.some((selectedId) =>
+            const matches = selectedCategoryIds.map((selectedId) =>
               selectedId === "__no_category__"
                 ? ids.length === 0
                 : ids.includes(selectedId),
             );
+
+            return categoryFilterMode === "and"
+              ? matches.every(Boolean)
+              : matches.some(Boolean);
           });
 
     const filtered = byCategory.filter(
@@ -339,6 +346,7 @@ export default function ItemPage() {
     items,
     searchInput,
     selectedCategoryIds,
+    categoryFilterMode,
     lowStockOnly,
     lowStockFilterThreshold,
     sortField,
@@ -449,9 +457,9 @@ export default function ItemPage() {
             </Box>
 
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              alignItems="center"
+              alignItems={{ xs: "stretch", sm: "center" }}
               sx={{ mb: 2, mt: 1 }}
             >
               <TextField
@@ -501,6 +509,27 @@ export default function ItemPage() {
                   </MenuItem>
                 ))}
               </TextField>
+
+              <TextField
+                select
+                label="Category match"
+                size="small"
+                value={categoryFilterMode}
+                onChange={(e) =>
+                  setCategoryFilterMode(e.target.value as "or" | "and")
+                }
+                sx={{ minWidth: 160 }}
+                disabled={!hasCategoryFilter}
+                helperText={
+                  hasCategoryFilter
+                    ? "Choose whether items must match any or all selected categories"
+                    : "Select categories first"
+                }
+              >
+                <MenuItem value="or">Match any</MenuItem>
+                <MenuItem value="and">Match all</MenuItem>
+              </TextField>
+
               <Button
                 variant="outlined"
                 color="inherit"
