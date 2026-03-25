@@ -124,11 +124,7 @@ export default function InventoryKpiSummary({
 
       {showFilteredMetrics && (
         <Stack spacing={0.75}>
-          <Typography
-            variant="subtitle2"
-            color="text.primary"
-            fontWeight={700}
-          >
+          <Typography variant="subtitle2" color="text.primary" fontWeight={700}>
             Information based on filter
           </Typography>
           <Paper variant="outlined" sx={{ p: 2 }}>
