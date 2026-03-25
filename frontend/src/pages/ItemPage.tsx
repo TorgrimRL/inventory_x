@@ -116,7 +116,8 @@ export default function ItemPage() {
       : Number(newItemLowStockThreshold);
   const newItemLowStockThresholdInvalid =
     newItemLowStockThreshold.trim() !== "" &&
-    (!Number.isInteger(newItemLowStockThresholdNumber) ||
+    (newItemLowStockThresholdNumber === null ||
+      !Number.isInteger(newItemLowStockThresholdNumber) ||
       newItemLowStockThresholdNumber < 0);
 
   const [snackOpen, setSnackOpen] = useState(false);
@@ -287,7 +288,9 @@ export default function ItemPage() {
 
   const categoryNameById = useMemo(
     () =>
-      new Map(categories.map((category) => [category.id, category.name] as const)),
+      new Map(
+        categories.map((category) => [category.id, category.name] as const),
+      ),
     [categories],
   );
 
@@ -320,9 +323,11 @@ export default function ItemPage() {
 
       if (sortField === "name") compare = a.name.localeCompare(b.name);
       else if (sortField === "stock") compare = a.stock - b.stock;
-      else if (sortField === "price") compare = Number(a.price) - Number(b.price);
+      else if (sortField === "price")
+        compare = Number(a.price) - Number(b.price);
       else if (sortField === "low_stock_threshold") {
-        compare = (a.low_stock_threshold ?? Number.MAX_SAFE_INTEGER) -
+        compare =
+          (a.low_stock_threshold ?? Number.MAX_SAFE_INTEGER) -
           (b.low_stock_threshold ?? Number.MAX_SAFE_INTEGER);
       } else if (sortField === "status") {
         compare = Number(isLowStock(a)) - Number(isLowStock(b));
@@ -347,7 +352,10 @@ export default function ItemPage() {
   );
 
   useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(displayedItems.length / rowsPerPage) - 1);
+    const maxPage = Math.max(
+      0,
+      Math.ceil(displayedItems.length / rowsPerPage) - 1,
+    );
     if (page > maxPage) setPage(maxPage);
   }, [displayedItems.length, page]);
 
@@ -440,7 +448,12 @@ export default function ItemPage() {
               />
             </Box>
 
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2, mt: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 2, mt: 1 }}
+            >
               <TextField
                 select
                 label="Category"
@@ -460,9 +473,11 @@ export default function ItemPage() {
                     if (ids.length === 0) return "All categories";
                     return ids
                       .map((id) => {
-                        if (id === "__no_category__") return "No category added";
+                        if (id === "__no_category__")
+                          return "No category added";
                         return (
-                          categories.find((category) => category.id === id)?.name || id
+                          categories.find((category) => category.id === id)
+                            ?.name || id
                         );
                       })
                       .join(", ");
@@ -520,7 +535,9 @@ export default function ItemPage() {
                       return;
                     }
                     if (!/^\d+$/.test(next)) return;
-                    setLowStockThresholdInput(String(Number.parseInt(next, 10)));
+                    setLowStockThresholdInput(
+                      String(Number.parseInt(next, 10)),
+                    );
                   }}
                   onBlur={() => {
                     if (lowStockThresholdInput.trim() === "") {
@@ -588,14 +605,20 @@ export default function ItemPage() {
             {loading ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
                 <CircularProgress />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 2 }}
+                >
                   Loading items…
                 </Typography>
               </Stack>
             ) : displayedItems.length === 0 ? (
               <Stack alignItems="center" justifyContent="center" sx={{ py: 7 }}>
                 <Typography variant="body1">
-                  {hasCategoryFilter ? "No items match your search." : "No items found."}
+                  {hasCategoryFilter
+                    ? "No items match your search."
+                    : "No items found."}
                 </Typography>
               </Stack>
             ) : (
@@ -608,7 +631,9 @@ export default function ItemPage() {
                           <TableSortLabel
                             active={sortField === "name"}
                             hideSortIcon={false}
-                            direction={sortField === "name" ? sortDirection : "asc"}
+                            direction={
+                              sortField === "name" ? sortDirection : "asc"
+                            }
                             onClick={() => handleSort("name")}
                             sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
@@ -620,7 +645,9 @@ export default function ItemPage() {
                           <TableSortLabel
                             active={sortField === "stock"}
                             hideSortIcon={false}
-                            direction={sortField === "stock" ? sortDirection : "asc"}
+                            direction={
+                              sortField === "stock" ? sortDirection : "asc"
+                            }
                             onClick={() => handleSort("stock")}
                             sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
@@ -631,7 +658,9 @@ export default function ItemPage() {
                           <TableSortLabel
                             active={sortField === "price"}
                             hideSortIcon={false}
-                            direction={sortField === "price" ? sortDirection : "asc"}
+                            direction={
+                              sortField === "price" ? sortDirection : "asc"
+                            }
                             onClick={() => handleSort("price")}
                             sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
@@ -642,7 +671,9 @@ export default function ItemPage() {
                           <TableSortLabel
                             active={sortField === "status"}
                             hideSortIcon={false}
-                            direction={sortField === "status" ? sortDirection : "asc"}
+                            direction={
+                              sortField === "status" ? sortDirection : "asc"
+                            }
                             onClick={() => handleSort("status")}
                             sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
                           >
@@ -654,7 +685,9 @@ export default function ItemPage() {
                             active={sortField === "low_stock_threshold"}
                             hideSortIcon={false}
                             direction={
-                              sortField === "low_stock_threshold" ? sortDirection : "asc"
+                              sortField === "low_stock_threshold"
+                                ? sortDirection
+                                : "asc"
                             }
                             onClick={() => handleSort("low_stock_threshold")}
                             sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
@@ -689,7 +722,11 @@ export default function ItemPage() {
                           </TableCell>
                           <TableCell align="right">
                             {isLowStock(item) ? (
-                              <Chip label="Low stock" color="warning" size="small" />
+                              <Chip
+                                label="Low stock"
+                                color="warning"
+                                size="small"
+                              />
                             ) : (
                               "—"
                             )}
@@ -762,7 +799,8 @@ export default function ItemPage() {
                     return ids
                       .map(
                         (id) =>
-                          categories.find((category) => category.id === id)?.name || id,
+                          categories.find((category) => category.id === id)
+                            ?.name || id,
                       )
                       .join(", ");
                   },
@@ -916,8 +954,8 @@ export default function ItemPage() {
             setSnackMessage("Stock updated");
             setSnackOpen(true);
           }}
-          onDeleteSuccess={() => {
-            setItems((prev) => prev.filter((it) => it.id !== selectedItem.id));
+          onItemDeleted={(id) => {
+            setItems((prev) => prev.filter((it) => it.id !== id));
             setSnackMessage("Item deleted");
             setSnackOpen(true);
           }}

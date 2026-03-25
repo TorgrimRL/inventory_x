@@ -153,7 +153,10 @@ export default function EditItemModal({
     direction === "decrease" &&
     currentStock - amountNumber < 0;
 
-  const initialCategoryKey = (initialCategoryIds || []).map(String).sort().join(",");
+  const initialCategoryKey = (initialCategoryIds || [])
+    .map(String)
+    .sort()
+    .join(",");
   const selectedCategoryKey = [...selectedCategoryIds]
     .map(String)
     .sort()

@@ -107,11 +107,8 @@ describe("EditItemModal - user story tests", () => {
       expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
         name: "Skim Milk",
         price: 30,
-<<<<<<< HEAD
-        category_ids: [],
-=======
         low_stock_threshold: 4,
->>>>>>> main
+        category_ids: [],
       });
     });
 
@@ -123,11 +120,8 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Skim Milk",
       price: 30,
-<<<<<<< HEAD
-      category_ids: [],
-=======
       lowStockThreshold: 4,
->>>>>>> main
+      category_ids: [],
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -352,6 +346,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        category_ids: [],
       });
     });
 
@@ -360,6 +355,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      category_ids: [],
     });
 
     expect(props.onClose).toHaveBeenCalled();
