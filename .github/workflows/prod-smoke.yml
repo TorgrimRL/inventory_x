@@ -2,9 +2,25 @@ name: Prod-like smoke test
 
 on:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - ".dockerignore"
+      - "LICENSE"
+      - "deploy/certbot/**"
+
   push:
     branches:
       - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".gitignore"
+      - ".dockerignore"
+      - "LICENSE"
+      - "deploy/certbot/**"
+
   workflow_dispatch:
 
 jobs:
