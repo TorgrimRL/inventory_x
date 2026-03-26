@@ -121,6 +121,22 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
     .filter((category) => category.id && category.name);
 }
 
+export type InventoryItem = {
+  id: number | string;
+  name: string;
+  stock: number;
+  price: number;
+  low_stock_threshold: number | null;
+  category_ids?: string[];
+  category_names?: string[];
+};
+
+export async function listInventoryItems(): Promise<InventoryItem[]> {
+  const res = await apiClient.get("/api/inventory/");
+  const data = res.data;
+  return (data.data || data) as InventoryItem[];
+}
+
 export async function updateItem(
   itemId: number | string,
   payload: {
