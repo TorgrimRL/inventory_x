@@ -30,7 +30,7 @@ def create_item(
     price,
     stock,
     low_stock_threshold=None,
-    request=None,
+    user=None,
 ):
     """
     Creates a new inventory item.
@@ -59,7 +59,7 @@ def create_item(
 
 @audit_logger("adjust_stock")
 def adjust_stock(
-    inventory_id: UUID, item_id: UUID, direction: str, amount: int, request=None
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
 ):
     """
     Adjusts stock for an inventory item.
@@ -100,7 +100,7 @@ def update_item(
     name: str,
     price: int,
     low_stock_threshold: int | None,
-    request=None,
+    user=None,
 ):
     """
     Updates item fields (name, price) only. Stock is not changed here.

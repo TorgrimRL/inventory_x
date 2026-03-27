@@ -32,11 +32,12 @@ class ItemDetailView(views.APIView):
             )
 
         try:
+            membership = get_active_membership_or_raise(request)
             item = update_item(
                 item_id=item_id,
                 name=serializer.validated_data["name"],
                 price=serializer.validated_data["price"],
-                request=request,
+                user=membership.user,
                 low_stock_threshold=serializer.validated_data.get(
                     "low_stock_threshold"
                 ),

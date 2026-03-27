@@ -64,7 +64,7 @@ class InventoryView(APIView):
                 name=name,
                 price=price,
                 stock=stock,
-                request=request,
+                user=membership.user,
                 low_stock_threshold=low_stock_threshold,
             )
             return Response(created, status=status.HTTP_201_CREATED)

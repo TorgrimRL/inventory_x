@@ -363,8 +363,8 @@ class Command(BaseCommand):
         self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
         self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
         self.stdout.write(
-            f"- Stock Logs: {StockLog.objects.count()} (with history & random\
-                    actors)"
+            f"- Stock Logs: {StockLog.objects.count()} (with history & random"
+            "actors)"
         )
         self.stdout.write(
             f"- Memberships: {InventoryMembership.objects.count()}"

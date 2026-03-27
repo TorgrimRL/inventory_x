@@ -8,8 +8,7 @@ def audit_logger(action_name):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
-            request = kwargs.get("request")
-            user = getattr(request, "user", None)
+            user = kwargs.get("user")
 
             if user and not user.is_authenticated:
                 user = None

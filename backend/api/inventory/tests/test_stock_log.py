@@ -49,7 +49,7 @@ class StockLogTests(TestCase):
             name="New Laptop",
             price=15000,
             stock=10,
-            request=self.mock_request,
+            user=self.user,
         )
         self.assertEqual(StockLog.objects.count(), 1)
         log = StockLog.objects.first()
@@ -78,7 +78,7 @@ class StockLogTests(TestCase):
             name="Gaming Mouse",
             price=500,
             low_stock_threshold=10,
-            request=self.mock_request,
+            user=self.user,
         )
 
         log = StockLog.objects.first()
@@ -106,7 +106,7 @@ class StockLogTests(TestCase):
             item_id=item.id,
             direction="decrease",
             amount=5,
-            request=self.mock_request,
+            user=self.user,
         )
 
         log = StockLog.objects.first()
