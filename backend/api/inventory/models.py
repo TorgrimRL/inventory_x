@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import IntegrityError, models, transaction
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 org_number_validator = RegexValidator(
     regex=r"^\d{9}$",
@@ -109,6 +110,32 @@ class ItemCategory(models.Model):
         return self.name
 
 
+class InventoryCustomField(models.Model):
+    """
+    Defines the schema for custom fields available within a specific inventory.
+    """
+
+    class DataType(models.TextChoices):
+        TEXT = "text", _("Text")
+        NUMBER = "number", _("Number")
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
+        "Inventory", on_delete=models.CASCADE, related_name="custom_fields"
+    )
+    name = models.CharField(max_length=255)
+    data_type = models.CharField(
+        max_length=20, choices=DataType.choices, default=DataType.TEXT
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("inventory", "name")
+
+    def __str__(self):
+        return f"{self.inventory.name} - {self.name} ({self.data_type})"
+
+
 class InventoryItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     inventory: models.ForeignKey[Inventory] = models.ForeignKey(
@@ -129,6 +156,17 @@ class InventoryItem(models.Model):
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
+    if TYPE_CHECKING:
+        custom_fields: dict[str, Any]
+    else:
+        custom_fields = models.JSONField(
+            default=dict,
+            blank=True,
+            help_text=_(
+                "Stores custom field values as a dictionary: "
+                "{'field_id': 'value'}"
+            ),
+        )
 
     def __str__(self):
         return self.name
