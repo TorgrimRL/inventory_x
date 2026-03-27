@@ -109,6 +109,7 @@ check:
 	$(FRONTEND_RUN) npx eslint .
 	$(BACKEND_RUN) uv run pytest -v -x
 	$(FRONTEND_RUN) npm test
+	$(BACKEND_RUN_NODEPS) uv run python manage.py makemigrations --check --dry-run
 	@echo "✅ All checks passed"
 
 debug-up:

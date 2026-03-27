@@ -1,11 +1,19 @@
-import "./login.css";
-
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { PATHS } from "../../App.tsx";
+import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
-import { checkSession } from "../../services/authService.ts";
+import { checkSession } from "../../services/authService";
 
 const Login: React.FC = () => {
   // init app state.
@@ -33,7 +41,11 @@ const Login: React.FC = () => {
 
   // show loading while waiting for checkSession to complete.
   if (checkingAuth) {
-    return <p className="text-gray-600 font-medium">Verifying session...</p>;
+    return (
+      <Container maxWidth="sm">
+        <Typography variant="body1">Verifying session...</Typography>
+      </Container>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,45 +90,48 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="login-form">
-      <h2>login</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        {/* inputs */}
-        <div className="input-group">
-          <input
-            type="email"
-            placeholder="info@inventoryx.no"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="login-input"
-          />
-        </div>
-        {error && <p className="error-message">{error}</p>}
-
-        {/* buttons*/}
-        <button type="submit" className="submit-button">
+    <Container maxWidth="sm">
+      <Paper sx={{ mt: 8, p: 4 }}>
+        <Typography variant="h5" mb={3}>
           Login
-        </button>
-        <button
-          onClick={() => navigate(PATHS.REGISTRATION)}
-          type="button"
-          className="submit-button"
-        >
-          Create Account
-        </button>
-      </form>
-    </div>
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={2}>
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="info@inventoryx.no"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth
+            />
+
+            <TextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+            />
+
+            {error && <Alert severity="error">{error}</Alert>}
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button type="submit" variant="contained">
+                Login
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={() => navigate(PATHS.REGISTRATION)}
+              >
+                Create Account
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

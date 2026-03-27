@@ -1,9 +1,21 @@
+// @ts-expect-error: None
+import { TextDecoder, TextEncoder } from "util";
+// @ts-expect-error: None
+global.TextEncoder = TextEncoder;
+// @ts-expect-error: None
+global.TextDecoder = TextDecoder;
+
+import { ThemeProvider } from "@mui/material/styles";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 import { PATHS } from "../App";
-import Dashboard from "../pages/dashboard";
+import Navbar from "../components/navbar/topbar";
 import apiClient from "../services/apiClient.ts";
 import { checkSession } from "../services/authService";
+import { getActiveInventory } from "../services/inventoryService";
+import { LightTheme } from "../theme";
+
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();
 jest.mock("../services/apiClient", () => ({
@@ -14,9 +26,11 @@ jest.mock("../services/apiClient", () => ({
   },
 }));
 jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
   useNavigate: () => mockNavigate,
 }));
 jest.mock("../services/authService");
+jest.mock("../services/inventoryService");
 
 describe("Logout Test", () => {
   beforeEach(() => {
@@ -25,9 +39,22 @@ describe("Logout Test", () => {
     (apiClient.get as jest.Mock).mockResolvedValue({ data: [] });
   });
 
+  /* Helper render */
+  const renderNavbar = () =>
+    render(
+      <ThemeProvider theme={LightTheme}>
+        <MemoryRouter>
+          <Navbar mode="light" setMode={jest.fn()} />
+        </MemoryRouter>
+      </ThemeProvider>,
+    );
+
   test("Ensure session is clear", async () => {
     // MOCK session
     (checkSession as jest.Mock).mockResolvedValue(true);
+    (getActiveInventory as jest.Mock).mockResolvedValue({
+      name: "Warehouse A",
+    });
 
     // Simulate server response. [200](POST)
     (apiClient.post as jest.Mock).mockImplementation(async () => {
@@ -39,7 +66,7 @@ describe("Logout Test", () => {
     document.cookie = "inventoryToken=12345fake; path=/";
     expect(document.cookie).toContain("inventoryToken");
 
-    render(<Dashboard />);
+    renderNavbar();
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
     fireEvent.click(logoutBtn);
 
@@ -52,23 +79,25 @@ describe("Logout Test", () => {
 
   test("Logout button is visible when session exists", async () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
+    (getActiveInventory as jest.Mock).mockResolvedValue({
+      name: "Warehouse A",
+    });
 
-    render(<Dashboard />);
-
+    renderNavbar();
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
-
     expect(logoutBtn).toBeInTheDocument();
   });
 
   test("Logout sends request to server", async () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
+    (getActiveInventory as jest.Mock).mockResolvedValue({
+      name: "Warehouse A",
+    });
 
     (apiClient.post as jest.Mock).mockResolvedValue({ status: 200 });
 
-    render(<Dashboard />);
-
+    renderNavbar();
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
-
     fireEvent.click(logoutBtn);
 
     await waitFor(() => {

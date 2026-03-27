@@ -1,0 +1,51 @@
+name: Migration check
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/migration-check.yml"
+  push:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/migration-check.yml"
+  workflow_dispatch:
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Check for missing migrations
+        run: |
+          rm -f backend/db.sqlite3
+          cd backend
+          if ! uv run python manage.py makemigrations --check --dry-run; then
+            {
+              echo "## Missing migrations"
+              echo ""
+              echo "Model changes were detected without committed migration files."
+              echo ""
+              echo "Fix locally with:"
+              echo ""
+              echo '```bash'
+              echo "cd backend"
+              echo "uv run python manage.py makemigrations"
+              echo "uv run python manage.py migrate"
+              echo '```'
+              echo ""
+              echo "Then commit the generated migration file(s) and push again."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi

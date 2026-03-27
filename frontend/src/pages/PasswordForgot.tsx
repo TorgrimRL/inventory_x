@@ -1,3 +1,13 @@
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -44,69 +54,32 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div style={styles.container}>
-      <div
-        style={{ ...styles.card, textAlign: styles.card.textAlign as "center" }}
-      >
-        <h2>Forgot Password</h2>
+    <Container maxWidth="sm">
+      <Paper elevation={1} sx={{ p: 4, mt: 6 }}>
+        <Stack spacing={3} alignItems="center">
+          <Typography variant="h5">Forgot Password</Typography>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-            required
-          />
+          <Box component="form" onSubmit={handleSubmit} width="100%">
+            <Stack spacing={2}>
+              <TextField
+                label="Email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+              />
 
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "Sending..." : "Submit"}
-          </button>
-        </form>
+              <Button type="submit" variant="contained" disabled={loading}>
+                {loading ? "Sending..." : "Submit"}
+              </Button>
+            </Stack>
+          </Box>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {message && <p style={styles.success}>{message}</p>}
-      </div>
-    </div>
+          {error && <Alert severity="error">{error}</Alert>}
+          {message && <Alert severity="success">{message}</Alert>}
+        </Stack>
+      </Paper>
+    </Container>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "400px",
-  },
-  card: {
-    padding: "2rem",
-    borderRadius: "8px",
-    width: "320px",
-    textAlign: "center",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    margin: "10px 0",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "4px",
-    border: "none",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    marginTop: "10px",
-  },
-  success: {
-    color: "green",
-    marginTop: "10px",
-  },
-};

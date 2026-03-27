@@ -83,7 +83,30 @@ jobs:
             echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
 
             export TAG=${{ env.TAG }}
+            
+            echo "Pulling latest images..."
             docker compose -f docker-compose.prod.yml pull
+            
+            echo "Stopping stack and wiping database volume..."
+            docker compose -f docker-compose.prod.yml down -v --remove-orphans
+            
+            echo "Starting fresh stack..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            echo "Waiting for web container and seed commands to be ready..."
+            for i in $(seq 1 20); do
+              if docker compose -f docker-compose.prod.yml exec -T web sh -lc "uv run python manage.py seed_users --force && uv run python manage.py seed_inventory"; then
+                echo "Seed completed successfully."
+                break
+              fi
+              if [ "$i" -eq 20 ]; then
+                echo "Seeding failed after multiple attempts."
+                docker compose -f docker-compose.prod.yml logs --no-color
+                exit 1
+              fi
+              echo "Seed not ready yet, retrying in 5 seconds..."
+              sleep 5
+            done
 
+            echo "Cleaning old images..."
             docker image prune -f

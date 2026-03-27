@@ -76,7 +76,7 @@ describe("EditItemModal - user story tests", () => {
     await user.clear(thresholdInput);
     await user.type(thresholdInput, "4");
 
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -130,7 +130,7 @@ describe("EditItemModal - user story tests", () => {
     expect(priceInput).toBeDisabled();
     expect(thresholdInput).toBeDisabled();
 
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -147,6 +147,7 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onStockUpdated).toHaveBeenCalledWith(10);
     expect(props.onClose).toHaveBeenCalled();
   });
+
   test("owner: invalid price blocks save and does not call backend", async () => {
     const user = userEvent.setup();
     renderModal({ canEditDetails: true });
@@ -187,7 +188,7 @@ describe("EditItemModal - user story tests", () => {
     await user.type(nameInput, "New Name");
 
     // amount can stay 0 (no stock change)
-    const amountInput = within(dialog).getByRole("textbox", {
+    const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
     await user.clear(amountInput);
@@ -279,6 +280,7 @@ describe("EditItemModal - user story tests", () => {
       ).not.toBeInTheDocument();
     });
   });
+
   test("owner: invalid low stock threshold blocks save and does not call backend", async () => {
     const user = userEvent.setup();
     renderModal({ canEditDetails: true, initialLowStockThreshold: 2 });
@@ -299,6 +301,7 @@ describe("EditItemModal - user story tests", () => {
     expect(mockedUpdateItem).not.toHaveBeenCalled();
     expect(mockedAdjustStock).not.toHaveBeenCalled();
   });
+
   test("owner: can clear low stock threshold back to null", async () => {
     mockedUpdateItem.mockResolvedValueOnce({} as any);
 

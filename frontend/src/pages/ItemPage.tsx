@@ -428,11 +428,6 @@ export default function ItemPage() {
                   onClick={resetListControls}
                   variant="contained"
                   color="inherit"
-                  sx={{
-                    bgcolor: "grey.300",
-                    color: "text.primary",
-                    "&:hover": { bgcolor: "grey.400" },
-                  }}
                 >
                   Reset
                 </Button>
