@@ -29,13 +29,15 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
 
 
 class Command(BaseCommand):
-    help = "Seeds database with mock inventory data and realistic historical \
-            StockLog entries with randomized actors."
+    help = (
+        "Seeds database with mock inventory data (items +"
+        " inventories + memberships)"
+    )
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
 
-        # Static UUIDs for manual testing consistency
+        # Static UUIDs for manual testing
         STATIC_INV_UUID = uuid.UUID("11111111-1111-1111-1111-111111111111")
         STATIC_ITEM_UUID = uuid.UUID("22222222-2222-2222-2222-222222222222")
 
@@ -51,8 +53,8 @@ class Command(BaseCommand):
 
         if missing:
             raise CommandError(
-                f"Missing users {missing}. \
-                        Run `python manage.py seed_users` first."
+                f"Missing users {missing}."
+                f"   Run `python manage.py seed_users` first."
             )
 
         admin = users["admin@example.com"]
@@ -68,35 +70,36 @@ class Command(BaseCommand):
             return self.simulated_time
 
         with transaction.atomic():
-            self.stdout.write("Wiping old inventory data...")
+            # Delete in safe order for FK changes
             InventoryMembership.objects.all().delete()
-            StockLog.objects.all().delete()
             InventoryItem.objects.all().delete()
             Inventory.objects.all().delete()
 
-            # --- 1. Inventories ---
+            # --- Inventories ---
             inv_specs = [
-                ("Ola AS", "123456789"),
-                ("Jessica Cookies AS", "444555666"),
+                ("Ola AS", "123456789"),  # Ola's bookstore
+                ("Jessica Cookies AS", "444555666"),  # Jessica's cookie shop
                 ("Kari AS", "987654321"),
                 ("Nordic Tools AS", "111222333"),
                 ("Fjord Supply AS", "222333444"),
                 ("Oslo Retail AS", "333444555"),
             ]
 
+            inventories: list[Inventory] = []
             inventories_by_name: dict[str, Inventory] = {}
+
             for name, org in inv_specs:
-                inv = Inventory.objects.create(
-                    id=STATIC_INV_UUID if name == "Ola AS" else uuid.uuid4(),
-                    name=name,
-                    org_number=org,
-                )
+                inv_kwargs = {"name": name, "org_number": org}
+                if name == "Ola AS":
+                    inv_kwargs["id"] = str(STATIC_INV_UUID)
+
+                inv = Inventory(**inv_kwargs)
+                inv.full_clean()
+                inv.save()
+                inventories.append(inv)
                 inventories_by_name[name] = inv
 
-            # --- 2. Memberships ---
-            # MUST be created before items so that StockLogs have actors
-            # to select from
-
+            # --- Memberships ---
             # Admin owns everything
             for inv in inventories_by_name.values():
                 InventoryMembership.objects.create(
@@ -125,8 +128,8 @@ class Command(BaseCommand):
                 role=InventoryMembership.Role.OWNER,
             )
 
-            # --- 3. Catalogs ---
-            # Retaining the expanded catalogs from the `main` branch
+            # --- Items ---
+            # Ola: bookstore / author event (Jo Nesbø)
             ola_catalog = [
                 ("Grunnboka — Eyvind Hellstrøm", 449),
                 ("Ufred — Åsne Seierstad", 449),
@@ -188,6 +191,7 @@ class Command(BaseCommand):
                 ("Let them-teorien — Mel Robbins", 399),
             ]
 
+            # Jessica: cookie shop / production + popup store
             jessica_catalog = [
                 # Signatur-cookies (TikTok/viral style)
                 ("NY-style Chocolate Chip Cookie (single)", 79),
@@ -252,6 +256,7 @@ class Command(BaseCommand):
                 ("Tape (6-pack)", 129),
             ]
 
+            # Generic set for other inventories (small, neutral)
             generic_catalog = [
                 ("Shipping Boxes (20 pcs)", 199),
                 ("Label Roll", 79),
@@ -259,7 +264,6 @@ class Command(BaseCommand):
                 ("Disposable Gloves (100 pcs)", 99),
             ]
 
-            # --- 4. Item Creation Logic ---
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
                 # Fetch members specifically for this inventory
                 members = [
