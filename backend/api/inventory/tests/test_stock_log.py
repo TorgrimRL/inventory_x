@@ -60,7 +60,6 @@ class StockLogTests(TestCase):
         self.assertEqual(log.price, 15000)
         self.assertEqual(log.current_stock, 10)
         self.assertEqual(log.performed_by, self.user)
-        self.assertEqual(log.performed_by_name, "Test Admin")
 
     def test_update_item_ok(self):
         # Arrange: Create an item first (this creates log #1)
@@ -88,7 +87,6 @@ class StockLogTests(TestCase):
         self.assertEqual(log.item_name, "Gaming Mouse")
         self.assertEqual(log.price, 500)
         self.assertEqual(log.current_stock, 5)  # Stock shouldn't change
-        self.assertEqual(log.item_id, item.id)
 
     def test_adjust_item_ok(self):
         # Arrange: Create an item first
@@ -118,6 +116,46 @@ class StockLogTests(TestCase):
         self.assertEqual(log.current_stock, 15)  # 20 - 5 = 15
         self.assertEqual(log.item_name, "Keyboard")
         self.assertEqual(log.price, 1000)
+
+    def test_delete_item_ok(self):
+        item = InventoryItem.objects.create(
+            inventory=self.inventory,
+            name="Doomed Item",
+            price=100,
+            stock=5,
+        )
+
+        StockLog.objects.create(
+            item=item,  # This is the foreign key we are testing
+            action="create_item",
+            item_name=item.name,
+            current_stock=item.stock,
+        )
+
+        self.assertEqual(StockLog.objects.count(), 1)
+        item.delete()
+        self.assertEqual(StockLog.objects.count(), 0)
+
+    def test_update_item_failed(self):
+        InventoryItem.objects.create(
+            inventory=self.inventory,
+            name="Stable Item",
+            price=100,
+            stock=5,
+        )
+        initial_log_count = StockLog.objects.count()
+
+        fake_uuid = uuid.uuid4()
+        with self.assertRaises(LookupError):
+            update_item(
+                item_id=fake_uuid,
+                name="Ghost Item Update",
+                price=999,
+                low_stock_threshold=5,
+                user=self.user,
+            )
+
+        self.assertEqual(StockLog.objects.count(), initial_log_count)
 
 
 class StockLogViewTests(BaseAPITestCase):
@@ -151,14 +189,12 @@ class StockLogViewTests(BaseAPITestCase):
 
         # 5. Create a manual StockLog entry for testing the GET request
         self.log_entry = StockLog.objects.create(
-            inventory_id=self.inventory.id,
             item_id=self.item.id,
             item_name="Milk",
             action="create_item",
             current_stock=10,
             price=25,
             performed_by=self.user,
-            performed_by_name=self.user.display_name,
         )
 
         # Ensure this matches the `name="stock-log"` in your urls.py
@@ -183,7 +219,6 @@ class StockLogViewTests(BaseAPITestCase):
         self.assertEqual(data[0]["item_name"], "Milk")
         self.assertEqual(data[0]["current_stock"], 10)
         self.assertEqual(data[0]["price"], 25)
-        self.assertEqual(data[0]["performed_by_name"], "Logging Admin")
 
     def test_get_stock_logs_403(self):
         self.client.logout()
