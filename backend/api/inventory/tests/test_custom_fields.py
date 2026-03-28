@@ -1,8 +1,11 @@
-from typing import Any
-
 from django.contrib.auth import get_user_model
-from rest_framework import serializers, status
+from rest_framework import status
 
+from api.inventory.contracts.create_item import CREATE_ITEM_RESPONSES
+from api.inventory.contracts.custom_field import (
+    CREATE_CUSTOM_FIELD_RESPONSES,
+)
+from api.inventory.contracts.list_items import LIST_ITEMS_RESPONSES
 from api.inventory.models import (
     Inventory,
     InventoryCustomField,
@@ -12,28 +15,6 @@ from api.inventory.models import (
 from api.tests.base import BaseAPITestCase
 
 User = get_user_model()
-
-
-# --- TDD Placeholders for Contracts ---
-class DummySerializer(serializers.Serializer):
-    def to_internal_value(self, data: Any) -> Any:
-        return data
-
-    def to_representation(self, instance: Any) -> Any:
-        return instance
-
-
-# Added dict[int, Any] type hints to satisfy assert_contract signature
-CREATE_CUSTOM_FIELD_CONTRACT: dict[int, Any] = {
-    status.HTTP_201_CREATED: DummySerializer,
-    status.HTTP_400_BAD_REQUEST: DummySerializer,
-}
-CREATE_ITEM_CONTRACT: dict[int, Any] = {
-    status.HTTP_201_CREATED: DummySerializer,
-    status.HTTP_400_BAD_REQUEST: DummySerializer,
-}
-LIST_ITEMS_CONTRACT: dict[int, Any] = {status.HTTP_200_OK: DummySerializer}
-# --------------------------------------
 
 
 class InventoryCustomFieldsTests(BaseAPITestCase):
@@ -53,9 +34,11 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
             role="OWNER",
         )
 
-        self.custom_fields_url = (
-            f"/api/inventory/inventories/{self.inventory.id}/custom-fields/"
-        )
+        session = self.client.session
+        session["active_inventory_id"] = str(self.inventory.id)
+        session.save()
+
+        self.custom_fields_url = "/api/inventory/active/fields"
         self.items_url = "/api/inventory/items/"
         self.inventory_items_url = (
             f"/api/inventory/inventories/{self.inventory.id}/items/"
@@ -68,7 +51,7 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
         )
 
         self.assert_contract(
-            response, CREATE_CUSTOM_FIELD_CONTRACT, status.HTTP_201_CREATED
+            response, CREATE_CUSTOM_FIELD_RESPONSES, status.HTTP_201_CREATED
         )
         self.assertEqual(InventoryCustomField.objects.count(), 1)
 
@@ -84,7 +67,7 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
         )
 
         self.assert_contract(
-            response, CREATE_CUSTOM_FIELD_CONTRACT, status.HTTP_400_BAD_REQUEST
+            response, CREATE_CUSTOM_FIELD_RESPONSES, status.HTTP_400_BAD_REQUEST
         )
         self.assertEqual(InventoryCustomField.objects.count(), 0)
         self.assertIn("already exists", str(response.data).lower())
@@ -104,7 +87,7 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
         response = self.client.post(self.items_url, payload, format="json")
 
         self.assert_contract(
-            response, CREATE_ITEM_CONTRACT, status.HTTP_201_CREATED
+            response, CREATE_ITEM_RESPONSES, status.HTTP_201_CREATED
         )
         self.assertEqual(InventoryItem.objects.count(), 1)
 
@@ -125,7 +108,7 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
         response = self.client.post(self.items_url, payload, format="json")
 
         self.assert_contract(
-            response, CREATE_ITEM_CONTRACT, status.HTTP_400_BAD_REQUEST
+            response, CREATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
         )
         self.assertEqual(InventoryItem.objects.count(), 0)
         self.assertIn("does not exist", str(response.data).lower())
@@ -145,7 +128,7 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
 
         response = self.client.get(self.inventory_items_url)
 
-        self.assert_contract(response, LIST_ITEMS_CONTRACT, status.HTTP_200_OK)
+        self.assert_contract(response, LIST_ITEMS_RESPONSES, status.HTTP_200_OK)
 
         data = response.data
         results = (
@@ -163,3 +146,5 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
         self.assertEqual(
             item_data["custom_fields"][str(custom_field.id)], "Blue"
         )
+
+    # TODO: Tests for deletion of custom fields
