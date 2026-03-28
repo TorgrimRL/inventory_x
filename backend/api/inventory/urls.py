@@ -36,7 +36,7 @@ urlpatterns = [
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
     path(
-        "<uuid:item_id>/stock-log/",
+        "active/<uuid:item_id>/stock-log/",
         StockLogView.as_view(),
         name="stock-log",
     ),

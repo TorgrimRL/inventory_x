@@ -59,7 +59,7 @@ export default function StockLogDialog({
 
       setError(null);
 
-      fetch(`/api/inventory/${itemId}/stock-log`, {
+      fetch(`/api/inventory/active/${itemId}/stock-log`, {
         headers: {
           "Content-Type": "application/json",
         },
