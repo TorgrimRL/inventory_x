@@ -282,7 +282,9 @@ export default function ItemPage() {
   const categoryNameById = useMemo(
     () =>
       new Map(
-        categories.map((category) => [String(category.id), category.name] as const),
+        categories.map(
+          (category) => [String(category.id), category.name] as const,
+        ),
       ),
     [categories],
   );
@@ -527,8 +529,17 @@ export default function ItemPage() {
                 value={selectedCategoryIds}
                 onChange={(e) => {
                   const value = e.target.value;
+                  const nextIds = Array.isArray(value)
+                    ? value.map(String)
+                    : String(value).split(",");
+
+                  if (nextIds.includes("__no_category__")) {
+                    setSelectedCategoryIds(["__no_category__"]);
+                    return;
+                  }
+
                   setSelectedCategoryIds(
-                    Array.isArray(value) ? value : String(value).split(","),
+                    nextIds.filter((id) => id !== "__no_category__"),
                   );
                 }}
                 sx={{ minWidth: 260 }}
@@ -633,7 +644,6 @@ export default function ItemPage() {
                   Reset
                 </Button>
               </Stack>
-
             </Stack>
 
             <Typography
@@ -686,7 +696,7 @@ export default function ItemPage() {
                   <Table size="medium" sx={{ minWidth: 900 }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>
+                        <TableCell sx={{ fontWeight: 600, width: "46%" }}>
                           <TableSortLabel
                             active={sortField === "name"}
                             hideSortIcon={false}
@@ -699,7 +709,9 @@ export default function ItemPage() {
                             Product name
                           </TableSortLabel>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 600, width: "12%" }}>
+                          Category
+                        </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
                           <TableSortLabel
                             active={sortField === "stock"}
@@ -763,10 +775,15 @@ export default function ItemPage() {
                     <TableBody>
                       {pagedItems.map((item) => (
                         <TableRow key={item.id} hover>
-                          <TableCell>{item.name}</TableCell>
+                          <TableCell sx={{ whiteSpace: "normal" }}>
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             {canEditDetails ? (
-                              <Stack spacing={1} sx={{ minWidth: 260 }}>
+                              <Stack
+                                spacing={1}
+                                sx={{ minWidth: 160, maxWidth: 190 }}
+                              >
                                 <TextField
                                   select
                                   size="small"
@@ -788,15 +805,20 @@ export default function ItemPage() {
                                   SelectProps={{
                                     multiple: true,
                                     onOpen: () => {
-                                      const currentIds = (item.category_ids || []).map(String);
+                                      const currentIds = (
+                                        item.category_ids || []
+                                      ).map(String);
                                       setEditingCategoryItemId(item.id);
                                       setEditingCategoryIds(currentIds);
                                       setOriginalEditingCategoryIds(currentIds);
                                     },
                                     onClose: () => {
-                                      if (editingCategoryItemId !== item.id) return;
+                                      if (editingCategoryItemId !== item.id)
+                                        return;
 
-                                      const before = [...originalEditingCategoryIds]
+                                      const before = [
+                                        ...originalEditingCategoryIds,
+                                      ]
                                         .map(String)
                                         .sort()
                                         .join(",");
@@ -822,19 +844,25 @@ export default function ItemPage() {
                                     },
                                     renderValue: (selected) => {
                                       const ids = selected as string[];
-                                      if (ids.length === 0) return "No category added";
+                                      if (ids.length === 0)
+                                        return "No category added";
                                       return renderCategoryNames(ids);
                                     },
                                   }}
-                                  sx={{ minWidth: 240 }}
+                                  sx={{ minWidth: 160, maxWidth: 190 }}
                                 >
                                   {categories.map((category) => (
-                                    <MenuItem key={category.id} value={category.id}>
+                                    <MenuItem
+                                      key={category.id}
+                                      value={category.id}
+                                    >
                                       <Checkbox
-                                        checked={(
-                                          editingCategoryItemId === item.id
-                                            ? editingCategoryIds
-                                            : (item.category_ids || []).map(String)
+                                        checked={(editingCategoryItemId ===
+                                        item.id
+                                          ? editingCategoryIds
+                                          : (item.category_ids || []).map(
+                                              String,
+                                            )
                                         ).includes(String(category.id))}
                                         size="small"
                                       />
@@ -844,7 +872,9 @@ export default function ItemPage() {
                                 </TextField>
                               </Stack>
                             ) : (
-                              renderCategoryNames((item.category_ids || []).map(String))
+                              renderCategoryNames(
+                                (item.category_ids || []).map(String),
+                              )
                             )}
                           </TableCell>
                           <TableCell align="right">{item.stock}</TableCell>
@@ -1066,7 +1096,6 @@ export default function ItemPage() {
                 ))}
               </TextField>
 
-
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   label="Price"
@@ -1133,7 +1162,6 @@ export default function ItemPage() {
           </DialogActions>
         </Box>
       </Dialog>
-
 
       {selectedItem && (
         <EditItemModal

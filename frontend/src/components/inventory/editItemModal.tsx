@@ -405,7 +405,6 @@ export default function EditItemModal({
               />
             )}
 
-
             <Divider />
 
             <Typography variant="subtitle1">Stock</Typography>
