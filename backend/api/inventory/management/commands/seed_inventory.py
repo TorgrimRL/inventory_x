@@ -291,7 +291,6 @@ class Command(BaseCommand):
                     ts_creation = get_next_timestamp()
 
                     log = StockLog.objects.create(
-                        inventory=inventory,
                         item_id=item.id,
                         item_name=item.name,
                         action="create_item",
@@ -299,7 +298,6 @@ class Command(BaseCommand):
                         current_stock=item.stock,
                         price=item.price,
                         performed_by=actor,
-                        performed_by_name=actor.display_name or actor.email,
                     )
                     # Force the historical timestamp
                     StockLog.objects.filter(pk=log.pk).update(
@@ -325,7 +323,6 @@ class Command(BaseCommand):
                             current_stock += adj_amount
 
                         adj_log = StockLog.objects.create(
-                            inventory=inventory,
                             item_id=item.id,
                             item_name=item.name,
                             action="adjust_stock",
@@ -334,8 +331,6 @@ class Command(BaseCommand):
                             current_stock=current_stock,
                             price=item.price,
                             performed_by=adj_actor,
-                            performed_by_name=adj_actor.display_name
-                            or adj_actor.email,
                         )
                         StockLog.objects.filter(pk=adj_log.pk).update(
                             timestamp=ts_adj

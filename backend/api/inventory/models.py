@@ -133,14 +133,13 @@ class StockLog(models.Model):
     Audit log for actions performed on Inventory items.
     """
 
-    # Context
-    inventory = models.ForeignKey(
-        Inventory, on_delete=models.CASCADE, editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     # Item State
-    item_id = models.UUIDField(null=True, blank=True)
+    item = models.ForeignKey(
+        "InventoryItem", on_delete=models.CASCADE, null=True, blank=True
+    )
     item_name = models.CharField(max_length=255, null=True, blank=True)
     price = models.IntegerField(null=True, blank=True)
 
@@ -154,7 +153,6 @@ class StockLog(models.Model):
     performed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
     )
-    performed_by_name = models.CharField(max_length=80, null=True, blank=True)
 
     class Meta:
         ordering = ("-timestamp",)
