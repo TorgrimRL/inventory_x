@@ -22,7 +22,7 @@ from api.inventory.services.categories import (
 
 
 class CategoryView(views.APIView):
-    permission_classes = (IsAuthenticated, IsActiveInventoryOwner)
+    permission_classes = (IsAuthenticated,)
 
     @extend_schema(
         summary="List categories",
@@ -39,6 +39,8 @@ class CategoryView(views.APIView):
         responses=CREATE_CATEGORY_RESPONSES,
     )
     def post(self, request: Request) -> Response:
+        if not IsActiveInventoryOwner().has_permission(request, self):
+            return Response(status=status.HTTP_403_FORBIDDEN)
         membership = get_active_membership_or_raise(request)
         serializer = CategorySerializer(data=request.data)
 

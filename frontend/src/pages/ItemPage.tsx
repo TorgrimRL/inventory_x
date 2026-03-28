@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   Alert,
   Box,
@@ -39,6 +40,7 @@ import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ApiClient from "../services/apiClient.ts";
 import {
   createActiveCategory,
+  deleteActiveCategory,
   getActiveInventory,
   listActiveCategories,
   updateItem,
@@ -99,7 +101,6 @@ export default function ItemPage() {
 
   const [name, setName] = useState("");
   const [newItemCategoryIds, setNewItemCategoryIds] = useState<string[]>([]);
-  const [newItemCategoryName, setNewItemCategoryName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -127,10 +128,24 @@ export default function ItemPage() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [page, setPage] = useState(0);
+  const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
+    null,
+  );
+  const [editingCategoryItemId, setEditingCategoryItemId] = useState<
+    string | number | null
+  >(null);
+  const [editingCategoryIds, setEditingCategoryIds] = useState<string[]>([]);
+  const [originalEditingCategoryIds, setOriginalEditingCategoryIds] = useState<
+    string[]
+  >([]);
 
   const [sortField, setSortField] = useState<
     "name" | "stock" | "price" | "low_stock_threshold" | "status"
@@ -181,7 +196,6 @@ export default function ItemPage() {
   function openDialog() {
     setError(null);
     setNewItemCategoryIds([]);
-    setNewItemCategoryName("");
     setNewItemLowStockThreshold("");
     setOpen(true);
   }
@@ -220,15 +234,6 @@ export default function ItemPage() {
     let categoryIdsToSave = [...newItemCategoryIds];
 
     try {
-      const newCategoryTrimmed = newItemCategoryName.trim();
-      if (newCategoryTrimmed.length > 0) {
-        const createdCategory = await createActiveCategory(newCategoryTrimmed);
-        setCategories((prev) => [...prev, createdCategory]);
-        categoryIdsToSave = [
-          ...new Set([...categoryIdsToSave, createdCategory.id]),
-        ];
-      }
-
       const payload = {
         name: name.trim(),
         price: Number(price),
@@ -238,21 +243,10 @@ export default function ItemPage() {
       };
 
       const res = await ApiClient.post("/api/inventory/", payload);
-      let created = res.data as InventoryItem;
-
-      if (categoryIdsToSave.length > 0) {
-        const updated = await updateItem(created.id, {
-          name: created.name,
-          price: Number(created.price),
-          low_stock_threshold: created.low_stock_threshold ?? null,
-          category_ids: categoryIdsToSave,
-        });
-        created = {
-          ...created,
-          ...updated,
-          category_ids: categoryIdsToSave,
-        } as InventoryItem;
-      }
+      const created = {
+        ...(res.data as InventoryItem),
+        category_ids: categoryIdsToSave,
+      } as InventoryItem;
 
       setItems((prev) => [
         ...prev,
@@ -268,7 +262,6 @@ export default function ItemPage() {
       setOpen(false);
       setName("");
       setNewItemCategoryIds([]);
-      setNewItemCategoryName("");
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
@@ -289,10 +282,22 @@ export default function ItemPage() {
   const categoryNameById = useMemo(
     () =>
       new Map(
-        categories.map((category) => [category.id, category.name] as const),
+        categories.map((category) => [String(category.id), category.name] as const),
       ),
     [categories],
   );
+
+  function renderCategoryNames(ids?: string[]) {
+    if (!ids || ids.length === 0) return "-";
+
+    const mapped = ids
+      .map((id) => categoryNameById.get(String(id)) || null)
+      .filter((name): name is string => Boolean(name));
+
+    if (mapped.length > 0) return mapped.join(", ");
+
+    return ids.join(", ");
+  }
 
   const displayedItems = useMemo(() => {
     const q = searchInput.trim().toLowerCase();
@@ -385,6 +390,38 @@ export default function ItemPage() {
     setSearchInput("");
   }
 
+  async function handleInlineCategoryChange(
+    item: InventoryItem,
+    nextCategoryIds: string[],
+  ) {
+    setCategoryError(null);
+    setUpdatingItemId(item.id);
+    try {
+      await updateItem(item.id, {
+        name: item.name,
+        price: Number(item.price),
+        low_stock_threshold: item.low_stock_threshold ?? null,
+        category_ids: nextCategoryIds,
+      });
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === item.id ? { ...it, category_ids: nextCategoryIds } : it,
+        ),
+      );
+      setEditingCategoryItemId(null);
+      setEditingCategoryIds([]);
+      setOriginalEditingCategoryIds([]);
+      setSnackMessage("Item categories updated");
+      setSnackOpen(true);
+    } catch (err: any) {
+      const detail =
+        err?.response?.data?.detail || "Failed to update item categories.";
+      setCategoryError(String(detail));
+    } finally {
+      setUpdatingItemId(null);
+    }
+  }
+
   function resetListControls() {
     setSortField("stock");
     setSortDirection("asc");
@@ -402,6 +439,35 @@ export default function ItemPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{error}</Alert>}
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            justifyContent="flex-end"
+          >
+            {canEditDetails && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<SettingsIcon />}
+                onClick={() => {
+                  setCategoryError(null);
+                  setCategoryDialogOpen(true);
+                }}
+              >
+                Manage categories
+              </Button>
+            )}
+            {canEditDetails && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openDialog}
+              >
+                Add item
+              </Button>
+            )}
+          </Stack>
 
           <Paper sx={{ p: 2.5 }}>
             <Stack
@@ -568,13 +634,6 @@ export default function ItemPage() {
                 </Button>
               </Stack>
 
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={openDialog}
-              >
-                Add item
-              </Button>
             </Stack>
 
             <Typography
@@ -706,12 +765,87 @@ export default function ItemPage() {
                         <TableRow key={item.id} hover>
                           <TableCell>{item.name}</TableCell>
                           <TableCell>
-                            {(item.category_ids || []).length > 0
-                              ? (item.category_ids || [])
-                                  .map((id) => categoryNameById.get(String(id)))
-                                  .filter(Boolean)
-                                  .join(", ")
-                              : "-"}
+                            {canEditDetails ? (
+                              <Stack spacing={1} sx={{ minWidth: 260 }}>
+                                <TextField
+                                  select
+                                  size="small"
+                                  value={
+                                    editingCategoryItemId === item.id
+                                      ? editingCategoryIds
+                                      : (item.category_ids || []).map(String)
+                                  }
+                                  disabled={updatingItemId === item.id}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setEditingCategoryItemId(item.id);
+                                    setEditingCategoryIds(
+                                      Array.isArray(value)
+                                        ? value.map(String)
+                                        : String(value).split(","),
+                                    );
+                                  }}
+                                  SelectProps={{
+                                    multiple: true,
+                                    onOpen: () => {
+                                      const currentIds = (item.category_ids || []).map(String);
+                                      setEditingCategoryItemId(item.id);
+                                      setEditingCategoryIds(currentIds);
+                                      setOriginalEditingCategoryIds(currentIds);
+                                    },
+                                    onClose: () => {
+                                      if (editingCategoryItemId !== item.id) return;
+
+                                      const before = [...originalEditingCategoryIds]
+                                        .map(String)
+                                        .sort()
+                                        .join(",");
+                                      const after = [...editingCategoryIds]
+                                        .map(String)
+                                        .sort()
+                                        .join(",");
+
+                                      if (before !== after) {
+                                        void handleInlineCategoryChange(
+                                          item,
+                                          editingCategoryIds,
+                                        );
+                                      } else {
+                                        setEditingCategoryItemId(null);
+                                        setEditingCategoryIds([]);
+                                        setOriginalEditingCategoryIds([]);
+                                      }
+                                    },
+                                    MenuProps: {
+                                      disableAutoFocusItem: true,
+                                      keepMounted: true,
+                                    },
+                                    renderValue: (selected) => {
+                                      const ids = selected as string[];
+                                      if (ids.length === 0) return "No category added";
+                                      return renderCategoryNames(ids);
+                                    },
+                                  }}
+                                  sx={{ minWidth: 240 }}
+                                >
+                                  {categories.map((category) => (
+                                    <MenuItem key={category.id} value={category.id}>
+                                      <Checkbox
+                                        checked={(
+                                          editingCategoryItemId === item.id
+                                            ? editingCategoryIds
+                                            : (item.category_ids || []).map(String)
+                                        ).includes(String(category.id))}
+                                        size="small"
+                                      />
+                                      <ListItemText primary={category.name} />
+                                    </MenuItem>
+                                  ))}
+                                </TextField>
+                              </Stack>
+                            ) : (
+                              renderCategoryNames((item.category_ids || []).map(String))
+                            )}
                           </TableCell>
                           <TableCell align="right">{item.stock}</TableCell>
                           <TableCell align="right">
@@ -762,6 +896,121 @@ export default function ItemPage() {
           </Paper>
         </Stack>
       </Container>
+
+      <Dialog
+        open={categoryDialogOpen}
+        onClose={() => {
+          if (!categorySaving) {
+            setCategoryError(null);
+            setCategoryDialogOpen(false);
+          }
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Manage categories</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {categoryError && <Alert severity="error">{categoryError}</Alert>}
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <TextField
+                label="New category"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                fullWidth
+                disabled={categorySaving}
+              />
+              <Button
+                variant="contained"
+                disabled={categorySaving || !categoryName.trim()}
+                onClick={async () => {
+                  setCategoryError(null);
+                  setCategorySaving(true);
+                  try {
+                    const created = await createActiveCategory(
+                      categoryName.trim(),
+                    );
+                    setCategories((prev) => [...prev, created]);
+                    setCategoryName("");
+                    setSnackMessage("Category created");
+                    setSnackOpen(true);
+                  } catch (err: any) {
+                    const detail =
+                      err?.response?.data?.detail ||
+                      err?.response?.data?.name?.[0] ||
+                      "A category with this name already exists.";
+                    setCategoryError(String(detail));
+                  } finally {
+                    setCategorySaving(false);
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </Stack>
+
+            <Stack spacing={1}>
+              {categories.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No categories yet.
+                </Typography>
+              ) : (
+                categories.map((category) => (
+                  <Stack
+                    key={category.id}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography>{category.name}</Typography>
+                    <Button
+                      color="error"
+                      onClick={async () => {
+                        setCategoryError(null);
+                        try {
+                          await deleteActiveCategory(category.id);
+                          setCategories((prev) =>
+                            prev.filter((c) => c.id !== category.id),
+                          );
+                          setItems((prev) =>
+                            prev.map((item) => ({
+                              ...item,
+                              category_ids: (item.category_ids || []).filter(
+                                (id) => String(id) !== category.id,
+                              ),
+                            })),
+                          );
+                          setSnackMessage("Category deleted");
+                          setSnackOpen(true);
+                        } catch (err: any) {
+                          const detail =
+                            err?.response?.data?.detail ||
+                            "Failed to delete category.";
+                          setCategoryError(String(detail));
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
+                ))
+              )}
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setCategoryError(null);
+              setCategoryDialogOpen(false);
+            }}
+            disabled={categorySaving}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
@@ -817,38 +1066,6 @@ export default function ItemPage() {
                 ))}
               </TextField>
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <TextField
-                  label="New category"
-                  value={newItemCategoryName}
-                  onChange={(e) => setNewItemCategoryName(e.target.value)}
-                  fullWidth
-                  disabled={saving}
-                  helperText="Optional: create new category"
-                />
-                <Button
-                  variant="outlined"
-                  disabled={saving || !newItemCategoryName.trim()}
-                  onClick={async () => {
-                    try {
-                      const createdCategory = await createActiveCategory(
-                        newItemCategoryName.trim(),
-                      );
-                      setCategories((prev) => [...prev, createdCategory]);
-                      setNewItemCategoryIds((prev) =>
-                        prev.includes(createdCategory.id)
-                          ? prev
-                          : [...prev, createdCategory.id],
-                      );
-                      setNewItemCategoryName("");
-                    } catch {
-                      setError("Failed to create category.");
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </Stack>
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
@@ -916,6 +1133,7 @@ export default function ItemPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
 
       {selectedItem && (
         <EditItemModal
