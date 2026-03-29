@@ -2,7 +2,10 @@ from typing import Any
 
 from rest_framework import status
 
-from api.common.serializers import ErrorResponseSerializer
+from api.common.serializers import (
+    ErrorResponseSerializer,
+    ValidationErrorResponseSerializer,
+)
 from api.inventory.serializers.custom_field import (
     InventoryCustomFieldSerializer,
 )
@@ -13,7 +16,7 @@ GET_CUSTOM_FIELDS_RESPONSES: dict[int, Any] = {
 
 CREATE_CUSTOM_FIELD_RESPONSES: dict[int, Any] = {
     status.HTTP_201_CREATED: InventoryCustomFieldSerializer,
-    status.HTTP_400_BAD_REQUEST: ErrorResponseSerializer,
+    status.HTTP_400_BAD_REQUEST: ValidationErrorResponseSerializer,
     status.HTTP_403_FORBIDDEN: ErrorResponseSerializer,
 }
 

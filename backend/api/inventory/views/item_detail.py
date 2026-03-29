@@ -24,7 +24,9 @@ class ItemDetailView(views.APIView):
     )
     def patch(self, request: Request, item_id: UUID) -> Response:
         membership = get_active_membership_or_raise(request)
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}, partial=True
+        )
 
         if not serializer.is_valid():
             return Response(
@@ -33,41 +35,29 @@ class ItemDetailView(views.APIView):
             )
 
         try:
-            item = update_item(
+            updated = update_item(
                 inventory_id=membership.inventory.id,
                 item_id=item_id,
-                name=serializer.validated_data["name"],
-                price=serializer.validated_data["price"],
+                name=serializer.validated_data.get("name"),
+                price=serializer.validated_data.get("price"),
                 low_stock_threshold=serializer.validated_data.get(
                     "low_stock_threshold"
                 ),
                 category_ids=serializer.validated_data.get("category_ids"),
+                custom_fields=serializer.validated_data.get("custom_fields"),
             )
-        except ValueError as exc:
+            return Response(updated, status=status.HTTP_200_OK)
+
+        except ValueError as e:
             return Response(
-                {"detail": {"non_field_errors": [str(exc)]}},
+                {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except LookupError as exc:
+        except Exception:
             return Response(
-                {"detail": str(exc)},
-                status=status.HTTP_404_NOT_FOUND,
+                {"detail": "Internal processing error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        return Response(
-            {
-                "id": item.id,
-                "name": item.name,
-                "price": item.price,
-                "stock": item.stock,
-                "category_ids": [
-                    category.id for category in item.categories.all()
-                ],
-                "low_stock_threshold": item.low_stock_threshold,
-                "message": "Item updated",
-            },
-            status=status.HTTP_200_OK,
-        )
 
     @extend_schema(responses=DELETE_ITEM_RESPONSES)
     def delete(
