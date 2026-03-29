@@ -32,6 +32,7 @@ import { useEffect, useMemo, useState } from "react";
 import EditItemModal from "../components/inventory/editItemModal";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import StockLog from "../components/inventory/StockLog"; // Adjust import path
 import ApiClient from "../services/apiClient.ts";
 import { getActiveInventory } from "../services/inventoryService";
 
@@ -126,6 +127,17 @@ export default function ItemPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
+  const [selectedLogItemId, setSelectedLogItemId] = useState<
+    number | string | null
+  >(null);
+
+  const handleOpenStockLog = (id: number | string) => {
+    setSelectedLogItemId(id);
+  };
+
+  const handleCloseStockLog = () => {
+    setSelectedLogItemId(null);
+  };
 
   async function loadItems() {
     setLoading(true);
@@ -533,7 +545,15 @@ export default function ItemPage() {
                   <TableBody>
                     {displayedItems.map((item) => (
                       <TableRow key={item.id} hover>
-                        <TableCell>{item.name}</TableCell>
+                        <TableCell
+                          onClick={() => handleOpenStockLog(item.id)}
+                          sx={{
+                            cursor: "pointer",
+                            color: "primary.main",
+                          }}
+                        >
+                          {item.name}
+                        </TableCell>
                         <TableCell align="right">{item.stock}</TableCell>
                         <TableCell align="right">
                           {new Intl.NumberFormat("nb-NO", {
@@ -732,6 +752,12 @@ export default function ItemPage() {
           {snackMessage}
         </Alert>
       </Snackbar>
+
+      <StockLog
+        open={Boolean(selectedLogItemId)}
+        itemId={selectedLogItemId}
+        onClose={handleCloseStockLog}
+      />
     </Box>
   );
 }
