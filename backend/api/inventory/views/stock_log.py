@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import views
 from rest_framework.permissions import IsAuthenticated
@@ -29,7 +31,7 @@ class StockLogView(views.APIView):
         ],
         responses=STOCK_LOG_RESPONSES,
     )
-    def get(self, req: Request, item_id: int):
+    def get(self, _req: Request, item_id: UUID) -> Response:
         logs = StockLog.objects.filter(item_id=item_id)
         serializer = StockLogSerializer(logs, many=True)
 
