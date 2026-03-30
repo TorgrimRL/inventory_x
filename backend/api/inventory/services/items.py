@@ -2,33 +2,28 @@ from uuid import UUID
 
 from django.db import transaction
 
+from api.inventory.decorators import audit_logger
 from api.inventory.models import InventoryItem, ItemCategory
 
 
 def get_all_items(inventory_id: UUID):
-    """
-    Fetches all inventory items from the database.
-    Returns them as a list of dictionaries.
-
-    Args:
-        inventory_id:
-    """
-    items_qs = (
-        InventoryItem.objects.filter(inventory_id=inventory_id)
-        .prefetch_related("categories")
-        .order_by("id")
-    )
-    return [
-        {
-            "id": item.id,
-            "name": item.name,
-            "price": item.price,
-            "stock": item.stock,
-            "low_stock_threshold": item.low_stock_threshold,
-            "category_ids": [category.id for category in item.categories.all()],
-        }
-        for item in items_qs
-    ]
+    try:
+        items = InventoryItem.objects.filter(
+            inventory_id=inventory_id
+        ).prefetch_related("categories")
+        return [
+            {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
+                "category_ids": [cat.id for cat in item.categories.all()],
+            }
+            for item in items
+        ]
+    except Exception as e:
+        raise Exception("Error fetching inventory items") from e
 
 
 def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
@@ -50,6 +45,7 @@ def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
     return categories
 
 
+@audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
     name: str,
@@ -57,6 +53,7 @@ def create_item(
     stock: int,
     low_stock_threshold=None,
     category_ids: list[UUID] | None = None,
+    user=None,
 ):
     try:
         with transaction.atomic():
@@ -89,8 +86,9 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@audit_logger("adjust_stock")
 def adjust_stock(
-    inventory_id: UUID, item_id: UUID, direction: str, amount: int
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
 ):
     """
     Adjusts stock for an inventory item.
@@ -125,6 +123,7 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@audit_logger("update_item")
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
@@ -132,6 +131,7 @@ def update_item(
     price: int,
     low_stock_threshold: int | None,
     category_ids: list[UUID] | None = None,
+    user=None,
 ):
     """
     Updates item fields. Stock is not changed here.

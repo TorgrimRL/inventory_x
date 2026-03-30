@@ -186,3 +186,33 @@ def enforce_category_inventory_match(
                 "Model Guard: Item and Category must belong "
                 "to the same inventory."
             )
+
+
+class StockLog(models.Model):
+    """
+    Audit log for actions performed on Inventory items.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Item State
+    item = models.ForeignKey(
+        "InventoryItem", on_delete=models.CASCADE, null=True, blank=True
+    )
+    item_name = models.CharField(max_length=255, null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True)
+
+    # Action Details
+    action = models.CharField(max_length=256)
+    amount = models.IntegerField(null=True, blank=True)
+    direction = models.CharField(max_length=50, null=True, blank=True)
+    current_stock = models.IntegerField(null=True, blank=True)
+
+    # Actor Details
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+
+    class Meta:
+        ordering = ("-timestamp",)

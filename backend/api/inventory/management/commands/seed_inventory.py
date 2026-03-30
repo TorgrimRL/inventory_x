@@ -1,15 +1,18 @@
 import random
 import uuid
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from api.inventory.models import (
     Inventory,
     InventoryItem,
     InventoryMembership,
     ItemCategory,
+    StockLog,
 )
 
 
@@ -54,6 +57,18 @@ class Command(BaseCommand):
                 f"Missing users {missing}."
                 f"   Run `python manage.py seed_users` first."
             )
+
+        admin = users["admin@example.com"]
+        alice = users["alice@example.com"]
+        bob = users["bob@example.com"]
+
+        # --- Simulated Time Helper ---
+        # Starts 30 days ago and moves forward to simulate history
+        self.simulated_time = timezone.now() - timedelta(days=30)
+
+        def get_next_timestamp():
+            self.simulated_time += timedelta(minutes=random.randint(10, 480))
+            return self.simulated_time
 
         with transaction.atomic():
             # Delete in safe order for FK changes
@@ -114,6 +129,35 @@ class Command(BaseCommand):
                     categories_for_inv[category_name] = created_category
 
                 categories_by_inventory[str(inv.id)] = categories_for_inv
+
+            # --- Memberships ---
+            # Admin owns everything
+            for inv in inventories_by_name.values():
+                InventoryMembership.objects.create(
+                    inventory=inv,
+                    user=admin,
+                    role=InventoryMembership.Role.OWNER,
+                )
+
+            # Alice works at Ola and Jessica's
+            InventoryMembership.objects.create(
+                inventory=inventories_by_name["Ola AS"],
+                user=alice,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
+            InventoryMembership.objects.create(
+                inventory=inventories_by_name["Jessica Cookies AS"],
+                user=alice,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
+
+            # Bob owns the last one
+            last_inv = list(inventories_by_name.values())[-1]
+            InventoryMembership.objects.create(
+                inventory=last_inv,
+                user=bob,
+                role=InventoryMembership.Role.OWNER,
+            )
 
             # --- Items ---
             # Ola: bookstore / author event (Jo Nesbø)
@@ -251,64 +295,100 @@ class Command(BaseCommand):
                 ("Disposable Gloves (100 pcs)", 99),
             ]
 
-            items_to_create: list[InventoryItem] = []
+            def seed_items_with_random_actor(inventory, catalog, is_ola=False):
+                # Fetch members specifically for this inventory
+                members = [
+                    m.user
+                    for m in InventoryMembership.objects.filter(
+                        inventory=inventory
+                    )
+                ]
 
-            # Ola gets Ola items
-            ola_inv = inventories_by_name["Ola AS"]
-            for index, (name, price) in enumerate(ola_catalog):
-                stock, low_stock_threshold = seeded_stock_and_threshold(index)
+                for index, (name, price) in enumerate(catalog):
+                    current_stock = random.randint(5, 40)
 
-                # Make firsts items UUID static
-                item_kwargs = {
-                    "inventory": ola_inv,
-                    "name": name,
-                    "price": price,
-                    "stock": stock,
-                    "low_stock_threshold": low_stock_threshold,
-                }
-                if index == 0:
-                    item_kwargs["id"] = STATIC_ITEM_UUID
-
-                items_to_create.append(InventoryItem(**item_kwargs))
-
-            # Jessica gets Jessica items
-            jessica_inv = inventories_by_name["Jessica Cookies AS"]
-            for index, (name, price) in enumerate(jessica_catalog):
-                stock, low_stock_threshold = seeded_stock_and_threshold(
-                    index + 100
-                )
-                items_to_create.append(
-                    InventoryItem(
-                        inventory=jessica_inv,
+                    item = InventoryItem.objects.create(
+                        id=STATIC_ITEM_UUID
+                        if (is_ola and index == 0)
+                        else uuid.uuid4(),
+                        inventory=inventory,
                         name=name,
                         price=price,
-                        stock=stock,
-                        low_stock_threshold=low_stock_threshold,
+                        stock=current_stock,
                     )
-                )
 
-            # Everyone else gets generic items
-            for inv in inventories:
-                if inv.id in (ola_inv.id, jessica_inv.id):
-                    continue
+                    # LOG: Creation (Random member as actor)
+                    actor = random.choice(members)
+                    ts_creation = get_next_timestamp()
 
-                for index, (name, price) in enumerate(generic_catalog):
-                    stock, low_stock_threshold = seeded_stock_and_threshold(
-                        index + 42
+                    log = StockLog.objects.create(
+                        item_id=item.id,
+                        item_name=item.name,
+                        action="create_item",
+                        amount=item.stock,
+                        current_stock=item.stock,
+                        price=item.price,
+                        performed_by=actor,
                     )
-                    items_to_create.append(
-                        InventoryItem(
-                            inventory=inv,
-                            name=name,
-                            price=price,
-                            stock=stock,
-                            low_stock_threshold=low_stock_threshold,
+                    # Force the historical timestamp
+                    StockLog.objects.filter(pk=log.pk).update(
+                        timestamp=ts_creation
+                    )
+
+                    # LOG: 1-3 Random Adjustments later in time
+                    for _ in range(random.randint(1, 3)):
+                        ts_adj = get_next_timestamp()
+                        adj_amount = random.randint(1, 10)
+                        direction = random.choice(["increase", "decrease"])
+
+                        # New actor for the adjustment
+                        adj_actor = random.choice(members)
+
+                        if (
+                            direction == "decrease"
+                            and current_stock > adj_amount
+                        ):
+                            current_stock -= adj_amount
+                        else:
+                            direction = "increase"
+                            current_stock += adj_amount
+
+                        adj_log = StockLog.objects.create(
+                            item_id=item.id,
+                            item_name=item.name,
+                            action="adjust_stock",
+                            amount=adj_amount,
+                            direction=direction,
+                            current_stock=current_stock,
+                            price=item.price,
+                            performed_by=adj_actor,
                         )
-                    )
+                        StockLog.objects.filter(pk=adj_log.pk).update(
+                            timestamp=ts_adj
+                        )
 
-            InventoryItem.objects.bulk_create(items_to_create)
+            self.stdout.write(
+                "Generating items and historical logs with randomized members.."
+            )
+
+            # Run Ola's Catalog
+            seed_items_with_random_actor(
+                inventories_by_name["Ola AS"], ola_catalog, is_ola=True
+            )
+
+            # Run Jessica's Catalog
+            seed_items_with_random_actor(
+                inventories_by_name["Jessica Cookies AS"], jessica_catalog
+            )
+
+            # Run Generic Catalog for the rest
+            for name, inv in inventories_by_name.items():
+                if name not in ["Ola AS", "Jessica Cookies AS"]:
+                    seed_items_with_random_actor(inv, generic_catalog)
 
             # --- Category assignment for items ---
+            self.stdout.write("Assigning categories to items...")
+
             for item in InventoryItem.objects.select_related("inventory").all():
                 inv_name = item.inventory.name
                 inv_categories = categories_by_inventory.get(
@@ -323,6 +403,7 @@ class Command(BaseCommand):
                 }:
                     continue
 
+                category = None
                 if inv_name == "Jessica Cookies AS":
                     lower_name = item.name.lower()
                     if any(
@@ -356,6 +437,7 @@ class Command(BaseCommand):
                             "butter",
                             "yogurt",
                             "cream",
+                            "eggs",
                         ]
                     ):
                         category = inv_categories.get("Dairy")
@@ -376,7 +458,13 @@ class Command(BaseCommand):
                     lower_name = item.name.lower()
                     if any(
                         keyword in lower_name
-                        for keyword in ["nesbø", "kepler", "engman", "holt"]
+                        for keyword in [
+                            "nesbø",
+                            "kepler",
+                            "engman",
+                            "holt",
+                            "horst",
+                        ]
                     ):
                         category = inv_categories.get("Crime")
                     elif any(
@@ -398,151 +486,27 @@ class Command(BaseCommand):
                 if category:
                     item.categories.set([category])
 
-            # --- Memberships ---
-            admin = users["admin@example.com"]
-            alice = users["alice@example.com"]
-            bob = users["bob@example.com"]
+            # --- Statistics ---
+            counts_by_inventory_name = {
+                inv.name: InventoryItem.objects.filter(inventory=inv).count()
+                for inv in inventories
+            }
 
-            # Admin is owner of all
-            InventoryMembership.objects.bulk_create(
-                [
-                    InventoryMembership(
-                        inventory=inv,
-                        user=admin,
-                        role=InventoryMembership.Role.OWNER,
-                    )
-                    for inv in inventories
-                ]
-            )
-
-            # Alice is an employee in two (keep same structure)
-            # Give her Ola + Jessica to match the personas nicely
-            InventoryMembership.objects.bulk_create(
-                [
-                    InventoryMembership(
-                        inventory=ola_inv,
-                        user=alice,
-                        role=InventoryMembership.Role.EMPLOYEE,
-                    ),
-                    InventoryMembership(
-                        inventory=jessica_inv,
-                        user=alice,
-                        role=InventoryMembership.Role.EMPLOYEE,
-                    ),
-                ]
-            )
-
-            # Bob is owner in one (keep: last inventory)
-            InventoryMembership.objects.create(
-                inventory=inventories[-1],
-                user=bob,
-                role=InventoryMembership.Role.OWNER,
-            )
-
-        # Count items per inventory from what we created (no DB query needed)
-        counts_by_inventory_name = {inv.name: 0 for inv in inventories}
-        for it in items_to_create:
-            counts_by_inventory_name[it.inventory.name] += 1
-
-        total_items = len(items_to_create)
-        total_inventories = len(inventories)
-
-        # Membership counts (we did a mix of bulk_create + create)
-        memberships_total = InventoryMembership.objects.count()
-
-        # Useful “persona” checks
-        ola_count = counts_by_inventory_name.get("Ola AS", 0)
-        jessica_count = counts_by_inventory_name.get("Jessica Cookies AS", 0)
-
-        # SEED CATEGORIES AND ASSIGN THEM TO ITEMS
-        self.stdout.write("Creating and assigning categories...")
-
-        # Clear out any old categories to maintain a clean slate
-        ItemCategory.objects.all().delete()
-
-        # Define realistic persona categories based on your inventory names
-        ola_category_names = [
-            "Electronics",
-            "Office Supplies",
-            "Furniture",
-            "Beverages",
-            "Hardware",
-            "On Sale",
-            "High Value",
-        ]
-        jessica_category_names = [
-            "Baked Goods",
-            "Raw Ingredients",
-            "Packaging",
-            "Merchandise",
-            "Vegan",
-            "Gluten-Free",
-            "Best Seller",
-        ]
-
-        db_ola_inv = Inventory.objects.get(name="Ola AS")
-        db_jessica_inv = Inventory.objects.get(name="Jessica Cookies AS")
-
-        ola_categories = [
-            ItemCategory.objects.create(inventory=db_ola_inv, name=name)
-            for name in ola_category_names
-        ]
-
-        jessica_categories = [
-            ItemCategory.objects.create(inventory=db_jessica_inv, name=name)
-            for name in jessica_category_names
-        ]
-
-        # Fetch all newly created items to assign M2M relationships
-        all_seeded_items = InventoryItem.objects.select_related(
-            "inventory"
-        ).all()
-
-        for item in all_seeded_items:
-            num_categories = random.choices(
-                [0, 1, 2, 3], weights=[15, 50, 25, 10], k=1
-            )[0]
-
-            if num_categories > 0:
-                if item.inventory.name == "Ola AS":
-                    pool = ola_categories
-                elif item.inventory.name == "Jessica Cookies AS":
-                    pool = jessica_categories
-                else:
-                    pool = []  # Other inventories get no categories for now
-
-                num_to_sample = min(num_categories, len(pool))
-
-                if pool and num_to_sample > 0:
-                    assigned_categories = random.sample(pool, k=num_to_sample)
-                    item.categories.set(assigned_categories)
-
-        self.stdout.write(self.style.SUCCESS("✅ Seed completed"))
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"- Inventories: {total_inventories}\n"
-                f"- Items: {total_items}\n"
-                f"- Memberships: {memberships_total}"
-            )
-        )
-
-        self.stdout.write(self.style.SUCCESS("\n📦 Items per inventory:"))
-        for inv_name in sorted(counts_by_inventory_name.keys()):
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"- {inv_name}: {counts_by_inventory_name[inv_name]} items"
-                )
+                self.style.SUCCESS("\n✅ Seed completed successfully")
+            )
+            self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
+            self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
+            self.stdout.write(
+                f"- Stock Logs: {StockLog.objects.count()} "
+                "(with history & random actors)"
+            )
+            self.stdout.write(
+                f"- Memberships: {InventoryMembership.objects.count()}"
             )
 
-        self.stdout.write(self.style.SUCCESS("\n👤 Persona sanity checks:"))
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"- Ola AS items: {ola_count} (expected {len(ola_catalog)})"
-            )
-        )
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"- Jessica Cookies AS items: {jessica_count}"
-                f" (expected {len(jessica_catalog)})"
-            )
-        )
+            self.stdout.write(self.style.SUCCESS("\n📦 Items per inventory:"))
+            for inv_name in sorted(counts_by_inventory_name.keys()):
+                self.stdout.write(
+                    f"  - {inv_name}: {counts_by_inventory_name[inv_name]}"
+                )
