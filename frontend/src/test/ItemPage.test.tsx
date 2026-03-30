@@ -64,6 +64,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: null,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -100,6 +101,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: null,
+        low_stock_notification: false,
       });
     });
 
@@ -115,6 +117,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        low_stock_notification: false
       },
     } as any);
 
@@ -155,6 +158,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        low_stock_notification: false
       });
     });
 

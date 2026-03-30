@@ -35,6 +35,7 @@ describe("EditItemModal - user story tests", () => {
       initialPrice: 25,
       currentStock: 2,
       initialLowStockThreshold: null,
+      low_stock_notification: false,
       canEditDetails: true,
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
@@ -89,6 +90,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Skim Milk",
         price: 30,
         low_stock_threshold: 4,
+        low_stock_notification: false,
       });
     });
 
@@ -101,6 +103,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
+      low_stock_notification: false
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -114,6 +117,7 @@ describe("EditItemModal - user story tests", () => {
       canEditDetails: false,
       currentStock: 2,
       initialLowStockThreshold: 5,
+
     });
 
     const dialog = await screen.findByRole("dialog");
@@ -325,6 +329,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        low_stock_notification: false,
       });
     });
 
@@ -333,6 +338,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      low_stock_notification: false,
     });
 
     expect(props.onClose).toHaveBeenCalled();
