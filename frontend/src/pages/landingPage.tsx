@@ -25,16 +25,23 @@ const LandingPage = () => {
     >
       {/* HERO */}
       <Container maxWidth="md">
-        <Box textAlign="center" sx={{ pt: 16, pb: 12 }}>
+        <Box textAlign="center" 
+          sx={{ 
+            pt: { xs: 10, sm: 15, },
+            pb: { xs: 8, sm: 12, }
+          }}
+          >
           <Typography
             variant="h2"
             fontWeight={700}
             sx={{
+              fontSize: { xs: "2.5rem", sm: "3.75rem" },
+              letterSpacing: { xs: 1, sm: 2 }, 
+              whiteSpace: "nowrap",
               background: theme.gradients.text,
               backgroundSize: "200% auto",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              letterSpacing: 2,
             }}
             gutterBottom
           >
@@ -49,11 +56,18 @@ const LandingPage = () => {
             Track items and manage stock for your business
           </Typography>
 
-          <Stack direction="row" spacing={3} justifyContent="center">
+          <Stack 
+            direction={{ xs: "column", sm: "row" }}
+            spacing={3} 
+            justifyContent="center"
+            alignItems="center"
+          >
             <Button
+              size="large"
               variant="contained"
               sx={{
-                px: 5,
+                minWidth: 170,
+                px: 4,
                 py: 1.5,
                 borderRadius: 2,
                 fontWeight: 600,
@@ -67,9 +81,11 @@ const LandingPage = () => {
             </Button>
 
             <Button
+              size="large"
               variant="outlined"
               sx={{
-                px: 5,
+                minWidth: 170,
+                px: 4,
                 py: 1.5,
                 borderRadius: 2,
                 borderColor: "primary.main",
@@ -137,12 +153,17 @@ const LandingPage = () => {
       </Container>
 
       {/* CTA */}
-      <Box textAlign="center" sx={{ pb: 16 }}>
+      <Box textAlign="center" 
+        sx={{ 
+          pb: { xs: 10, md: 16 } 
+        }}
+        >
         <Typography variant="h5" color="primary.main" sx={{ mb: 3 }}>
           Refine Your Inventory Experience
         </Typography>
 
         <Button
+          size="large"
           variant="contained"
           sx={{
             px: 6,
