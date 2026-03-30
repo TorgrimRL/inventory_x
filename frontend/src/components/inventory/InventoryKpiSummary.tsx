@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 type KpiItem = {
@@ -54,11 +54,26 @@ type MetricBlockProps = {
 
 function MetricBlock({ title, value }: MetricBlockProps) {
   return (
-    <Stack sx={{ minWidth: 180 }}>
-      <Typography variant="caption" color="text.secondary">
+    <Stack sx={{ minWidth: 0, width: "100%" }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant="h6">{value}</Typography>
+      <Typography
+        variant="h6"
+        sx={{
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
+        }}
+      >
+        {value}
+      </Typography>
     </Stack>
   );
 }
@@ -93,8 +108,23 @@ export default function InventoryKpiSummary({
 
   return (
     <Stack spacing={2} sx={{ mb: 2 }}>
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Paper variant="outlined" sx={{ p: 2, overflow: "hidden" }}>
+        <Box
+          sx={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(3, minmax(0, 1fr))",
+              lg: "repeat(6, minmax(0, 1fr))",
+            },
+            columnGap: 8,
+            rowGap: 2,
+            justifyItems: "stretch",
+            alignItems: "stretch",
+          }}
+        >
           <MetricBlock
             title="Total inventory value"
             value={formatCurrency(metrics.total.value)}
@@ -119,15 +149,30 @@ export default function InventoryKpiSummary({
             title="Out of stock"
             value={formatCount(metrics.total.outOfStock)}
           />
-        </Stack>
+        </Box>
       </Paper>
 
       {showFilteredMetrics && (
-        <Paper variant="outlined" sx={{ p: 2 }}>
+        <Paper variant="outlined" sx={{ p: 2, overflow: "hidden" }}>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
             Information based on filter
           </Typography>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+          <Box
+            sx={{
+              width: "100%",
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+                md: "repeat(3, minmax(0, 1fr))",
+                lg: "repeat(6, minmax(0, 1fr))",
+              },
+              columnGap: 8,
+              rowGap: 2,
+              justifyItems: "stretch",
+              alignItems: "stretch",
+            }}
+          >
             <MetricBlock
               title="Total inventory value"
               value={formatCurrency(metrics.filtered.value)}
@@ -152,7 +197,7 @@ export default function InventoryKpiSummary({
               title="Out of stock"
               value={formatCount(metrics.filtered.outOfStock)}
             />
-          </Stack>
+          </Box>
         </Paper>
       )}
     </Stack>
