@@ -44,6 +44,7 @@ type InventoryItem = {
   price: number;
   order_id?: string;
   low_stock_threshold: number | null;
+  low_stock_notification: boolean;
 };
 
 function isLowStock(item: InventoryItem) {
@@ -139,6 +140,7 @@ export default function ItemPage() {
   const handleCloseStockLog = () => {
     setSelectedLogItemId(null);
   };
+  const [enableNotification, setEnableNotification] = useState(false);
 
   async function loadItems() {
     setLoading(true);
@@ -207,6 +209,7 @@ export default function ItemPage() {
       price: Number(price),
       stock: s,
       low_stock_threshold: newItemLowStockThresholdNumber,
+      low_stock_notification: enableNotification,
     };
 
     try {
@@ -228,6 +231,7 @@ export default function ItemPage() {
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
+      setEnableNotification(false);
     } catch (err) {
       console.error(err);
       setError(extractBackendMessage(err));
@@ -374,7 +378,7 @@ export default function ItemPage() {
               value={searchInput}
               disabled={loading}
               onChange={setSearchInput}
-              onSearch={() => {}}
+              onSearch={() => { }}
               onClear={handleClearSearch}
             />
 
@@ -652,6 +656,17 @@ export default function ItemPage() {
                   }
                 />
               </Stack>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableNotification}
+                    onChange={(e) => setEnableNotification(e.target.checked)}
+                    disabled={saving}
+                    color="primary"
+                  />
+                }
+                label="Enable low stock notifications for this item"
+              />
 
               {showClientHint && (
                 <Alert severity="info">
@@ -693,6 +708,7 @@ export default function ItemPage() {
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
           initialLowStockThreshold={selectedItem.low_stock_threshold}
+          low_stock_notification={selectedItem.low_stock_notification}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
@@ -700,16 +716,18 @@ export default function ItemPage() {
             name: string;
             price: number;
             lowStockThreshold: number | null;
+            low_stock_notification: boolean;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
                   ? {
-                      ...it,
-                      name: updated.name,
-                      price: updated.price,
-                      low_stock_threshold: updated.lowStockThreshold,
-                    }
+                    ...it,
+                    name: updated.name,
+                    price: updated.price,
+                    low_stock_threshold: updated.lowStockThreshold,
+                    low_stock_notification: updated.low_stock_notification
+                  }
                   : it,
               ),
             );
