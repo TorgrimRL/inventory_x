@@ -8,6 +8,7 @@ from api.inventory.contracts.custom_field import (
     GET_CUSTOM_FIELDS_RESPONSES,
 )
 from api.inventory.contracts.list_items import LIST_ITEMS_RESPONSES
+from api.inventory.contracts.update_item import UPDATE_ITEM_RESPONSES
 from api.inventory.models import (
     Inventory,
     InventoryCustomField,
@@ -226,7 +227,9 @@ class InventoryCustomFieldsTests(BaseAPITestCase):
             self.item_detail_url(item.id), payload, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_200_OK
+        )
 
         item.refresh_from_db()
         # Both fields should exist now

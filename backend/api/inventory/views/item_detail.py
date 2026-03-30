@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
@@ -12,6 +13,8 @@ from api.inventory.contracts.update_item import UPDATE_ITEM_RESPONSES
 from api.inventory.permissions import IsActiveInventoryOwner
 from api.inventory.serializers.update_item import InventoryItemUpdateSerializer
 from api.inventory.services.items import delete_item, update_item
+
+logger = logging.getLogger(__name__)
 
 
 class ItemDetailView(views.APIView):
@@ -35,11 +38,13 @@ class ItemDetailView(views.APIView):
             )
 
         try:
+            membership = get_active_membership_or_raise(request)
             updated = update_item(
                 inventory_id=membership.inventory.id,
                 item_id=item_id,
                 name=serializer.validated_data.get("name"),
                 price=serializer.validated_data.get("price"),
+                user=membership.user,
                 low_stock_threshold=serializer.validated_data.get(
                     "low_stock_threshold"
                 ),
@@ -49,11 +54,20 @@ class ItemDetailView(views.APIView):
             return Response(updated, status=status.HTTP_200_OK)
 
         except ValueError as e:
+            error_msg = str(e)
+
+            if "not found" in error_msg.lower():
+                return Response(
+                    {"detail": error_msg},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             return Response(
-                {"detail": str(e)},
+                {"detail": {"non_field_errors": [error_msg]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Failed to update inventory item: {e!s}")
             return Response(
                 {"detail": "Internal processing error."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

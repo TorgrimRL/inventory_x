@@ -3,6 +3,7 @@ from uuid import UUID
 
 from django.db import transaction
 
+from api.inventory.decorators import audit_logger
 from api.inventory.models import InventoryItem, ItemCategory
 
 
@@ -46,6 +47,7 @@ def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
     return categories
 
 
+@audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
     name: str,
@@ -54,6 +56,7 @@ def create_item(
     low_stock_threshold=None,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
+    user=None,
 ):
     try:
         with transaction.atomic():
@@ -88,8 +91,9 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@audit_logger("adjust_stock")
 def adjust_stock(
-    inventory_id: UUID, item_id: UUID, direction: str, amount: int
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
 ):
     """
     Adjusts stock for an inventory item.
@@ -124,6 +128,7 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@audit_logger("update_item")
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
@@ -132,6 +137,7 @@ def update_item(
     low_stock_threshold: int | None,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
+    user=None,
 ):
     """
     Updates item fields. Stock is not changed here.

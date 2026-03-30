@@ -68,6 +68,7 @@ class InventoryView(APIView):
                 name=name,
                 price=price,
                 stock=stock,
+                user=membership.user,
                 low_stock_threshold=low_stock_threshold,
                 custom_fields=custom_fields,
             )
