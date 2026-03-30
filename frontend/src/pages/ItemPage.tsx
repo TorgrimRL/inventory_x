@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   IconButton,
   Paper,
   Snackbar,
@@ -34,7 +35,7 @@ import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import StockLog from "../components/inventory/StockLog"; // Adjust import path
 import ApiClient from "../services/apiClient.ts";
-import { getActiveInventory } from "../services/inventoryService";
+import { createItem, getActiveInventory } from "../services/inventoryService";
 
 type InventoryItem = {
   id: number | string;
@@ -209,8 +210,7 @@ export default function ItemPage() {
     };
 
     try {
-      const res = await ApiClient.post("/api/inventory/", payload);
-      const created = res.data as InventoryItem;
+      const created = await createItem(payload);
 
       setItems((prev) => [
         ...prev,
