@@ -7,7 +7,9 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -27,6 +29,7 @@ type Props = {
   initialPrice: number;
   currentStock: number;
   initialLowStockThreshold?: number | null;
+  low_stock_notification: boolean;
   // owner => true, employee => false
   canEditDetails: boolean;
 
@@ -37,6 +40,7 @@ type Props = {
     name: string;
     price: number;
     lowStockThreshold: null | number;
+    low_stock_notification: boolean;
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -66,6 +70,7 @@ export default function EditItemModal({
   initialName,
   initialPrice,
   initialLowStockThreshold,
+  low_stock_notification,
   currentStock,
   canEditDetails,
   onClose,
@@ -78,6 +83,7 @@ export default function EditItemModal({
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
   );
+  const [notification, setNotifications] = useState(low_stock_notification);
 
   const [amount, setAmount] = useState<string>("0");
   const [direction, setDirection] = useState<"increase" | "decrease" | null>(
@@ -130,7 +136,8 @@ export default function EditItemModal({
     canEditDetails &&
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
-      lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
+      lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
+      notification !== low_stock_notification);
 
   const stockChanged = wantsStockChange && direction !== null;
 
@@ -191,12 +198,14 @@ export default function EditItemModal({
             name: trimmed,
             price: priceNumber,
             low_stock_threshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
           });
           onItemUpdated({
             id: itemId,
             name: trimmed,
             price: priceNumber,
             lowStockThreshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
           });
         }
       }
@@ -359,6 +368,19 @@ export default function EditItemModal({
                   Decrease
                 </Button>
               </Stack>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={notification}
+                    onChange={(e) => setNotifications(e.target.checked)}
+                    disabled={!canEditDetails || saving}
+                    color="primary"
+                  />
+                }
+                label="Enable low stock notifications"
+                sx={{ mt: 2 }}
+              />
 
               {directionIsInvalid && (
                 <Alert severity="warning">
