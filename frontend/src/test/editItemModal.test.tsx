@@ -103,7 +103,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
-      low_stock_notification: false
+      low_stock_notification: false,
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -117,7 +117,6 @@ describe("EditItemModal - user story tests", () => {
       canEditDetails: false,
       currentStock: 2,
       initialLowStockThreshold: 5,
-
     });
 
     const dialog = await screen.findByRole("dialog");
