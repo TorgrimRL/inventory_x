@@ -7,7 +7,7 @@ from django.core.mail import (
 )
 from django.template.loader import render_to_string
 
-from api.inventory.models import InventoryItem, StockLog
+from api.inventory.models import InventoryItem, InventoryMembership, StockLog
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +74,7 @@ def notify_low_stock(func):
 
         item = func(*args, **kwargs)
 
-        # Handle both dict (create_item)
-        # and object (adjust_stock/update_item)
+        # Handle both dict (create_item) and object (adjust_stock/update_item)
         if item:
             is_dict = isinstance(item, dict)
             notify_enabled = (
@@ -104,21 +103,23 @@ def notify_low_stock(func):
                 is_now_low = cur_stock <= threshold
 
                 if was_above and is_now_low:
-                    item_obj = (
-                        InventoryItem.objects.select_related("inventory__owner")
-                        .filter(id=item_id_val)
+                    # Look up inventory_id based on result type
+                    inventory_id = (
+                        item.get("inventory_id")
+                        if is_dict
+                        else getattr(item, "inventory_id", None)
+                    )
+
+                    membership = (
+                        InventoryMembership.objects.select_related("user")
+                        .filter(inventory_id=inventory_id, role="OWNER")
                         .first()
                     )
 
-                    # Fetch the inventory owner.
-                    if (
-                        item_obj
-                        and item_obj.inventory
-                        and item_obj.inventory.owner
-                    ):
-                        owner = item_obj.inventory.owner
+                    if membership and membership.user:
+                        owner = membership.user
                         recipient_email = owner.email
-                        display_name = owner.display_name or "unknown owner"
+                        display_name = owner.display_name or "Inventory Owner"
 
                         if recipient_email and recipient_email != "none":
                             try:
@@ -141,7 +142,7 @@ def notify_low_stock(func):
                                     fail_silently=False,
                                 )
                                 logger.info(
-                                    "Low stock notification sent for item"
+                                    "Low stock notification sent for item "
                                     f"{item_id_val}"
                                 )
                             except Exception as e:
