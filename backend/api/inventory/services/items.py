@@ -18,7 +18,12 @@ def get_all_items(inventory_id: UUID):
         "id"
     )
     items = queryset.values(
-        "id", "name", "price", "stock", "low_stock_threshold"
+        "id",
+        "name",
+        "price",
+        "stock",
+        "low_stock_threshold",
+        "low_stock_notification",
     )
     return list(items)
 
