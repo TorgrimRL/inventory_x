@@ -83,7 +83,7 @@ export default function EditItemModal({
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
   );
-  const [notification, setNotifications] = useState(low_stock_notification);
+  const [notification, setNotifications] = useState(Boolean(low_stock_notification));
 
   const [amount, setAmount] = useState<string>("0");
   const [direction, setDirection] = useState<"increase" | "decrease" | null>(
@@ -101,10 +101,11 @@ export default function EditItemModal({
     setLowStockThreshold(
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
+    setNotifications(Boolean(low_stock_notification));
     setAmount("0");
     setDirection(null);
     setError(null);
-  }, [open, initialName, initialPrice, initialLowStockThreshold]);
+  }, [open, itemId, initialName, initialPrice, initialLowStockThreshold, low_stock_notification]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -137,7 +138,7 @@ export default function EditItemModal({
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
-      notification !== low_stock_notification);
+      notification !== Boolean(low_stock_notification));
 
   const stockChanged = wantsStockChange && direction !== null;
 
@@ -186,13 +187,15 @@ export default function EditItemModal({
 
     setSaving(true);
     try {
-      // 1) Update name/price (only if owner AND changed)
+      // 1) Update name/price/threshold/notifications (only if owner AND changed)
       if (canEditDetails) {
         const trimmed = name.trim();
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
-          lowStockThresholdNumber !== initialThresholdValue;
+          lowStockThresholdNumber !== initialThresholdValue ||
+          notification !== Boolean(low_stock_notification);
+
         if (changed) {
           await updateItem(itemId, {
             name: trimmed,
@@ -308,9 +311,20 @@ export default function EditItemModal({
               }
             />
 
-            <Divider />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={notification}
+                  onChange={(e) => setNotifications(e.target.checked)}
+                  disabled={!canEditDetails || saving}
+                  color="primary"
+                />
+              }
+              label="Enable low stock mail notifications for this item"
+            />
+            <Divider sx={{ my: 1 }} />
 
-            <Typography variant="subtitle1">Stock</Typography>
+            <Typography variant="subtitle1">Stock Adjustment</Typography>
 
             <Typography variant="body2" color="text.secondary">
               Current stock: {currentStock}
@@ -368,19 +382,6 @@ export default function EditItemModal({
                   Decrease
                 </Button>
               </Stack>
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={notification}
-                    onChange={(e) => setNotifications(e.target.checked)}
-                    disabled={!canEditDetails || saving}
-                    color="primary"
-                  />
-                }
-                label="Enable low stock notifications"
-                sx={{ mt: 2 }}
-              />
 
               {directionIsInvalid && (
                 <Alert severity="warning">
