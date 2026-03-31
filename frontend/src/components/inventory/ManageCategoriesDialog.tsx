@@ -16,8 +16,6 @@ import {
   deleteActiveCategory,
 } from "../../services/inventoryService";
 
-// It is generally good practice to move these to a shared types.ts file later,
-// but for now, we mirror what ItemPage uses.
 type Category = {
   id: string;
   name: string;
@@ -42,6 +40,37 @@ type ManageCategoriesDialogProps = {
   setSnackMessage: (msg: string) => void;
   setSnackOpen: (open: boolean) => void;
 };
+
+function extractErrorMessage(err: any, defaultMsg: string): string {
+  const data = err?.response?.data;
+
+  if (!data) return defaultMsg;
+
+  if (typeof data === "string") return data;
+  if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.message === "string") return data.message;
+
+  const targetObj =
+    typeof data?.detail === "object" && data.detail !== null
+      ? data.detail
+      : data;
+
+  if (typeof targetObj === "object" && targetObj !== null) {
+    const parts: string[] = [];
+
+    for (const value of Object.values(targetObj)) {
+      if (Array.isArray(value)) {
+        parts.push(value.join(" "));
+      } else if (typeof value === "string") {
+        parts.push(value);
+      }
+    }
+
+    if (parts.length > 0) return parts.join(" | ");
+  }
+
+  return defaultMsg;
+}
 
 export default function ManageCategoriesDialog({
   open,
@@ -94,11 +123,9 @@ export default function ManageCategoriesDialog({
                   setSnackMessage("Category created");
                   setSnackOpen(true);
                 } catch (err: any) {
-                  const detail =
-                    err?.response?.data?.detail ||
-                    err?.response?.data?.name?.[0] ||
-                    "A category with this name already exists.";
-                  setCategoryError(String(detail));
+                  setCategoryError(
+                    extractErrorMessage(err, "Failed to create category."),
+                  );
                 } finally {
                   setCategorySaving(false);
                 }

@@ -35,6 +35,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import EditItemModal from "../components/inventory/editItemModal";
+import InlineCategorySelect from "../components/inventory/InlineCategorySelect";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
@@ -136,14 +137,6 @@ export default function ItemPage() {
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
   );
-  const [editingCategoryItemId, setEditingCategoryItemId] = useState<
-    string | number | null
-  >(null);
-  const [editingCategoryIds, setEditingCategoryIds] = useState<string[]>([]);
-  const [originalEditingCategoryIds, setOriginalEditingCategoryIds] = useState<
-    string[]
-  >([]);
-
   const [sortField, setSortField] = useState<
     "name" | "stock" | "price" | "low_stock_threshold" | "status"
   >("stock");
@@ -404,7 +397,7 @@ export default function ItemPage() {
     item: InventoryItem,
     nextCategoryIds: string[],
   ) {
-    setCategoryError(null);
+    setError(null);
     setUpdatingItemId(item.id);
     try {
       await updateItem(item.id, {
@@ -418,15 +411,12 @@ export default function ItemPage() {
           it.id === item.id ? { ...it, category_ids: nextCategoryIds } : it,
         ),
       );
-      setEditingCategoryItemId(null);
-      setEditingCategoryIds([]);
-      setOriginalEditingCategoryIds([]);
       setSnackMessage("Item categories updated");
       setSnackOpen(true);
     } catch (err: any) {
       const detail =
         err?.response?.data?.detail || "Failed to update item categories.";
-      setCategoryError(String(detail));
+      setError(String(detail));
     } finally {
       setUpdatingItemId(null);
     }
@@ -804,92 +794,28 @@ export default function ItemPage() {
                                 spacing={1}
                                 sx={{ minWidth: 160, maxWidth: 190 }}
                               >
-                                <TextField
-                                  select
-                                  size="small"
-                                  value={
-                                    editingCategoryItemId === item.id
-                                      ? editingCategoryIds
-                                      : (item.category_ids || []).map(String)
-                                  }
-                                  disabled={updatingItemId === item.id}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setEditingCategoryItemId(item.id);
-                                    setEditingCategoryIds(
-                                      Array.isArray(value)
-                                        ? value.map(String)
-                                        : String(value).split(","),
-                                    );
-                                  }}
-                                  SelectProps={{
-                                    multiple: true,
-                                    onOpen: () => {
-                                      const currentIds = (
-                                        item.category_ids || []
-                                      ).map(String);
-                                      setEditingCategoryItemId(item.id);
-                                      setEditingCategoryIds(currentIds);
-                                      setOriginalEditingCategoryIds(currentIds);
-                                    },
-                                    onClose: () => {
-                                      if (editingCategoryItemId !== item.id)
-                                        return;
-
-                                      const before = [
-                                        ...originalEditingCategoryIds,
-                                      ]
-                                        .map(String)
-                                        .sort()
-                                        .join(",");
-                                      const after = [...editingCategoryIds]
-                                        .map(String)
-                                        .sort()
-                                        .join(",");
-
-                                      if (before !== after) {
-                                        void handleInlineCategoryChange(
-                                          item,
-                                          editingCategoryIds,
-                                        );
-                                      } else {
-                                        setEditingCategoryItemId(null);
-                                        setEditingCategoryIds([]);
-                                        setOriginalEditingCategoryIds([]);
-                                      }
-                                    },
-                                    MenuProps: {
-                                      disableAutoFocusItem: true,
-                                      keepMounted: true,
-                                    },
-                                    renderValue: (selected) => {
-                                      const ids = selected as string[];
-                                      if (ids.length === 0)
-                                        return "No category added";
-                                      return renderCategoryNames(ids);
-                                    },
-                                  }}
-                                  sx={{ minWidth: 160, maxWidth: 190 }}
-                                >
-                                  {categories.map((category) => (
-                                    <MenuItem
-                                      key={category.id}
-                                      value={category.id}
+                                <TableCell>
+                                  {canEditDetails ? (
+                                    <Stack
+                                      spacing={1}
+                                      sx={{ minWidth: 160, maxWidth: 190 }}
                                     >
-                                      <Checkbox
-                                        checked={(editingCategoryItemId ===
-                                        item.id
-                                          ? editingCategoryIds
-                                          : (item.category_ids || []).map(
-                                              String,
-                                            )
-                                        ).includes(String(category.id))}
-                                        size="small"
+                                      <InlineCategorySelect
+                                        item={item}
+                                        categories={categories}
+                                        updating={updatingItemId === item.id}
+                                        onSave={handleInlineCategoryChange}
+                                        renderCategoryNames={
+                                          renderCategoryNames
+                                        }
                                       />
-                                      <ListItemText primary={category.name} />
-                                    </MenuItem>
-                                  ))}
-                                </TextField>
+                                    </Stack>
+                                  ) : (
+                                    renderCategoryNames(
+                                      (item.category_ids || []).map(String),
+                                    )
+                                  )}
+                                </TableCell>
                               </Stack>
                             ) : (
                               renderCategoryNames(
