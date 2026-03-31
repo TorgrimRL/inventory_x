@@ -2,7 +2,7 @@ import uuid
 
 from django.core import mail
 
-from api.inventory.models import Inventory
+from api.inventory.models import Inventory, InventoryMembership
 from api.inventory.services.items import adjust_stock, create_item
 from api.tests.base import BaseAPITestCase
 
@@ -21,6 +21,11 @@ class LowStockNotificationTests(BaseAPITestCase):
             org_number=org,
         )
         self.inventory_id = self.inventory.id
+        InventoryMembership.objects.create(
+            inventory=self.inventory,
+            user=self.user,
+            role="OWNER",  # Matches the filter in decorator
+        )
         self.item = create_item(
             inventory_id=self.inventory_id,
             name="Test Widget",
