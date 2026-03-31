@@ -304,7 +304,7 @@ class UpdateItemViewTests(BaseAPITestCase):
     def test_update_item_success(self):
         response = self.client.patch(
             self.url,
-            {"name": "Skim Milk", "price": 30},
+            {"name": "Skim Milk", "price": 30, "low_stock_notification": False},
             format="json",
         )
 
