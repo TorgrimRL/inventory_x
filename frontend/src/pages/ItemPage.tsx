@@ -545,14 +545,22 @@ export default function ItemPage() {
                     ? value.map(String)
                     : String(value).split(",");
 
-                  if (nextIds.includes("__no_category__")) {
-                    setSelectedCategoryIds(["__no_category__"]);
-                    return;
-                  }
+                  const wasNoCategorySelected =
+                    selectedCategoryIds.includes("__no_category__");
+                  const isNoCategoryInNext =
+                    nextIds.includes("__no_category__");
 
-                  setSelectedCategoryIds(
-                    nextIds.filter((id) => id !== "__no_category__"),
-                  );
+                  if (!wasNoCategorySelected && isNoCategoryInNext) {
+                    // User just checked "No category": clear all other categories
+                    setSelectedCategoryIds(["__no_category__"]);
+                  } else if (wasNoCategorySelected && nextIds.length > 1) {
+                    // User had "No category" checked, but just clicked a real category: uncheck "No category"
+                    setSelectedCategoryIds(
+                      nextIds.filter((id) => id !== "__no_category__"),
+                    );
+                  } else {
+                    setSelectedCategoryIds(nextIds);
+                  }
                 }}
                 sx={{ minWidth: 260 }}
                 SelectProps={{
