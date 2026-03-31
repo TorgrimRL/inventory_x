@@ -7,7 +7,7 @@ from django.core.mail import (
 )
 from django.template.loader import render_to_string
 
-from api.inventory.models import StockLog
+from api.inventory.models import InventoryItem, StockLog
 
 logger = logging.getLogger(__name__)
 
@@ -61,48 +61,94 @@ def audit_logger(action_name):
 def notify_low_stock(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
+        item_id = kwargs.get("item_id")
+
+        # Get the stock info before create or update operations runs.
+        prev_stock = None
+        if item_id:
+            prev_stock = (
+                InventoryItem.objects.filter(id=item_id)
+                .values_list("stock", flat=True)
+                .first()
+            )
+
         item = func(*args, **kwargs)
 
-        # Check if the item exists and has notifications enabled
-        if item and getattr(item, "low_stock_notification", False):
-            threshold = getattr(item, "low_stock_threshold", None)
+        # Handle both dict (create_item)
+        # and object (adjust_stock/update_item)
+        if item:
+            is_dict = isinstance(item, dict)
+            notify_enabled = (
+                item.get("low_stock_notification", False)
+                if is_dict
+                else getattr(item, "low_stock_notification", False)
+            )
+            threshold = (
+                item.get("low_stock_threshold")
+                if is_dict
+                else getattr(item, "low_stock_threshold", None)
+            )
+            cur_stock = (
+                item.get("stock") if is_dict else getattr(item, "stock", 0)
+            )
+            item_name = (
+                item.get("name") if is_dict else getattr(item, "name", "")
+            )
+            item_id_val = (
+                item.get("id") if is_dict else getattr(item, "id", None)
+            )
 
-            # Check if it hit or dropped below the threshold.
-            if threshold is not None and item.stock <= threshold:
-                user = kwargs.get("user")
-                recipient_email = (
-                    user.email if user and hasattr(user, "email") else None
-                )
+            # LOGIC: Only send if it WAS high and is NOW low.
+            if notify_enabled and threshold is not None:
+                was_above = prev_stock is None or prev_stock > threshold
+                is_now_low = cur_stock <= threshold
 
-                display_name = "user"
-                if user and hasattr(user, "display_name") and user.display_name:
-                    display_name = user.display_name
+                if was_above and is_now_low:
+                    item_obj = (
+                        InventoryItem.objects.select_related("inventory__owner")
+                        .filter(id=item_id_val)
+                        .first()
+                    )
 
-                if recipient_email and recipient_email != "none":
-                    try:
-                        context = {
-                            "display_name": display_name,
-                            "item_name": item.name,
-                            "current_stock": item.stock,
-                            "threshold": threshold,
-                        }
+                    # Fetch the inventory owner.
+                    if (
+                        item_obj
+                        and item_obj.inventory
+                        and item_obj.inventory.owner
+                    ):
+                        owner = item_obj.inventory.owner
+                        recipient_email = owner.email
+                        display_name = owner.display_name or "unknown owner"
 
-                        # Render the template from your templates folder
-                        email_body = render_to_string(
-                            "low_stock_notification.txt", context
-                        )
+                        if recipient_email and recipient_email != "none":
+                            try:
+                                context = {
+                                    "display_name": display_name,
+                                    "item_name": item_name,
+                                    "current_stock": cur_stock,
+                                    "threshold": threshold,
+                                }
 
-                        send_mail(
-                            subject=f"⚠️ Low Stock Alert: {item.name}",
-                            message=email_body,
-                            from_email="noreply@yourdomain.com",
-                            recipient_list=[recipient_email],
-                            fail_silently=False,
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f"Failed to send low stock email for {item.id}: {e}"
-                        )
+                                email_body = render_to_string(
+                                    "low_stock_notification.txt", context
+                                )
+
+                                send_mail(
+                                    subject=f"⚠️ Low Stock Alert: {item_name}",
+                                    message=email_body,
+                                    from_email="noreply@yourdomain.com",
+                                    recipient_list=[recipient_email],
+                                    fail_silently=False,
+                                )
+                                logger.info(
+                                    "Low stock notification sent for item"
+                                    f"{item_id_val}"
+                                )
+                            except Exception as e:
+                                logger.error(
+                                    "Failed to send low stock email for "
+                                    f"{item_id_val}: {e}"
+                                )
 
         return item
 
