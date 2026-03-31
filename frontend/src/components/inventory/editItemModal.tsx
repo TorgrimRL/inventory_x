@@ -83,7 +83,9 @@ export default function EditItemModal({
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
   );
-  const [notification, setNotifications] = useState(Boolean(low_stock_notification));
+  const [notification, setNotifications] = useState(
+    Boolean(low_stock_notification),
+  );
 
   const [amount, setAmount] = useState<string>("0");
   const [direction, setDirection] = useState<"increase" | "decrease" | null>(
@@ -105,7 +107,14 @@ export default function EditItemModal({
     setAmount("0");
     setDirection(null);
     setError(null);
-  }, [open, itemId, initialName, initialPrice, initialLowStockThreshold, low_stock_notification]);
+  }, [
+    open,
+    itemId,
+    initialName,
+    initialPrice,
+    initialLowStockThreshold,
+    low_stock_notification,
+  ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;

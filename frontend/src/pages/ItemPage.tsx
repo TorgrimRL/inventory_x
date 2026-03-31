@@ -378,7 +378,7 @@ export default function ItemPage() {
               value={searchInput}
               disabled={loading}
               onChange={setSearchInput}
-              onSearch={() => { }}
+              onSearch={() => {}}
               onClear={handleClearSearch}
             />
 
@@ -722,12 +722,12 @@ export default function ItemPage() {
               prev.map((it) =>
                 it.id === updated.id
                   ? {
-                    ...it,
-                    name: updated.name,
-                    price: updated.price,
-                    low_stock_threshold: updated.lowStockThreshold,
-                    low_stock_notification: updated.low_stock_notification,
-                  }
+                      ...it,
+                      name: updated.name,
+                      price: updated.price,
+                      low_stock_threshold: updated.lowStockThreshold,
+                      low_stock_notification: updated.low_stock_notification,
+                    }
                   : it,
               ),
             );
