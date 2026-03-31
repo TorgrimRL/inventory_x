@@ -57,6 +57,7 @@ def create_item(
             "price": item.price,
             "stock": item.stock,
             "low_stock_threshold": item.low_stock_threshold,
+            "low_stock_notification": item.low_stock_notification,
         }
     except ValueError as ve:
         raise ve
