@@ -41,25 +41,36 @@ export default function ResetPassword() {
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
+    const maxRetries = 5;
+    const retryDelay = 5000; // 5 seconds
 
-      await apiClient.put("/api/user/password_reset", {
-        OTC: token,
-        NEW_PASSWORD: password,
-      });
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await apiClient.put("/api/user/password_reset", {
+          OTC: token,
+          NEW_PASSWORD: password,
+        });
 
-      setMessage("Password successfully updated! Redirecting to login...");
-      setPassword("");
-      setConfirmPassword("");
+        setMessage("Password successfully updated! Redirecting to login...");
+        setPassword("");
+        setConfirmPassword("");
+        setLoading(false);
 
-      setTimeout(() => {
-        navigate(PATHS.LOGIN);
-      }, 2000);
-    } catch {
-      setError("Link expired or invalid. Please request a new reset link.");
-    } finally {
-      setLoading(false);
+        setTimeout(() => {
+          navigate(PATHS.LOGIN);
+        }, 2000);
+
+        return;
+      } catch {
+        if (attempt === maxRetries) {
+          setError("Link expired or invalid. Please request a new reset link.");
+          setLoading(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
     }
   };
 
@@ -67,6 +78,7 @@ export default function ResetPassword() {
     let timeoutId: ReturnType<typeof setTimeout>;
 
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError("Link expired or invalid. Redirecting...");
       timeoutId = setTimeout(() => {
         navigate(PATHS.PASSWORD_FORGOT);
