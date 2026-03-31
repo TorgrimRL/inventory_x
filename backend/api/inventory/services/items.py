@@ -30,6 +30,7 @@ def create_item(
     price,
     stock,
     low_stock_threshold=None,
+    low_stock_notification=False,
     user=None,
 ):
     """
@@ -43,6 +44,7 @@ def create_item(
             price=price,
             stock=stock,
             low_stock_threshold=low_stock_threshold,
+            low_stock_notification=low_stock_notification,
         )
         return {
             "id": item.id,

@@ -8,3 +8,6 @@ class InventoryItemCreateSerializer(serializers.Serializer):
     low_stock_threshold = serializers.IntegerField(
         min_value=0, required=False, allow_null=True
     )
+    low_stock_notification = serializers.BooleanField(
+        required=False, default=False
+    )
