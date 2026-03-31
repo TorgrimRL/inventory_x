@@ -56,6 +56,7 @@ export default function InlineCategorySelect({
       }}
       SelectProps={{
         multiple: true,
+        displayEmpty: true,
         open: open,
         onOpen: () => {
           setOpen(true);

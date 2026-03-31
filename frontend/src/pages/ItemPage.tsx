@@ -794,28 +794,13 @@ export default function ItemPage() {
                                 spacing={1}
                                 sx={{ minWidth: 160, maxWidth: 190 }}
                               >
-                                <TableCell>
-                                  {canEditDetails ? (
-                                    <Stack
-                                      spacing={1}
-                                      sx={{ minWidth: 160, maxWidth: 190 }}
-                                    >
-                                      <InlineCategorySelect
-                                        item={item}
-                                        categories={categories}
-                                        updating={updatingItemId === item.id}
-                                        onSave={handleInlineCategoryChange}
-                                        renderCategoryNames={
-                                          renderCategoryNames
-                                        }
-                                      />
-                                    </Stack>
-                                  ) : (
-                                    renderCategoryNames(
-                                      (item.category_ids || []).map(String),
-                                    )
-                                  )}
-                                </TableCell>
+                                <InlineCategorySelect
+                                  item={item}
+                                  categories={categories}
+                                  updating={updatingItemId === item.id}
+                                  onSave={handleInlineCategoryChange}
+                                  renderCategoryNames={renderCategoryNames}
+                                />
                               </Stack>
                             ) : (
                               renderCategoryNames(

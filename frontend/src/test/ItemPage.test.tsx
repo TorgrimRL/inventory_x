@@ -44,7 +44,7 @@ describe("ItemPage", () => {
   let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     consoleWarnSpy = jest
       .spyOn(console, "warn")
       .mockImplementation((...args: unknown[]) => {
@@ -140,7 +140,8 @@ describe("ItemPage", () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
-    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
+    const noCategoryElements = await screen.findAllByText("No category added");
+    expect(noCategoryElements.length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /add item/i }));
 
@@ -522,5 +523,111 @@ describe("ItemPage", () => {
     expect(
       within(butterRow as HTMLElement).queryByText("Low stock"),
     ).not.toBeInTheDocument();
+  });
+
+  test("category filter mutual exclusivity for 'No category added'", async () => {
+    render(<ItemPage />);
+    await screen.findByText("Milk");
+
+    const categorySelect = screen.getByRole("combobox", {
+      name: /^category$/i,
+    });
+
+    // Open dropdown
+    fireEvent.mouseDown(categorySelect);
+    // Select 'Cookies'
+    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+    // Select 'No category added'
+    fireEvent.click(
+      await screen.findByRole("option", { name: /no category added/i }),
+    );
+
+    // Close dropdown
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Bread")).toBeInTheDocument();
+    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+
+    // Now test the reverse
+    fireEvent.mouseDown(categorySelect);
+    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+    fireEvent.keyDown(document.activeElement || categorySelect, {
+      key: "Escape",
+      code: "Escape",
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
+
+    // We should now see Milk and not Bread
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+  });
+
+  test("Manage categories dialog - add, delete, and nested error handling", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+    await screen.findByText("Milk");
+
+    // Open the manage categories dialog
+    await user.click(
+      screen.getByRole("button", { name: /manage categories/i }),
+    );
+    const dialog = await screen.findByRole("dialog");
+
+    // Verify existing categories loaded
+    expect(within(dialog).getByText("Cookies")).toBeInTheDocument();
+
+    // Add a category successfully
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 201,
+      data: { id: "c4", name: "Snacks" },
+    } as any);
+
+    const newCatInput = within(dialog).getByRole("textbox", {
+      name: /new category/i,
+    });
+    await user.type(newCatInput, "Snacks");
+    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+
+    expect(await screen.findByText("Category created")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Snacks")).toBeInTheDocument();
+
+    // Nested Error Parsing
+    mockedAxios.post.mockRejectedValueOnce({
+      response: {
+        data: {
+          detail: {
+            non_field_errors: ["A category with this name already exists."],
+          },
+        },
+      },
+    });
+
+    await user.type(newCatInput, "Duplicate");
+    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+
+    expect(
+      await screen.findByText("A category with this name already exists."),
+    ).toBeInTheDocument();
+
+    // Delete a category
+    mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
+
+    // Find the row containing 'Cookies' and click its specific Delete button
+    const cookiesText = within(dialog).getByText("Cookies");
+    const cookiesRow = cookiesText.closest(".MuiStack-root") as HTMLElement;
+    await user.click(
+      within(cookiesRow).getByRole("button", { name: /delete/i }),
+    );
+
+    expect(await screen.findByText("Category deleted")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Cookies")).not.toBeInTheDocument();
   });
 });
