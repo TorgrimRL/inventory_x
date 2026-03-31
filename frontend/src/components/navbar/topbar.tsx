@@ -58,7 +58,7 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
   const authNavItems = [
     ["Inventories", PATHS.INVENTORIES],
     ["Dashboard", PATHS.DASHBOARD],
-    ["Items", "/add_item"],
+    ["Items", PATHS.ADD_ITEM],
   ];
 
   useEffect(() => {
