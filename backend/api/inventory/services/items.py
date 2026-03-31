@@ -107,6 +107,7 @@ def update_item(
     name: str,
     price: int,
     low_stock_threshold: int | None,
+    low_stock_notification: bool | None,
     user=None,
 ):
     """
@@ -119,7 +120,15 @@ def update_item(
             item.name = name
             item.price = price
             item.low_stock_threshold = low_stock_threshold
-            item.save(update_fields=["name", "price", "low_stock_threshold"])
+            item.low_stock_notification = low_stock_notification
+            item.save(
+                update_fields=[
+                    "name",
+                    "price",
+                    "low_stock_threshold",
+                    "low_stock_notification",
+                ]
+            )
 
             return item
 

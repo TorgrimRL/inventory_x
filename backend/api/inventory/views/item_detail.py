@@ -41,6 +41,9 @@ class ItemDetailView(views.APIView):
                 low_stock_threshold=serializer.validated_data.get(
                     "low_stock_threshold"
                 ),
+                low_stock_notification=serializer.validated_data.get(
+                    "low_stock_notification"
+                ),
             )
         except LookupError as exc:
             return Response(
