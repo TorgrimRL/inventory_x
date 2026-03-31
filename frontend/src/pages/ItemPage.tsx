@@ -37,11 +37,10 @@ import { useEffect, useMemo, useState } from "react";
 import EditItemModal from "../components/inventory/editItemModal";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
-  createActiveCategory,
-  deleteActiveCategory,
   getActiveInventory,
   listActiveCategories,
   updateItem,
@@ -129,9 +128,6 @@ export default function ItemPage() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryError, setCategoryError] = useState<string | null>(null);
-  const [categorySaving, setCategorySaving] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
@@ -464,10 +460,7 @@ export default function ItemPage() {
                 variant="outlined"
                 color="inherit"
                 startIcon={<SettingsIcon />}
-                onClick={() => {
-                  setCategoryError(null);
-                  setCategoryDialogOpen(true);
-                }}
+                onClick={() => setCategoryDialogOpen(true)}
               >
                 Manage categories
               </Button>
@@ -954,120 +947,15 @@ export default function ItemPage() {
         </Stack>
       </Container>
 
-      <Dialog
+      <ManageCategoriesDialog
         open={categoryDialogOpen}
-        onClose={() => {
-          if (!categorySaving) {
-            setCategoryError(null);
-            setCategoryDialogOpen(false);
-          }
-        }}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Manage categories</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {categoryError && <Alert severity="error">{categoryError}</Alert>}
-
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <TextField
-                label="New category"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                fullWidth
-                disabled={categorySaving}
-              />
-              <Button
-                variant="contained"
-                disabled={categorySaving || !categoryName.trim()}
-                onClick={async () => {
-                  setCategoryError(null);
-                  setCategorySaving(true);
-                  try {
-                    const created = await createActiveCategory(
-                      categoryName.trim(),
-                    );
-                    setCategories((prev) => [...prev, created]);
-                    setCategoryName("");
-                    setSnackMessage("Category created");
-                    setSnackOpen(true);
-                  } catch (err: any) {
-                    const detail =
-                      err?.response?.data?.detail ||
-                      err?.response?.data?.name?.[0] ||
-                      "A category with this name already exists.";
-                    setCategoryError(String(detail));
-                  } finally {
-                    setCategorySaving(false);
-                  }
-                }}
-              >
-                Add
-              </Button>
-            </Stack>
-
-            <Stack spacing={1}>
-              {categories.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No categories yet.
-                </Typography>
-              ) : (
-                categories.map((category) => (
-                  <Stack
-                    key={category.id}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography>{category.name}</Typography>
-                    <Button
-                      color="error"
-                      onClick={async () => {
-                        setCategoryError(null);
-                        try {
-                          await deleteActiveCategory(category.id);
-                          setCategories((prev) =>
-                            prev.filter((c) => c.id !== category.id),
-                          );
-                          setItems((prev) =>
-                            prev.map((item) => ({
-                              ...item,
-                              category_ids: (item.category_ids || []).filter(
-                                (id) => String(id) !== category.id,
-                              ),
-                            })),
-                          );
-                          setSnackMessage("Category deleted");
-                          setSnackOpen(true);
-                        } catch (err: any) {
-                          const detail =
-                            err?.response?.data?.detail ||
-                            "Failed to delete category.";
-                          setCategoryError(String(detail));
-                        }
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </Stack>
-                ))
-              )}
-            </Stack>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setCategoryError(null);
-              setCategoryDialogOpen(false);
-            }}
-            disabled={categorySaving}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onClose={() => setCategoryDialogOpen(false)}
+        categories={categories}
+        setCategories={setCategories}
+        setItems={setItems}
+        setSnackMessage={setSnackMessage}
+        setSnackOpen={setSnackOpen}
+      />
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
