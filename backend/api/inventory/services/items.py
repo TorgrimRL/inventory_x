@@ -2,7 +2,7 @@ from uuid import UUID
 
 from django.db import transaction
 
-from api.inventory.decorators import audit_logger
+from api.inventory.decorators import audit_logger, notify_low_stock
 from api.inventory.models import InventoryItem
 
 
@@ -64,6 +64,7 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@notify_low_stock
 @audit_logger("adjust_stock")
 def adjust_stock(
     inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
@@ -101,6 +102,7 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@notify_low_stock
 @audit_logger("update_item")
 def update_item(
     item_id: UUID,
