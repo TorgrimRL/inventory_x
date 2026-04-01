@@ -24,7 +24,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         InventoryMembership.objects.create(
             inventory=self.inventory,
             user=self.user,
-            role="OWNER",  # Matches the filter in decorator
+            role="owner",  # Matches the filter in decorator
         )
         self.item = create_item(
             inventory_id=self.inventory_id,

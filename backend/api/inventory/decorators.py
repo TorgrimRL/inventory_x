@@ -77,25 +77,20 @@ def notify_low_stock(func):
         # Handle both dict (create_item) and object (adjust_stock/update_item)
         if item:
             is_dict = isinstance(item, dict)
-            notify_enabled = (
-                item.get("low_stock_notification", False)
-                if is_dict
-                else getattr(item, "low_stock_notification", False)
-            )
-            threshold = (
-                item.get("low_stock_threshold")
-                if is_dict
-                else getattr(item, "low_stock_threshold", None)
-            )
-            cur_stock = (
-                item.get("stock") if is_dict else getattr(item, "stock", 0)
-            )
-            item_name = (
-                item.get("name") if is_dict else getattr(item, "name", "")
-            )
-            item_id_val = (
-                item.get("id") if is_dict else getattr(item, "id", None)
-            )
+            if is_dict:
+                notify_enabled = item.get("low_stock_notification", False)
+                threshold = item.get("low_stock_threshold")
+                cur_stock = item.get("stock")
+                item_name = item.get("name")
+                item_id_val = item.get("id")
+                inventory_id = item.get("inventory_id")
+            else:
+                notify_enabled = getattr(item, "low_stock_notification", False)
+                threshold = getattr(item, "low_stock_threshold", None)
+                cur_stock = getattr(item, "stock", 0)
+                item_name = getattr(item, "name", "")
+                item_id_val = getattr(item, "id", None)
+                inventory_id = getattr(item, "inventory_id", None)
 
             # LOGIC: Only send if it WAS high and is NOW low.
             if notify_enabled and threshold is not None:
@@ -103,16 +98,10 @@ def notify_low_stock(func):
                 is_now_low = cur_stock <= threshold
 
                 if was_above and is_now_low:
-                    # Look up inventory_id based on result type
-                    inventory_id = (
-                        item.get("inventory_id")
-                        if is_dict
-                        else getattr(item, "inventory_id", None)
-                    )
-
+                    # Look up owner's email.
                     membership = (
                         InventoryMembership.objects.select_related("user")
-                        .filter(inventory_id=inventory_id, role="OWNER")
+                        .filter(inventory_id=inventory_id, role="owner")
                         .first()
                     )
 
