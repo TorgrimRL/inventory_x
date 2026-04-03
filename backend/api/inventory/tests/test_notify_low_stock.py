@@ -108,3 +108,37 @@ class LowStockNotificationTests(BaseAPITestCase):
 
         # Assert NO mail was sent
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_spam_notifications_protection(
+        self,
+    ):
+        """
+        Scenario: Item stock drops below threshold multiple times,
+        or adjust_stock is called multiple times while already below threshold.
+        Expectation: One email is sent.
+        """
+
+        # Setup: Create an item with notifications DISABLED
+        silent_item = create_item(
+            inventory_id=self.inventory_id,
+            name="Silent Widget",
+            price=100,
+            stock=10,
+            low_stock_threshold=8,
+            low_stock_notification=True,  # <-- Enabled
+            user=self.user,
+        )
+        mail.outbox.clear()
+
+        # Action: Decrease stock to 4 (below threshold)
+        for _ in range(3):
+            adjust_stock(
+                inventory_id=self.inventory_id,
+                item_id=silent_item["id"],
+                direction="decrease",
+                amount=1,
+                user=self.user,
+            )
+
+        # Assert one mail was sent
+        self.assertEqual(len(mail.outbox), 1)
