@@ -2,7 +2,8 @@ from uuid import UUID
 
 from django.db import transaction
 
-from api.inventory.models import InventoryItem, ItemCategory
+from api.inventory.decorators import audit_logger
+from api.inventory.models import InventoryItem
 
 
 def get_all_items(inventory_id: UUID):
@@ -18,44 +19,24 @@ def get_all_items(inventory_id: UUID):
         .prefetch_related("categories")
         .order_by("id")
     )
-    return [
-        {
-            "id": item.id,
-            "name": item.name,
-            "price": item.price,
-            "stock": item.stock,
-            "low_stock_threshold": item.low_stock_threshold,
-            "category_ids": [category.id for category in item.categories.all()],
-        }
-        for item in items_qs
-    ]
-
-
-def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
-    """Ensures categories exist and returns the QuerySet."""
-    if not category_ids:
-        return ItemCategory.objects.none()
-
-    unique_category_ids = set(category_ids)
-    categories = ItemCategory.objects.filter(
-        id__in=unique_category_ids, inventory_id=inventory_id
+    items = queryset.values(
+        "id", "name", "price", "stock", "low_stock_threshold"
     )
-
-    if categories.count() != len(unique_category_ids):
-        raise ValueError(
-            "One or more categories are invalid "
-            "or do not belong to this inventory."
-        )
-
-    return categories
+    return list(items)
 
 
+@audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
+   
     name: str,
+   
     price: int,
+   
     stock: int,
+   
     low_stock_threshold=None,
+    user=None,,
     category_ids: list[UUID] | None = None,
 ):
     try:
@@ -89,8 +70,9 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@audit_logger("adjust_stock")
 def adjust_stock(
-    inventory_id: UUID, item_id: UUID, direction: str, amount: int
+    inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
 ):
     """
     Adjusts stock for an inventory item.
@@ -125,12 +107,17 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@audit_logger("update_item")
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
+   
     name: str,
+   
     price: int,
+   
     low_stock_threshold: int | None,
+    user=None,,
     category_ids: list[UUID] | None = None,
 ):
     """

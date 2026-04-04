@@ -36,6 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import EditItemModal from "../components/inventory/editItemModal";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import StockLog from "../components/inventory/StockLog"; // Adjust import path
 import ApiClient from "../services/apiClient.ts";
 import {
   createActiveCategory,
@@ -99,7 +100,6 @@ export default function ItemPage() {
 
   const [name, setName] = useState("");
   const [newItemCategoryIds, setNewItemCategoryIds] = useState<string[]>([]);
-  const [newItemCategoryName, setNewItemCategoryName] = useState("");
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -138,6 +138,17 @@ export default function ItemPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
+  const [selectedLogItemId, setSelectedLogItemId] = useState<
+    number | string | null
+  >(null);
+
+  const handleOpenStockLog = (id: number | string) => {
+    setSelectedLogItemId(id);
+  };
+
+  const handleCloseStockLog = () => {
+    setSelectedLogItemId(null);
+  };
 
   async function loadItems() {
     setLoading(true);
@@ -181,7 +192,6 @@ export default function ItemPage() {
   function openDialog() {
     setError(null);
     setNewItemCategoryIds([]);
-    setNewItemCategoryName("");
     setNewItemLowStockThreshold("");
     setOpen(true);
   }
@@ -217,18 +227,9 @@ export default function ItemPage() {
 
     setSaving(true);
 
-    let categoryIdsToSave = [...newItemCategoryIds];
+    const categoryIdsToSave = [...newItemCategoryIds];
 
     try {
-      const newCategoryTrimmed = newItemCategoryName.trim();
-      if (newCategoryTrimmed.length > 0) {
-        const createdCategory = await createActiveCategory(newCategoryTrimmed);
-        setCategories((prev) => [...prev, createdCategory]);
-        categoryIdsToSave = [
-          ...new Set([...categoryIdsToSave, createdCategory.id]),
-        ];
-      }
-
       const payload = {
         name: name.trim(),
         price: Number(price),
@@ -238,21 +239,10 @@ export default function ItemPage() {
       };
 
       const res = await ApiClient.post("/api/inventory/", payload);
-      let created = res.data as InventoryItem;
-
-      if (categoryIdsToSave.length > 0) {
-        const updated = await updateItem(created.id, {
-          name: created.name,
-          price: Number(created.price),
-          low_stock_threshold: created.low_stock_threshold ?? null,
-          category_ids: categoryIdsToSave,
-        });
-        created = {
-          ...created,
-          ...updated,
-          category_ids: categoryIdsToSave,
-        } as InventoryItem;
-      }
+      const created = {
+        ...(res.data as InventoryItem),
+        category_ids: categoryIdsToSave,
+      } as InventoryItem;
 
       setItems((prev) => [
         ...prev,
@@ -268,7 +258,6 @@ export default function ItemPage() {
       setOpen(false);
       setName("");
       setNewItemCategoryIds([]);
-      setNewItemCategoryName("");
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
@@ -704,7 +693,15 @@ export default function ItemPage() {
                     <TableBody>
                       {pagedItems.map((item) => (
                         <TableRow key={item.id} hover>
-                          <TableCell>{item.name}</TableCell>
+                          <TableCell
+                            onClick={() => handleOpenStockLog(item.id)}
+                            sx={{
+                              cursor: "pointer",
+                              color: "primary.main",
+                            }}
+                          >
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             {(item.category_ids || []).length > 0
                               ? (item.category_ids || [])
@@ -817,38 +814,6 @@ export default function ItemPage() {
                 ))}
               </TextField>
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <TextField
-                  label="New category"
-                  value={newItemCategoryName}
-                  onChange={(e) => setNewItemCategoryName(e.target.value)}
-                  fullWidth
-                  disabled={saving}
-                  helperText="Optional: create new category"
-                />
-                <Button
-                  variant="outlined"
-                  disabled={saving || !newItemCategoryName.trim()}
-                  onClick={async () => {
-                    try {
-                      const createdCategory = await createActiveCategory(
-                        newItemCategoryName.trim(),
-                      );
-                      setCategories((prev) => [...prev, createdCategory]);
-                      setNewItemCategoryIds((prev) =>
-                        prev.includes(createdCategory.id)
-                          ? prev
-                          : [...prev, createdCategory.id],
-                      );
-                      setNewItemCategoryName("");
-                    } catch {
-                      setError("Failed to create category.");
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              </Stack>
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
@@ -976,6 +941,12 @@ export default function ItemPage() {
           {snackMessage}
         </Alert>
       </Snackbar>
+
+      <StockLog
+        open={Boolean(selectedLogItemId)}
+        itemId={selectedLogItemId}
+        onClose={handleCloseStockLog}
+      />
     </Box>
   );
 }
