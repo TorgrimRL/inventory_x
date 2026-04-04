@@ -8,15 +8,11 @@ from django.db import transaction
 from django.utils import timezone
 
 from api.inventory.models import (
-    (
     Inventory,
-   
     InventoryItem,
-   
     InventoryMembership,
-    StockLog,
-),
     ItemCategory,
+    StockLog,
 )
 
 
