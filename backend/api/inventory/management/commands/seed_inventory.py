@@ -295,6 +295,49 @@ class Command(BaseCommand):
                 ("Disposable Gloves (100 pcs)", 99),
             ]
 
+            def pick_categories_for_item(inventory, item_name: str):
+                category_map = categories_by_inventory.get(str(inventory.id), {})
+
+                if inventory.name == "Jessica Cookies AS":
+                    lowered = item_name.lower()
+                    picked: list[str] = []
+
+                    if any(word in lowered for word in ["cookie", "brownie", "blondie", "brookie", "cupcake"]):
+                        picked.append("Snacks")
+                    if any(word in lowered for word in ["dip", "vanilla cream"]):
+                        picked.append("Drinks")
+                    if any(word in lowered for word in ["flour", "sugar", "butter", "eggs", "chocolate", "cocoa", "vanilla", "baking powder", "salt", "biscoff", "hazelnut", "macadamia", "peanut butter", "oats", "raisins"]):
+                        picked.append("Dairy" if "butter" in lowered or "eggs" in lowered else "Milk")
+                    if any(word in lowered for word in ["boxes", "paper bags", "labels", "napkins", "gloves", "takeaway", "shipping", "bubble wrap", "tape"]):
+                        picked.append("Bread")
+
+                    return [
+                        category_map[name]
+                        for name in picked
+                        if name in category_map
+                    ]
+
+                if inventory.name == "Ola AS":
+                    lowered = item_name.lower()
+                    picked = []
+                    if "jo nesbø" in lowered or "pascal engman" in lowered or "jussi adler-olsen" in lowered or "lars kepler" in lowered or "jørn lier horst" in lowered:
+                        picked.append("Crime")
+                    elif any(word in lowered for word in ["ledelse", "statsbudsjett", "vagusnerven", "hele deg", "sjøfareren"]):
+                        picked.append("Non-fiction")
+                    else:
+                        picked.append("Books")
+
+                    return [
+                        category_map[name]
+                        for name in picked
+                        if name in category_map
+                    ]
+
+                default_category = category_map.get("General") or next(
+                    iter(category_map.values()), None
+                )
+                return [default_category] if default_category else []
+
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
                 # Fetch members specifically for this inventory
                 members = [
@@ -316,6 +359,10 @@ class Command(BaseCommand):
                         price=price,
                         stock=current_stock,
                     )
+
+                    selected_categories = pick_categories_for_item(inventory, name)
+                    if selected_categories:
+                        item.categories.set(selected_categories)
 
                     # LOG: Creation (Random member as actor)
                     actor = random.choice(members)
