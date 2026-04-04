@@ -43,6 +43,7 @@ type InventoryItem = {
   price: number;
   order_id?: string;
   low_stock_threshold: number | null;
+  image_url?: string | null;
 };
 
 function isLowStock(item: InventoryItem) {
@@ -113,6 +114,10 @@ export default function ItemPage() {
   const [snackMessage, setSnackMessage] = useState("Item added");
 
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
@@ -469,6 +474,7 @@ export default function ItemPage() {
                 <Table size="medium" sx={{ minWidth: 720 }}>
                   <TableHead>
                     <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Image</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>
                         <TableSortLabel
                           active={sortField === "name"}
@@ -545,6 +551,32 @@ export default function ItemPage() {
                   <TableBody>
                     {displayedItems.map((item) => (
                       <TableRow key={item.id} hover>
+                        <TableCell>
+                          {item.image_url ? (
+                            <Box
+                              component="img"
+                              src={item.image_url}
+                              alt={`${item.name} image thumbnail`}
+                              onClick={() =>
+                                setPreviewImage({
+                                  src: item.image_url as string,
+                                  alt: `${item.name} image preview`,
+                                })
+                              }
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                objectFit: "cover",
+                                borderRadius: 1,
+                                cursor: "pointer",
+                                border: 1,
+                                borderColor: "divider",
+                              }}
+                            />
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
                         <TableCell
                           onClick={() => handleOpenStockLog(item.id)}
                           sx={{
@@ -685,6 +717,24 @@ export default function ItemPage() {
         </Box>
       </Dialog>
 
+      <Dialog open={Boolean(previewImage)} onClose={() => setPreviewImage(null)}>
+        <DialogContent sx={{ p: 1 }}>
+          {previewImage && (
+            <Box
+              component="img"
+              src={previewImage.src}
+              alt={previewImage.alt}
+              sx={{
+                maxWidth: "80vw",
+                maxHeight: "80vh",
+                display: "block",
+                objectFit: "contain",
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {selectedItem && (
         <EditItemModal
           open={editOpen}
@@ -693,6 +743,7 @@ export default function ItemPage() {
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
           initialLowStockThreshold={selectedItem.low_stock_threshold}
+          initialImageUrl={selectedItem.image_url ?? null}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
@@ -700,6 +751,7 @@ export default function ItemPage() {
             name: string;
             price: number;
             lowStockThreshold: number | null;
+            imageUrl?: string | null;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
@@ -709,12 +761,13 @@ export default function ItemPage() {
                       name: updated.name,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
+                      image_url: updated.imageUrl ?? it.image_url,
                     }
                   : it,
               ),
             );
 
-            setSnackMessage("Item updated");
+            setSnackMessage(updated.imageUrl ? "Image uploaded" : "Item updated");
             setSnackOpen(true);
           }}
           onStockUpdated={(newStock: number) => {
