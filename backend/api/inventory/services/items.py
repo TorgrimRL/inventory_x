@@ -3,40 +3,65 @@ from uuid import UUID
 from django.db import transaction
 
 from api.inventory.decorators import audit_logger
-from api.inventory.models import InventoryItem
+from api.inventory.models import InventoryItem, ItemCategory
+
+
+def _get_validated_categories(
+    inventory_id: UUID, category_ids: list[UUID]
+) -> list[ItemCategory]:
+    if not category_ids:
+        return []
+
+    categories = list(
+        ItemCategory.objects.filter(
+            inventory_id=inventory_id,
+            id__in=category_ids,
+        )
+    )
+
+    if len(categories) != len(set(category_ids)):
+        raise ValueError(
+            "All categories must belong to the active inventory."
+        )
+
+    return categories
 
 
 def get_all_items(inventory_id: UUID):
     """
     Fetches all inventory items from the database.
     Returns them as a list of dictionaries.
-
-    Args:
-        inventory_id:
     """
     items_qs = (
         InventoryItem.objects.filter(inventory_id=inventory_id)
         .prefetch_related("categories")
         .order_by("id")
     )
-    items = queryset.values(
-        "id", "name", "price", "stock", "low_stock_threshold"
-    )
-    return list(items)
+
+    items = []
+    for item in items_qs:
+        items.append(
+            {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
+                "category_ids": [str(category.id) for category in item.categories.all()],
+            }
+        )
+
+    return items
 
 
 @audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
-   
     name: str,
-   
     price: int,
-   
     stock: int,
-   
     low_stock_threshold=None,
-    user=None,,
+    user=None,
     category_ids: list[UUID] | None = None,
 ):
     try:
@@ -62,7 +87,7 @@ def create_item(
                 "price": item.price,
                 "stock": item.stock,
                 "low_stock_threshold": item.low_stock_threshold,
-                "category_ids": category_ids or [],
+                "category_ids": [str(category.id) for category in categories],
             }
     except ValueError as ve:
         raise ve
@@ -111,13 +136,10 @@ def adjust_stock(
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
-   
     name: str,
-   
     price: int,
-   
     low_stock_threshold: int | None,
-    user=None,,
+    user=None,
     category_ids: list[UUID] | None = None,
 ):
     """
@@ -129,6 +151,7 @@ def update_item(
                 id=item_id, inventory_id=inventory_id
             )
 
+            categories: list[ItemCategory] = []
             if category_ids is not None:
                 categories = _get_validated_categories(
                     item.inventory_id, category_ids
