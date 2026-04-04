@@ -17,7 +17,6 @@ import {
   adjustStock,
   deleteItem,
   updateItem,
-  uploadItemImage,
 } from "../../services/inventoryService";
 
 type Props = {
@@ -28,7 +27,6 @@ type Props = {
   initialPrice: number;
   currentStock: number;
   initialLowStockThreshold?: number | null;
-  initialImageUrl?: string | null;
   // owner => true, employee => false
   canEditDetails: boolean;
 
@@ -39,7 +37,6 @@ type Props = {
     name: string;
     price: number;
     lowStockThreshold: null | number;
-    imageUrl?: string | null;
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -69,7 +66,6 @@ export default function EditItemModal({
   initialName,
   initialPrice,
   initialLowStockThreshold,
-  initialImageUrl,
   currentStock,
   canEditDetails,
   onClose,
@@ -91,10 +87,6 @@ export default function EditItemModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
-    initialImageUrl ?? null,
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -108,7 +100,7 @@ export default function EditItemModal({
     setSelectedImage(null);
     setImagePreviewUrl(initialImageUrl ?? null);
     setError(null);
-  }, [open, initialName, initialPrice, initialLowStockThreshold, initialImageUrl]);
+  }, [open, initialName, initialPrice, initialLowStockThreshold]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -211,19 +203,7 @@ export default function EditItemModal({
         }
       }
 
-      // 2) Upload image (if selected)
-      if (selectedImage) {
-        const res = await uploadItemImage(itemId, selectedImage);
-        onItemUpdated({
-          id: itemId,
-          name: name.trim(),
-          price: priceNumber,
-          lowStockThreshold: lowStockThresholdNumber,
-          imageUrl: res.image_url,
-        });
-      }
-
-      // 3) Adjust stock (only if amount > 0)
+      // 2) Adjust stock (only if amount > 0)
       if (wantsStockChange && direction) {
         const res = await adjustStock(itemId, direction, amountNumber);
         onStockUpdated(res.stock);
@@ -320,56 +300,6 @@ export default function EditItemModal({
                   : "Leave empty if no threshold should be set"
               }
             />
-
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">Item image</Typography>
-              {imagePreviewUrl ? (
-                <Box
-                  component="img"
-                  src={imagePreviewUrl}
-                  alt={`${initialName} image preview`}
-                  sx={{
-                    width: 96,
-                    height: 96,
-                    objectFit: "cover",
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: "divider",
-                  }}
-                />
-              ) : null}
-              <input
-                id={`item-image-upload-${itemId}`}
-                hidden
-                aria-label="Upload image"
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  setSelectedImage(file);
-                  if (file) {
-                    setImagePreviewUrl(URL.createObjectURL(file));
-                  }
-                }}
-              />
-              <Button
-                variant="outlined"
-                disabled={saving}
-                onClick={() => {
-                  const input = document.getElementById(
-                    `item-image-upload-${itemId}`,
-                  ) as HTMLInputElement | null;
-                  input?.click();
-                }}
-              >
-                Upload image
-              </Button>
-              {selectedImage ? (
-                <Typography variant="body2" color="text.secondary">
-                  {selectedImage.name}
-                </Typography>
-              ) : null}
-            </Stack>
 
             <Divider />
 

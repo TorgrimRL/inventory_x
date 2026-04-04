@@ -108,6 +108,18 @@ export async function updateItem(
   return res.data;
 }
 
+export async function uploadItemImage(
+  itemId: number | string,
+  image: File,
+): Promise<{ image_url: string; message: string }> {
+  const formData = new FormData();
+  formData.append("image", image);
+  const res = await apiClient.post(`/api/inventory/${itemId}/image/`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data as { image_url: string; message: string };
+}
+
 export async function deleteItem(itemId: number | string) {
   const res = await apiClient.delete(`/api/inventory/${itemId}/`);
   return res.data;

@@ -17,10 +17,17 @@ def get_all_items(inventory_id: UUID):
     queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
         "id"
     )
-    items = queryset.values(
-        "id", "name", "price", "stock", "low_stock_threshold"
-    )
-    return list(items)
+    return [
+        {
+            "id": item.id,
+            "name": item.name,
+            "price": item.price,
+            "stock": item.stock,
+            "low_stock_threshold": item.low_stock_threshold,
+            "image_url": item.image.url if item.image else None,
+        }
+        for item in queryset
+    ]
 
 
 @audit_logger("create_item")

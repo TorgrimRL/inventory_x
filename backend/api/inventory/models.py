@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import TYPE_CHECKING, ClassVar
 
@@ -82,6 +83,11 @@ class Inventory(models.Model):
         return f"{self.name} ({self.org_number})"
 
 
+def item_image_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1].lower() or ".png"
+    return f"item-images/{instance.inventory_id}/{instance.id}{ext}"
+
+
 class InventoryItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
@@ -94,6 +100,7 @@ class InventoryItem(models.Model):
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
+    image = models.ImageField(upload_to=item_image_upload_path, null=True, blank=True)
 
     def __str__(self):
         return self.name

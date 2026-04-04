@@ -34,7 +34,10 @@ import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import StockLog from "../components/inventory/StockLog"; // Adjust import path
 import ApiClient from "../services/apiClient.ts";
-import { getActiveInventory } from "../services/inventoryService";
+import {
+  getActiveInventory,
+  uploadItemImage,
+} from "../services/inventoryService";
 
 type InventoryItem = {
   id: number | string;
@@ -118,6 +121,8 @@ export default function ItemPage() {
     src: string;
     alt: string;
   } | null>(null);
+  const [imageDialogItem, setImageDialogItem] = useState<InventoryItem | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   // Existing main-branch search
   const [searchInput, setSearchInput] = useState("");
@@ -557,12 +562,14 @@ export default function ItemPage() {
                               component="img"
                               src={item.image_url}
                               alt={`${item.name} image thumbnail`}
-                              onClick={() =>
+                              onClick={() => {
+                                setImageDialogItem(item);
+                                setSelectedImageFile(null);
                                 setPreviewImage({
                                   src: item.image_url as string,
                                   alt: `${item.name} image preview`,
-                                })
-                              }
+                                });
+                              }}
                               sx={{
                                 width: 40,
                                 height: 40,
@@ -574,7 +581,17 @@ export default function ItemPage() {
                               }}
                             />
                           ) : (
-                            "-"
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                setImageDialogItem(item);
+                                setSelectedImageFile(null);
+                                setPreviewImage(null);
+                              }}
+                            >
+                              Add image
+                            </Button>
                           )}
                         </TableCell>
                         <TableCell
@@ -717,22 +734,131 @@ export default function ItemPage() {
         </Box>
       </Dialog>
 
-      <Dialog open={Boolean(previewImage)} onClose={() => setPreviewImage(null)}>
-        <DialogContent sx={{ p: 1 }}>
-          {previewImage && (
+      <Dialog
+        open={Boolean(imageDialogItem)}
+        onClose={() => {
+          setImageDialogItem(null);
+          setSelectedImageFile(null);
+          setPreviewImage(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Item image</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {previewImage ? (
+              <Box
+                component="img"
+                src={previewImage.src}
+                alt={previewImage.alt}
+                sx={{
+                  width: "100%",
+                  maxHeight: 420,
+                  objectFit: "contain",
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: "divider",
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  minHeight: 220,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  color: "text.secondary",
+                }}
+              >
+                No image uploaded yet.
+              </Box>
+            )}
+
+            <Typography variant="body2" color="text.secondary">
+              Choose a file to upload or replace the current image.
+            </Typography>
             <Box
-              component="img"
-              src={previewImage.src}
-              alt={previewImage.alt}
-              sx={{
-                maxWidth: "80vw",
-                maxHeight: "80vh",
-                display: "block",
-                objectFit: "contain",
+              component="input"
+              aria-label="Upload image"
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const file = e.target.files?.[0] ?? null;
+                setSelectedImageFile(file);
+                if (file) {
+                  setPreviewImage({
+                    src: URL.createObjectURL(file),
+                    alt: `${imageDialogItem?.name || "Item"} image preview`,
+                  });
+                }
               }}
             />
-          )}
+          </Stack>
         </DialogContent>
+        <DialogActions>
+          <Button
+            color="inherit"
+            onClick={() => {
+              setImageDialogItem(null);
+              setSelectedImageFile(null);
+              setPreviewImage(null);
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            color="inherit"
+            disabled={!previewImage}
+            onClick={() => {
+              setItems((prev) =>
+                prev.map((it) =>
+                  it.id === imageDialogItem?.id ? { ...it, image_url: null } : it,
+                ),
+              );
+              setPreviewImage(null);
+              setSelectedImageFile(null);
+              setSnackMessage("Image removed");
+              setSnackOpen(true);
+            }}
+          >
+            Remove image
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!imageDialogItem || !selectedImageFile}
+            onClick={async () => {
+              if (!imageDialogItem || !selectedImageFile) return;
+              try {
+                const res = await uploadItemImage(
+                  imageDialogItem.id,
+                  selectedImageFile,
+                );
+                setItems((prev) =>
+                  prev.map((it) =>
+                    it.id === imageDialogItem.id
+                      ? { ...it, image_url: res.image_url }
+                      : it,
+                  ),
+                );
+                setPreviewImage({
+                  src: res.image_url,
+                  alt: `${imageDialogItem.name} image preview`,
+                });
+                setSelectedImageFile(null);
+                setSnackMessage("Image uploaded");
+                setSnackOpen(true);
+              } catch {
+                setError("Failed to upload image.");
+              }
+            }}
+          >
+            {previewImage ? "Change image" : "Upload image"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {selectedItem && (
@@ -743,7 +869,6 @@ export default function ItemPage() {
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
           initialLowStockThreshold={selectedItem.low_stock_threshold}
-          initialImageUrl={selectedItem.image_url ?? null}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
           onItemUpdated={(updated: {
@@ -751,7 +876,6 @@ export default function ItemPage() {
             name: string;
             price: number;
             lowStockThreshold: number | null;
-            imageUrl?: string | null;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
@@ -761,13 +885,12 @@ export default function ItemPage() {
                       name: updated.name,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
-                      image_url: updated.imageUrl ?? it.image_url,
                     }
                   : it,
               ),
             );
 
-            setSnackMessage(updated.imageUrl ? "Image uploaded" : "Item updated");
+            setSnackMessage("Item updated");
             setSnackOpen(true);
           }}
           onStockUpdated={(newStock: number) => {
