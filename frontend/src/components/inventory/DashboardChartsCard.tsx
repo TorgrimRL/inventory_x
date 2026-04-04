@@ -8,19 +8,18 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PATHS } from "../../App";
-import { type InventoryItem } from "../../services/inventoryService";
+import {
+  getInventoryHistory,
+  type InventoryHistoryPoint,
+  type InventoryItem,
+} from "../../services/inventoryService";
 
 const CATEGORY_COLORS = ["#3f51b5", "#ff9800", "#4caf50", "#e91e63", "#00acc1"];
 const YEAR_OPTIONS = [2024, 2025, 2026];
-const YEARLY_FACTORS: Record<number, number[]> = {
-  2024: [0.48, 0.52, 0.57, 0.61, 0.66, 0.7, 0.75, 0.8, 0.84, 0.88, 0.92, 0.96],
-  2025: [0.55, 0.59, 0.64, 0.69, 0.74, 0.78, 0.83, 0.87, 0.91, 0.95, 0.98, 1],
-  2026: [0.62, 0.68, 0.73, 0.79, 0.84, 0.88, 0.91, 0.94, 0.97, 0.99, 1, 1.04],
-};
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -456,6 +455,23 @@ export default function DashboardChartsCard({
   categoryNameById: Map<string, string>;
 }) {
   const [selectedYear, setSelectedYear] = useState(2026);
+  const [historyPoints, setHistoryPoints] = useState<InventoryHistoryPoint[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getInventoryHistory(selectedYear)
+      .then((data) => {
+        if (!cancelled) setHistoryPoints(data);
+      })
+      .catch(() => {
+        if (!cancelled) setHistoryPoints([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedYear]);
 
   const metrics = useMemo(() => {
     const categoryCountTotals = new Map<string, number>();
@@ -507,15 +523,16 @@ export default function DashboardChartsCard({
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       }));
 
-    const totalValue = items.reduce(
-      (sum, item) => sum + Number(item.price) * item.stock,
-      0,
-    );
-    const growthFactors = YEARLY_FACTORS[selectedYear] ?? YEARLY_FACTORS[2026];
-    const monthlyValues = MONTH_LABELS.map((label, index) => ({
-      label,
-      value: Math.round(totalValue * growthFactors[index]),
-    }));
+    const monthlyValues =
+      historyPoints.length > 0
+        ? historyPoints.map((point) => ({
+            label: point.month,
+            value: point.value,
+          }))
+        : MONTH_LABELS.map((label) => ({
+            label,
+            value: 0,
+          }));
 
     const topInventoryValueItems = [...items]
       .map((item) => ({
@@ -543,7 +560,7 @@ export default function DashboardChartsCard({
       topInventoryValueItems,
       lowestStockItems,
     };
-  }, [categoryNameById, items, selectedYear]);
+  }, [categoryNameById, historyPoints, items]);
 
   if (items.length === 0) {
     return (

@@ -63,11 +63,22 @@ class Command(BaseCommand):
         bob = users["bob@example.com"]
 
         # --- Simulated Time Helper ---
-        # Starts 30 days ago and moves forward to simulate history
-        self.simulated_time = timezone.now() - timedelta(days=30)
+        # Starts in early 2025 and moves forward to simulate longer history
+        self.simulated_time = timezone.now().replace(
+            year=2025,
+            month=1,
+            day=5,
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
         def get_next_timestamp():
-            self.simulated_time += timedelta(minutes=random.randint(10, 480))
+            if self.simulated_time.year == 2025:
+                self.simulated_time += timedelta(days=random.randint(3, 12))
+            else:
+                self.simulated_time += timedelta(days=random.randint(2, 6))
             return self.simulated_time
 
         with transaction.atomic():

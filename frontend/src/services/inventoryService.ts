@@ -150,6 +150,20 @@ export async function updateItem(
   return res.data;
 }
 
+export type InventoryHistoryPoint = {
+  month: string;
+  value: number;
+};
+
+export async function getInventoryHistory(
+  year: number,
+): Promise<InventoryHistoryPoint[]> {
+  const res = await apiClient.get("/api/inventory/active/history/", {
+    params: { year },
+  });
+  return res.data as InventoryHistoryPoint[];
+}
+
 export async function createActiveCategory(
   name: string,
 ): Promise<ItemCategory> {
