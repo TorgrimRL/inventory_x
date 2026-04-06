@@ -3,7 +3,7 @@ import uuid
 from django.core import mail
 
 from api.inventory.models import Inventory, InventoryMembership
-from api.inventory.services.items import adjust_stock, create_item
+from api.inventory.services.items import adjust_stock, create_item, update_item
 from api.tests.base import BaseAPITestCase
 
 
@@ -77,7 +77,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         # Assert NO mail was sent
         self.assertEqual(len(mail.outbox), 0)
 
-    def test_adjust_stock_notifications_disabled(
+    def test_update_item_notifications_disabled(
         self,
     ):
         """
@@ -98,11 +98,12 @@ class LowStockNotificationTests(BaseAPITestCase):
         mail.outbox.clear()
 
         # Action: Decrease stock to 4 (below threshold)
-        adjust_stock(
-            inventory_id=self.inventory_id,
+        update_item(
+            name="silent_item",
             item_id=silent_item["id"],
-            direction="decrease",
-            amount=6,
+            low_stock_threshold=5,
+            low_stock_notification=False,
+            price=100,
             user=self.user,
         )
 
@@ -113,12 +114,11 @@ class LowStockNotificationTests(BaseAPITestCase):
         self,
     ):
         """
-        Scenario: Item stock drops below threshold multiple times,
-        or adjust_stock is called multiple times while already below threshold.
-        Expectation: One email is sent.
+        Scenario: Item stockd double dips, notifications are enabled.
+        Expectation: Two emails is sent.
         """
 
-        # Setup: Create an item with notifications DISABLED
+        # Setup: Create an item Enabled notifications.
         silent_item = create_item(
             inventory_id=self.inventory_id,
             name="Silent Widget",
@@ -131,14 +131,14 @@ class LowStockNotificationTests(BaseAPITestCase):
         mail.outbox.clear()
 
         # Action: Decrease stock to 4 (below threshold)
-        for _ in range(3):
-            adjust_stock(
-                inventory_id=self.inventory_id,
-                item_id=silent_item["id"],
-                direction="decrease",
-                amount=1,
-                user=self.user,
-            )
-
-        # Assert one mail was sent
-        self.assertEqual(len(mail.outbox), 1)
+        for i, directionn in enumerate(["decrease", "increase", "decrease"]):
+            for _ in range(3):
+                adjust_stock(
+                    inventory_id=self.inventory_id,
+                    item_id=silent_item["id"],
+                    direction=directionn,
+                    amount=1,
+                    user=self.user,
+                )
+            # Assert one mail was sent
+            self.assertEqual(len(mail.outbox), 2 if i == 2 else 1)
