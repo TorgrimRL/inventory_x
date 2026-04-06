@@ -123,19 +123,15 @@ def update_item(
             item.name = name
             item.price = price
             item.low_stock_threshold = low_stock_threshold
-            item.low_stock_notification = (
-                item.low_stock_notification
-                if low_stock_notification is None
-                else low_stock_notification
-            )
-            item.save(
-                update_fields=[
-                    "name",
-                    "price",
-                    "low_stock_threshold",
-                    "low_stock_notification",
-                ]
-            )
+
+            # build the update fields dynamically
+            update_fields = ["name", "price", "low_stock_threshold"]
+
+            if low_stock_notification is not None:
+                item.low_stock_notification = low_stock_notification
+                update_fields.append("low_stock_notification")
+
+            item.save(update_fields=update_fields)
 
             return item
 
