@@ -36,7 +36,6 @@ class LowStockNotificationTests(BaseAPITestCase):
             user=self.user,
         )
 
-        # Clear the outbox just in case create_item triggered anything
         mail.outbox.clear()
 
     def test_adjust_stock_below_threshold(self):
@@ -54,7 +53,6 @@ class LowStockNotificationTests(BaseAPITestCase):
             user=self.user,
         )
 
-        # Assert mail was sent
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertEqual(email.to, ["manager@example.com"])
@@ -74,7 +72,6 @@ class LowStockNotificationTests(BaseAPITestCase):
             user=self.user,
         )
 
-        # Assert NO mail was sent
         self.assertEqual(len(mail.outbox), 0)
 
     def test_update_item_notifications_disabled(
@@ -85,7 +82,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         Expectation: No email is sent.
         """
 
-        # Setup: Create an item with notifications DISABLED
+        # Setup: Create an item with notifications disabled
         silent_item = create_item(
             inventory_id=self.inventory_id,
             name="Silent Widget",
@@ -97,7 +94,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         )
         mail.outbox.clear()
 
-        # Action: Decrease stock to 4 (below threshold)
+        # Action: Decrease stock below threshold.
         update_item(
             name="silent_item",
             item_id=silent_item["id"],
@@ -130,7 +127,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         )
         mail.outbox.clear()
 
-        # Action: Decrease stock to 4 (below threshold)
+        # Action: Doube dip stock around the threshold.
         for i, directionn in enumerate(["decrease", "increase", "decrease"]):
             for _ in range(3):
                 adjust_stock(
@@ -140,5 +137,5 @@ class LowStockNotificationTests(BaseAPITestCase):
                     amount=1,
                     user=self.user,
                 )
-            # Assert one mail was sent
+
             self.assertEqual(len(mail.outbox), 2 if i == 2 else 1)
