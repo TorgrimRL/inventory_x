@@ -120,6 +120,13 @@ export async function uploadItemImage(
   return res.data as { image_url: string; message: string };
 }
 
+export async function removeItemImage(
+  itemId: number | string,
+): Promise<{ message: string }> {
+  const res = await apiClient.delete(`/api/inventory/${itemId}/image/`);
+  return res.data as { message: string };
+}
+
 export async function deleteItem(itemId: number | string) {
   const res = await apiClient.delete(`/api/inventory/${itemId}/`);
   return res.data;
