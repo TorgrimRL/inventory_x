@@ -142,7 +142,7 @@ class LowStockNotificationTests(BaseAPITestCase):
 
     def test_update_item_w_missing_notification_field(self):
         """
-        Scenario: Update item without changing thresholdand and
+        Scenario: Update item without changing threshold and
         notifications setting
         Expectation: No email is sent.
         """
@@ -150,7 +150,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         item = update_item(
             name="test_widget",
             item_id=self.item["id"],
-            low_stock_threshold=5,
+            low_stock_threshold=None,
             price=100,
             user=self.user,
         )
