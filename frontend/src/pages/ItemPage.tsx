@@ -567,7 +567,7 @@ export default function ItemPage() {
                                 width: 40,
                                 height: 40,
                                 objectFit: "cover",
-                                borderRadius: 1,
+                                borderRadius: 0,
                                 cursor: "pointer",
                                 border: 1,
                                 borderColor: "divider",
