@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   Alert,
   Box,
@@ -34,12 +35,13 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import EditItemModal from "../components/inventory/editItemModal";
+import InlineCategorySelect from "../components/inventory/InlineCategorySelect";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
-import StockLog from "../components/inventory/StockLog"; // Adjust import path
+import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
+import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
-  createActiveCategory,
   getActiveInventory,
   listActiveCategories,
   updateItem,
@@ -127,11 +129,14 @@ export default function ItemPage() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [page, setPage] = useState(0);
-
+  const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
+    null,
+  );
   const [sortField, setSortField] = useState<
     "name" | "stock" | "price" | "low_stock_threshold" | "status"
   >("stock");
@@ -278,10 +283,24 @@ export default function ItemPage() {
   const categoryNameById = useMemo(
     () =>
       new Map(
-        categories.map((category) => [category.id, category.name] as const),
+        categories.map(
+          (category) => [String(category.id), category.name] as const,
+        ),
       ),
     [categories],
   );
+
+  function renderCategoryNames(ids?: string[]) {
+    if (!ids || ids.length === 0) return "-";
+
+    const mapped = ids
+      .map((id) => categoryNameById.get(String(id)) || null)
+      .filter((name): name is string => Boolean(name));
+
+    if (mapped.length > 0) return mapped.join(", ");
+
+    return ids.join(", ");
+  }
 
   const displayedItems = useMemo(() => {
     const q = searchInput.trim().toLowerCase();
@@ -374,6 +393,35 @@ export default function ItemPage() {
     setSearchInput("");
   }
 
+  async function handleInlineCategoryChange(
+    item: InventoryItem,
+    nextCategoryIds: string[],
+  ) {
+    setError(null);
+    setUpdatingItemId(item.id);
+    try {
+      await updateItem(item.id, {
+        name: item.name,
+        price: Number(item.price),
+        low_stock_threshold: item.low_stock_threshold ?? null,
+        category_ids: nextCategoryIds,
+      });
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === item.id ? { ...it, category_ids: nextCategoryIds } : it,
+        ),
+      );
+      setSnackMessage("Item categories updated");
+      setSnackOpen(true);
+    } catch (err: any) {
+      const detail =
+        err?.response?.data?.detail || "Failed to update item categories.";
+      setError(String(detail));
+    } finally {
+      setUpdatingItemId(null);
+    }
+  }
+
   function resetListControls() {
     setSortField("stock");
     setSortDirection("asc");
@@ -391,6 +439,32 @@ export default function ItemPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{error}</Alert>}
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            justifyContent="flex-end"
+          >
+            {canEditDetails && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<SettingsIcon />}
+                onClick={() => setCategoryDialogOpen(true)}
+              >
+                Manage categories
+              </Button>
+            )}
+            {canEditDetails && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openDialog}
+              >
+                Add item
+              </Button>
+            )}
+          </Stack>
 
           <Paper sx={{ p: 2.5 }}>
             <Stack
@@ -450,9 +524,26 @@ export default function ItemPage() {
                 value={selectedCategoryIds}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setSelectedCategoryIds(
-                    Array.isArray(value) ? value : String(value).split(","),
-                  );
+                  const nextIds = Array.isArray(value)
+                    ? value.map(String)
+                    : String(value).split(",");
+
+                  const wasNoCategorySelected =
+                    selectedCategoryIds.includes("__no_category__");
+                  const isNoCategoryInNext =
+                    nextIds.includes("__no_category__");
+
+                  if (!wasNoCategorySelected && isNoCategoryInNext) {
+                    // User just checked "No category": clear all other categories
+                    setSelectedCategoryIds(["__no_category__"]);
+                  } else if (wasNoCategorySelected && nextIds.length > 1) {
+                    // User had "No category" checked, but just clicked a real category: uncheck "No category"
+                    setSelectedCategoryIds(
+                      nextIds.filter((id) => id !== "__no_category__"),
+                    );
+                  } else {
+                    setSelectedCategoryIds(nextIds);
+                  }
                 }}
                 sx={{ minWidth: 260 }}
                 SelectProps={{
@@ -556,14 +647,6 @@ export default function ItemPage() {
                   Reset
                 </Button>
               </Stack>
-
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={openDialog}
-              >
-                Add item
-              </Button>
             </Stack>
 
             <Typography
@@ -616,7 +699,7 @@ export default function ItemPage() {
                   <Table size="medium" sx={{ minWidth: 900 }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>
+                        <TableCell sx={{ fontWeight: 600, width: "46%" }}>
                           <TableSortLabel
                             active={sortField === "name"}
                             hideSortIcon={false}
@@ -629,7 +712,9 @@ export default function ItemPage() {
                             Product name
                           </TableSortLabel>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 600, width: "12%" }}>
+                          Category
+                        </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
                           <TableSortLabel
                             active={sortField === "stock"}
@@ -696,6 +781,7 @@ export default function ItemPage() {
                           <TableCell
                             onClick={() => handleOpenStockLog(item.id)}
                             sx={{
+                              whiteSpace: "normal",
                               cursor: "pointer",
                               color: "primary.main",
                             }}
@@ -703,12 +789,26 @@ export default function ItemPage() {
                             {item.name}
                           </TableCell>
                           <TableCell>
-                            {(item.category_ids || []).length > 0
-                              ? (item.category_ids || [])
-                                  .map((id) => categoryNameById.get(String(id)))
-                                  .filter(Boolean)
-                                  .join(", ")
-                              : "-"}
+                            {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
+                            {/* eslint-disable-next-line no-constant-condition */}
+                            {false ? (
+                              <Stack
+                                spacing={1}
+                                sx={{ minWidth: 160, maxWidth: 190 }}
+                              >
+                                <InlineCategorySelect
+                                  item={item}
+                                  categories={categories}
+                                  updating={updatingItemId === item.id}
+                                  onSave={handleInlineCategoryChange}
+                                  renderCategoryNames={renderCategoryNames}
+                                />
+                              </Stack>
+                            ) : (
+                              renderCategoryNames(
+                                (item.category_ids || []).map(String),
+                              )
+                            )}
                           </TableCell>
                           <TableCell align="right">{item.stock}</TableCell>
                           <TableCell align="right">
@@ -759,6 +859,16 @@ export default function ItemPage() {
           </Paper>
         </Stack>
       </Container>
+
+      <ManageCategoriesDialog
+        open={categoryDialogOpen}
+        onClose={() => setCategoryDialogOpen(false)}
+        categories={categories}
+        setCategories={setCategories}
+        setItems={setItems}
+        setSnackMessage={setSnackMessage}
+        setSnackOpen={setSnackOpen}
+      />
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
@@ -813,7 +923,6 @@ export default function ItemPage() {
                   </MenuItem>
                 ))}
               </TextField>
-
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField

@@ -19,7 +19,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { ItemCategory } from "../../services/inventoryService";
 import {
   adjustStock,
-  createActiveCategory,
   deleteItem,
   listActiveCategories,
   updateItem,
@@ -89,15 +88,14 @@ export default function EditItemModal({
   );
 
   const [amount, setAmount] = useState<string>("0");
-  const [direction, setDirection] = useState<"increase" | "decrease">(
-    "increase",
+  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
+    null,
   );
 
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     initialCategoryIds || [],
   );
-  const [newCategoryName, setNewCategoryName] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,9 +109,8 @@ export default function EditItemModal({
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
     setAmount("0");
-    setDirection("increase");
+    setDirection(null);
     setSelectedCategoryIds(initialCategoryIds || []);
-    setNewCategoryName("");
     setError(null);
 
     listActiveCategories()
@@ -167,7 +164,6 @@ export default function EditItemModal({
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
       initialCategoryKey !== selectedCategoryKey ||
-      newCategoryName.trim().length > 0 ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
 
   const stockChanged = wantsStockChange && direction !== null;
@@ -221,18 +217,7 @@ export default function EditItemModal({
       if (canEditDetails) {
         const trimmed = name.trim();
 
-        let categoryIdsToSave = [...selectedCategoryIds];
-        const newCategoryTrimmed = newCategoryName.trim();
-        if (newCategoryTrimmed.length > 0) {
-          const createdCategory =
-            await createActiveCategory(newCategoryTrimmed);
-          setCategories((prev) => [...prev, createdCategory]);
-          categoryIdsToSave = [
-            ...new Set([...categoryIdsToSave, createdCategory.id]),
-          ];
-          setSelectedCategoryIds(categoryIdsToSave);
-          setNewCategoryName("");
-        }
+        const categoryIdsToSave = [...selectedCategoryIds];
 
         const initialIds = (initialCategoryIds || []).map(String).sort();
         const currentIds = [...categoryIdsToSave].map(String).sort();
@@ -360,75 +345,65 @@ export default function EditItemModal({
               }
             />
 
-            <TextField
-              select
-              label="Categories"
-              value={selectedCategoryIds}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedCategoryIds(
-                  Array.isArray(value) ? value : String(value).split(","),
-                );
-              }}
-              disabled={saving || !canEditDetails}
-              fullWidth
-              helperText="Select one or more categories for this inventory"
-              SelectProps={{
-                multiple: true,
-                renderValue: (selected) => {
-                  const ids = selected as string[];
-                  if (ids.length === 0) return "No category added";
-                  return ids
-                    .map(
-                      (id) =>
-                        categories.find((category) => category.id === id)
-                          ?.name || id,
-                    )
-                    .join(", ");
-                },
-              }}
-            >
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  <Checkbox
-                    checked={selectedCategoryIds.includes(category.id)}
-                    size="small"
-                  />
-                  <ListItemText primary={category.name} />
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            {canEditDetails ? (
               <TextField
-                label="New category"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                disabled={saving || !canEditDetails}
+                select
+                label="Categories"
+                value={selectedCategoryIds}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryIds(
+                    Array.isArray(value) ? value : String(value).split(","),
+                  );
+                }}
+                disabled={saving}
                 fullWidth
-                helperText="Create category if it does not exist"
-              />
-              <Button
-                variant="outlined"
-                disabled={saving || !canEditDetails || !newCategoryName.trim()}
-                onClick={async () => {
-                  try {
-                    const created = await createActiveCategory(
-                      newCategoryName.trim(),
-                    );
-                    setCategories((prev) => [...prev, created]);
-                    setSelectedCategoryIds((prev) =>
-                      prev.includes(created.id) ? prev : [...prev, created.id],
-                    );
-                    setNewCategoryName("");
-                  } catch {
-                    setError("Failed to create category.");
-                  }
+                helperText="Select one or more categories for this inventory"
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => {
+                    const ids = selected as string[];
+                    if (ids.length === 0) return "No category added";
+                    return ids
+                      .map(
+                        (id) =>
+                          categories.find((category) => category.id === id)
+                            ?.name || id,
+                      )
+                      .join(", ");
+                  },
                 }}
               >
-                Add
-              </Button>
-            </Stack>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    <Checkbox
+                      checked={selectedCategoryIds.includes(category.id)}
+                      size="small"
+                    />
+                    <ListItemText primary={category.name} />
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                label="Categories"
+                value={
+                  selectedCategoryIds.length === 0
+                    ? "No category added"
+                    : selectedCategoryIds
+                        .map(
+                          (id) =>
+                            categories.find(
+                              (category) => String(category.id) === String(id),
+                            )?.name,
+                        )
+                        .filter(Boolean)
+                        .join(", ") || "No category added"
+                }
+                disabled
+                fullWidth
+              />
+            )}
 
             <Divider />
 

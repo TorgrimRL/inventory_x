@@ -112,35 +112,6 @@ class Command(BaseCommand):
                 inventories.append(inv)
                 inventories_by_name[name] = inv
 
-            # --- Memberships ---
-            # Admin owns everything
-            for inv in inventories_by_name.values():
-                InventoryMembership.objects.create(
-                    inventory=inv,
-                    user=admin,
-                    role=InventoryMembership.Role.OWNER,
-                )
-
-            # Alice works at Ola and Jessica's
-            InventoryMembership.objects.create(
-                inventory=inventories_by_name["Ola AS"],
-                user=alice,
-                role=InventoryMembership.Role.EMPLOYEE,
-            )
-            InventoryMembership.objects.create(
-                inventory=inventories_by_name["Jessica Cookies AS"],
-                user=alice,
-                role=InventoryMembership.Role.EMPLOYEE,
-            )
-
-            # Bob owns the last one
-            last_inv = list(inventories_by_name.values())[-1]
-            InventoryMembership.objects.create(
-                inventory=last_inv,
-                user=bob,
-                role=InventoryMembership.Role.OWNER,
-            )
-
             # --- Categories (inventory-specific) ---
             categories_by_inventory: dict[str, dict[str, ItemCategory]] = {}
 
@@ -169,6 +140,35 @@ class Command(BaseCommand):
                     categories_for_inv[category_name] = created_category
 
                 categories_by_inventory[str(inv.id)] = categories_for_inv
+
+            # --- Memberships ---
+            # Admin owns everything
+            for inv in inventories_by_name.values():
+                InventoryMembership.objects.create(
+                    inventory=inv,
+                    user=admin,
+                    role=InventoryMembership.Role.OWNER,
+                )
+
+            # Alice works at Ola and Jessica's
+            InventoryMembership.objects.create(
+                inventory=inventories_by_name["Ola AS"],
+                user=alice,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
+            InventoryMembership.objects.create(
+                inventory=inventories_by_name["Jessica Cookies AS"],
+                user=alice,
+                role=InventoryMembership.Role.EMPLOYEE,
+            )
+
+            # Bob owns the last one
+            last_inv = list(inventories_by_name.values())[-1]
+            InventoryMembership.objects.create(
+                inventory=last_inv,
+                user=bob,
+                role=InventoryMembership.Role.OWNER,
+            )
 
             # --- Items ---
             # Ola: bookstore / author event (Jo Nesbø)
@@ -426,34 +426,39 @@ class Command(BaseCommand):
                         )
 
             self.stdout.write(
-                "Generating items and historical logs with randomized members."
+                "Generating items and historical logs with randomized members.."
             )
 
-            # Run Ola's Catalog
             seed_items_with_random_actor(
                 inventories_by_name["Ola AS"], ola_catalog, is_ola=True
             )
-
-            # Run Jessica's Catalog
             seed_items_with_random_actor(
                 inventories_by_name["Jessica Cookies AS"], jessica_catalog
             )
-
-            # Run Generic Catalog for the rest
             for name, inv in inventories_by_name.items():
                 if name not in ["Ola AS", "Jessica Cookies AS"]:
                     seed_items_with_random_actor(inv, generic_catalog)
 
-        # --- Statistics ---
-        self.stdout.write(
-            self.style.SUCCESS("\n✅ Seed completed successfully")
-        )
-        self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
-        self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
-        self.stdout.write(
-            f"- Stock Logs: {StockLog.objects.count()} (with history & random"
-            "actors)"
-        )
-        self.stdout.write(
-            f"- Memberships: {InventoryMembership.objects.count()}"
-        )
+            counts_by_inventory_name = {
+                inv.name: InventoryItem.objects.filter(inventory=inv).count()
+                for inv in inventories
+            }
+
+            self.stdout.write(
+                self.style.SUCCESS("\n✅ Seed completed successfully")
+            )
+            self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
+            self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
+            self.stdout.write(
+                f"- Stock Logs: {StockLog.objects.count()} "
+                "(with history & random actors)"
+            )
+            self.stdout.write(
+                f"- Memberships: {InventoryMembership.objects.count()}"
+            )
+
+            self.stdout.write(self.style.SUCCESS("\n📦 Items per inventory:"))
+            for inv_name in sorted(counts_by_inventory_name.keys()):
+                self.stdout.write(
+                    f"  - {inv_name}: {counts_by_inventory_name[inv_name]}"
+                )

@@ -360,4 +360,30 @@ describe("EditItemModal - user story tests", () => {
 
     expect(props.onClose).toHaveBeenCalled();
   });
+
+  test("blocks save and shows warning when amount is set but direction is not selected", async () => {
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    const amountInput = within(dialog).getByRole("spinbutton", {
+      name: /amount/i,
+    });
+    await user.clear(amountInput);
+    await user.type(amountInput, "5");
+
+    expect(
+      await within(dialog).findByText(
+        /Please select increase or decrease to update stock/i,
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      within(dialog).getByRole("button", { name: /^save$/i }),
+    ).toBeDisabled();
+
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+    expect(mockedAdjustStock).not.toHaveBeenCalled();
+  });
 });

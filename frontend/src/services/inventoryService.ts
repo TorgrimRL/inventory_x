@@ -173,6 +173,13 @@ export async function createActiveCategory(
   return res.data as ItemCategory;
 }
 
+export async function deleteActiveCategory(categoryId: string) {
+  const res = await apiClient.delete(
+    `/api/inventory/active/categories/${categoryId}/`,
+  );
+  return res.data;
+}
+
 export async function deleteItem(itemId: number | string) {
   const res = await apiClient.delete(`/api/inventory/${itemId}/`);
   return res.data;

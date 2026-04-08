@@ -105,47 +105,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="StockLog",
-            fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("timestamp", models.DateTimeField(auto_now_add=True)),
-                ("item_name", models.CharField(blank=True, max_length=255, null=True)),
-                ("price", models.IntegerField(blank=True, null=True)),
-                ("action", models.CharField(max_length=256)),
-                ("amount", models.IntegerField(blank=True, null=True)),
-                ("direction", models.CharField(blank=True, max_length=50, null=True)),
-                ("current_stock", models.IntegerField(blank=True, null=True)),
-                (
-                    "item",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="inventory.inventoryitem",
-                    ),
-                ),
-                (
-                    "performed_by",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-            ],
-            options={
-                "ordering": ("-timestamp",),
-            },
-        ),
-        migrations.CreateModel(
             name="InventoryMembership",
             fields=[
                 (

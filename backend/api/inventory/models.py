@@ -163,6 +163,28 @@ class InventoryMembership(models.Model):
         return f"{self.user} -> {self.inventory} as {self.role}"
 
 
+@receiver(m2m_changed, sender=InventoryItem.categories.through)
+def enforce_category_inventory_match(
+    sender, instance, action, pk_set, **kwargs
+):
+    """
+    Ensures that an InventoryItem and its ItemCategories always belong
+    to the same Inventory. This runs automatically on .set() or .add().
+    """
+    if action == "pre_add" and pk_set:
+        invalid_count = (
+            ItemCategory.objects.filter(id__in=pk_set)
+            .exclude(inventory_id=instance.inventory_id)
+            .count()
+        )
+
+        if invalid_count > 0:
+            raise ValueError(
+                "Model Guard: Item and Category must belong "
+                "to the same inventory."
+            )
+
+
 class StockLog(models.Model):
     """
     Audit log for actions performed on Inventory items.
@@ -191,28 +213,3 @@ class StockLog(models.Model):
 
     class Meta:
         ordering = ("-timestamp",)
-
-
-@receiver(m2m_changed, sender=InventoryItem.categories.through)
-def enforce_category_inventory_match(
-    sender, instance, action, pk_set, **kwargs
-):
-    """
-    Ensures that an InventoryItem and its ItemCategories always belong
-    to the same Inventory. This runs automatically on .set() or .add().
-    """
-    if action == "pre_add" and pk_set:
-        # pk_set contains the UUIDs of the categories being added.
-        # We query to see if ANY of these categories have a different
-        # inventory_id than the item (instance) they are being attached to.
-        invalid_count = (
-            ItemCategory.objects.filter(id__in=pk_set)
-            .exclude(inventory_id=instance.inventory_id)
-            .count()
-        )
-
-        if invalid_count > 0:
-            raise ValueError(
-                "Model Guard: Item and Category must belong "
-                "to the same inventory."
-            )

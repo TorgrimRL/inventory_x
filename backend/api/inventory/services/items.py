@@ -15,7 +15,7 @@ def _get_validated_categories(
     categories = list(
         ItemCategory.objects.filter(
             inventory_id=inventory_id,
-            id__in=category_ids,
+            id__in=set(category_ids),
         )
     )
 
@@ -38,20 +38,17 @@ def get_all_items(inventory_id: UUID):
         .order_by("id")
     )
 
-    items = []
-    for item in items_qs:
-        items.append(
-            {
-                "id": item.id,
-                "name": item.name,
-                "price": item.price,
-                "stock": item.stock,
-                "low_stock_threshold": item.low_stock_threshold,
-                "category_ids": [str(category.id) for category in item.categories.all()],
-            }
-        )
-
-    return items
+    return [
+        {
+            "id": item.id,
+            "name": item.name,
+            "price": item.price,
+            "stock": item.stock,
+            "low_stock_threshold": item.low_stock_threshold,
+            "category_ids": [str(category.id) for category in item.categories.all()],
+        }
+        for item in items_qs
+    ]
 
 
 @audit_logger("create_item")
@@ -61,8 +58,8 @@ def create_item(
     price: int,
     stock: int,
     low_stock_threshold=None,
-    user=None,
     category_ids: list[UUID] | None = None,
+    user=None,
 ):
     try:
         with transaction.atomic():
@@ -139,8 +136,8 @@ def update_item(
     name: str,
     price: int,
     low_stock_threshold: int | None,
-    user=None,
     category_ids: list[UUID] | None = None,
+    user=None,
 ):
     """
     Updates item fields. Stock is not changed here.
