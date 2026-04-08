@@ -120,7 +120,7 @@ const Login: React.FC = () => {
               <Button type="submit" variant="contained">
                 Login
               </Button>
-
+              <Button variant="outlined">Continue with Google</Button>
               <Button
                 variant="outlined"
                 onClick={() => navigate(PATHS.REGISTRATION)}
