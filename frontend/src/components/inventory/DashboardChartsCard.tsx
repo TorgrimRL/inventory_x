@@ -348,39 +348,72 @@ function InventoryValueLineChartCard({
   monthlyValues: Array<{ label: string; value: number }>;
 }) {
   const theme = useTheme();
-  const axisLabelColor = theme.palette.text.primary;
+  const axisLabelColor = theme.palette.text.secondary;
+  const lineColor = theme.palette.primary.main;
+  const fillColor = theme.palette.primary.light;
 
-  const rawMax = useMemo(
-    () => Math.max(...monthlyValues.map((point) => point.value), 0),
-    [monthlyValues],
-  );
-  const rawMin = useMemo(
-    () => Math.min(...monthlyValues.map((point) => point.value), 0),
-    [monthlyValues],
-  );
+  const chart = useMemo(() => {
+    const width = 720;
+    const height = 280;
+    const left = 88;
+    const right = 24;
+    const top = 20;
+    const bottom = 48;
+    const plotWidth = width - left - right;
+    const plotHeight = height - top - bottom;
 
-  const chartMin = rawMin <= 0 ? 0 : Math.max(0, rawMin * 0.9);
-  const chartMax = rawMax <= 0 ? 1 : rawMax * 1.05;
-  const chartRange = Math.max(chartMax - chartMin, 1);
+    const values = monthlyValues.map((point) => point.value);
+    const maxValue = Math.max(...values, 0);
+    const minValue = Math.min(...values, 0);
+    const paddedMin = minValue <= 0 ? 0 : minValue * 0.92;
+    const paddedMax = maxValue <= 0 ? 1 : maxValue * 1.08;
+    const range = Math.max(paddedMax - paddedMin, 1);
 
-  const yAxisTicks = useMemo(() => {
-    const tickValues = [chartMax, chartMin + chartRange * 0.5, chartMin];
-    return tickValues.map((value) => ({
-      value,
-      label: formatCurrency(Math.round(value)),
-      y: 120 - ((value - chartMin) / chartRange) * 90,
-    }));
-  }, [chartMax, chartMin, chartRange]);
+    const ticks = Array.from({ length: 5 }, (_, index) => {
+      const ratio = index / 4;
+      const value = paddedMax - range * ratio;
+      const y = top + plotHeight * ratio;
+      return {
+        value,
+        label: formatCurrency(Math.round(value)),
+        y,
+      };
+    });
 
-  const linePath = useMemo(() => {
-    return monthlyValues
-      .map((point, index) => {
-        const x = 44 + (index / (monthlyValues.length - 1 || 1)) * 256;
-        const y = 120 - ((point.value - chartMin) / chartRange) * 90;
-        return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-      })
+    const points = monthlyValues.map((point, index) => {
+      const x =
+        left + (index / Math.max(monthlyValues.length - 1, 1)) * plotWidth;
+      const y = top + ((paddedMax - point.value) / range) * plotHeight;
+      return { ...point, x, y };
+    });
+
+    const linePath = points
+      .map((point, index) =>
+        `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`,
+      )
       .join(" ");
-  }, [chartMin, chartRange, monthlyValues]);
+
+    const areaPath = points.length
+      ? `${linePath} L ${points[points.length - 1]?.x} ${top + plotHeight} L ${points[0]?.x} ${top + plotHeight} Z`
+      : "";
+
+    return {
+      width,
+      height,
+      left,
+      right,
+      top,
+      bottom,
+      plotWidth,
+      plotHeight,
+      ticks,
+      points,
+      linePath,
+      areaPath,
+      minValue: paddedMin,
+      maxValue: paddedMax,
+    };
+  }, [monthlyValues]);
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -391,9 +424,14 @@ function InventoryValueLineChartCard({
           alignItems={{ xs: "stretch", sm: "center" }}
           spacing={1.5}
         >
-          <Typography variant="subtitle1" fontWeight={700}>
-            Inventory value over time
-          </Typography>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700}>
+              Inventory value over time
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Month-end inventory value based on historical stock logs
+            </Typography>
+          </Box>
           <TextField
             select
             size="small"
@@ -409,76 +447,88 @@ function InventoryValueLineChartCard({
             ))}
           </TextField>
         </Stack>
-        <Box data-testid="inventory-value-line-chart">
+
+        <Box data-testid="inventory-value-line-chart" sx={{ width: "100%" }}>
           <svg
             width="100%"
-            height="180"
-            viewBox="0 0 320 150"
+            height="280"
+            viewBox={`0 0 ${chart.width} ${chart.height}`}
             aria-label="Inventory value line chart"
+            preserveAspectRatio="xMidYMid meet"
           >
-            {yAxisTicks.map((tick) => (
+            {chart.ticks.map((tick) => (
               <g key={tick.label}>
                 <line
-                  x1="44"
+                  x1={chart.left}
                   y1={tick.y}
-                  x2="300"
+                  x2={chart.width - chart.right}
                   y2={tick.y}
-                  stroke="#e0e0e0"
+                  stroke={theme.palette.divider}
                   strokeWidth="1"
                 />
                 <text
-                  x="40"
+                  x={chart.left - 10}
                   y={tick.y}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize="9"
+                  fontSize="11"
                   fill={axisLabelColor}
                 >
                   {tick.label}
                 </text>
               </g>
             ))}
+
             <line
-              x1="44"
-              y1="120"
-              x2="300"
-              y2="120"
-              stroke="#c4c4c4"
-              strokeWidth="1"
+              x1={chart.left}
+              y1={chart.top}
+              x2={chart.left}
+              y2={chart.height - chart.bottom}
+              stroke={theme.palette.text.disabled}
+              strokeWidth="1.25"
             />
             <line
-              x1="44"
-              y1="20"
-              x2="44"
-              y2="120"
-              stroke="#c4c4c4"
-              strokeWidth="1"
+              x1={chart.left}
+              y1={chart.height - chart.bottom}
+              x2={chart.width - chart.right}
+              y2={chart.height - chart.bottom}
+              stroke={theme.palette.text.disabled}
+              strokeWidth="1.25"
             />
+
+            {chart.areaPath ? (
+              <path d={chart.areaPath} fill={fillColor} fillOpacity="0.18" />
+            ) : null}
             <path
-              d={linePath}
+              d={chart.linePath}
               fill="none"
-              stroke="#3f51b5"
-              strokeWidth="3"
+              stroke={lineColor}
+              strokeWidth="4"
               strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            {monthlyValues.map((point, index) => {
-              const x = 44 + (index / (monthlyValues.length - 1 || 1)) * 256;
-              const y = 120 - ((point.value - chartMin) / chartRange) * 90;
-              return (
-                <g key={point.label}>
-                  <circle cx={x} cy={y} r="3" fill="#3f51b5" />
-                  <text
-                    x={x}
-                    y="138"
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill={axisLabelColor}
-                  >
-                    {point.label}
-                  </text>
-                </g>
-              );
-            })}
+
+            {chart.points.map((point) => (
+              <g key={point.label}>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r="4.5"
+                  fill={lineColor}
+                  stroke={theme.palette.background.paper}
+                  strokeWidth="2"
+                />
+                <text
+                  x={point.x}
+                  y={chart.height - chart.bottom + 20}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill={axisLabelColor}
+                >
+                  {point.label}
+                </text>
+              </g>
+            ))}
           </svg>
         </Box>
       </Stack>
