@@ -89,6 +89,15 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setError("");
+
+    try {
+      await startSocialLogin("google");
+    } catch (err: any) {
+      setError(err.message || "Social Login failed");
+    }
+  };
   return (
     <Container maxWidth="sm">
       <Paper sx={{ mt: 8, p: 4 }}>
@@ -120,10 +129,7 @@ const Login: React.FC = () => {
               <Button type="submit" variant="contained">
                 Login
               </Button>
-              <Button
-                variant="outlined"
-                onClick={() => startSocialLogin("google")}
-              >
+              <Button variant="outlined" onClick={handleGoogleLogin}>
                 Continue with Google
               </Button>
               <Button
