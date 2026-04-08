@@ -8,3 +8,7 @@ export const checkSession = async () => {
     return false; // Session is invalid
   }
 };
+
+export const startSocialLogin = async (provider: "google") => {
+  throw new Error(`startSocialLogin not implemented for provider: ${provider}`);
+};

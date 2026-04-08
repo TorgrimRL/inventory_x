@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import Login from "../components/auth/loginForm";
-import { checkSession } from "../services/authService";
+import { checkSession, startSocialLogin } from "../services/authService";
 
 //  MOCK DEPENDENCIES
 jest.mock("axios");
@@ -163,5 +163,18 @@ describe("Login Component", () => {
     expect(
       screen.getByRole("button", { name: /continue with google/i }),
     ).toBeInTheDocument();
+  });
+  test("calls social login handler when clicking Continue with Google", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    render(<Login />);
+
+    const googleButton = await screen.findByRole("button", {
+      name: /continue with google/i,
+    });
+
+    fireEvent.click(googleButton);
+
+    expect(startSocialLogin).toHaveBeenCalledWith("google");
   });
 });

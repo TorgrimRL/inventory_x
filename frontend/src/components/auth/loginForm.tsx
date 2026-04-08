@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
-import { checkSession } from "../../services/authService";
+import { checkSession, startSocialLogin } from "../../services/authService";
 
 const Login: React.FC = () => {
   // init app state.
@@ -120,7 +120,12 @@ const Login: React.FC = () => {
               <Button type="submit" variant="contained">
                 Login
               </Button>
-              <Button variant="outlined">Continue with Google</Button>
+              <Button
+                variant="outlined"
+                onClick={() => startSocialLogin("google")}
+              >
+                Continue with Google
+              </Button>
               <Button
                 variant="outlined"
                 onClick={() => navigate(PATHS.REGISTRATION)}
