@@ -139,3 +139,21 @@ class LowStockNotificationTests(BaseAPITestCase):
                 )
 
             self.assertEqual(len(mail.outbox), 2 if i == 2 else 1)
+
+    def test_update_item_w_missing_notification_field(self):
+        """
+        Scenario: Update item without changing thresholdand and
+        notifications setting
+        Expectation: No email is sent.
+        """
+
+        item = update_item(
+            name="test_widget",
+            item_id=self.item["id"],
+            low_stock_threshold=5,
+            price=100,
+            user=self.user,
+        )
+
+        self.assertEqual(item.low_stock_notification, True)
+        self.assertEqual(len(mail.outbox), 0)

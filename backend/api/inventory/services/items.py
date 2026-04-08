@@ -110,7 +110,7 @@ def update_item(
     name: str,
     price: int,
     low_stock_threshold: int | None,
-    low_stock_notification: bool | None,
+    low_stock_notification=None,
     user=None,
 ):
     """
