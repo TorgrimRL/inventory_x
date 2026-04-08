@@ -43,6 +43,17 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function roundToNearest(value: number, step: number) {
+  return Math.round(value / step) * step;
+}
+
+function formatCompactAxisValue(value: number) {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+  return `${Math.round(value / 1000)}k`;
+}
+
 function Metric({
   title,
   value,
@@ -351,6 +362,7 @@ function InventoryValueLineChartCard({
   const axisLabelColor = theme.palette.text.secondary;
   const lineColor = theme.palette.primary.main;
   const fillColor = theme.palette.primary.light;
+  const [hoveredPointLabel, setHoveredPointLabel] = useState<string | null>(null);
 
   const chart = useMemo(() => {
     const width = 720;
@@ -365,20 +377,29 @@ function InventoryValueLineChartCard({
     const values = monthlyValues.map((point) => point.value);
     const maxValue = Math.max(...values, 0);
     const minValue = Math.min(...values, 0);
-    const paddedMin = minValue <= 0 ? 0 : minValue * 0.92;
-    const paddedMax = maxValue <= 0 ? 1 : maxValue * 1.08;
+    const paddedMin = minValue <= 0 ? 0 : Math.max(0, minValue * 0.92);
+    const paddedMax = maxValue <= 0 ? 50_000 : maxValue * 1.08;
     const range = Math.max(paddedMax - paddedMin, 1);
 
-    const ticks = Array.from({ length: 5 }, (_, index) => {
+    const rawTicks = Array.from({ length: 5 }, (_, index) => {
       const ratio = index / 4;
       const value = paddedMax - range * ratio;
+      const roundedValue = roundToNearest(value, 50_000);
       const y = top + plotHeight * ratio;
       return {
-        value,
-        label: formatCurrency(Math.round(value)),
+        value: roundedValue,
+        label: formatCompactAxisValue(roundedValue),
         y,
       };
     });
+
+    const ticks = rawTicks.map((tick, index) => ({
+      ...tick,
+      value:
+        index === 0
+          ? Math.max(rawTicks[0]?.value ?? tick.value, 50_000)
+          : tick.value,
+    }));
 
     const points = monthlyValues.map((point, index) => {
       const x =
@@ -508,27 +529,54 @@ function InventoryValueLineChartCard({
               strokeLinejoin="round"
             />
 
-            {chart.points.map((point) => (
-              <g key={point.label}>
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r="4.5"
-                  fill={lineColor}
-                  stroke={theme.palette.background.paper}
-                  strokeWidth="2"
-                />
-                <text
-                  x={point.x}
-                  y={chart.height - chart.bottom + 20}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fill={axisLabelColor}
-                >
-                  {point.label}
-                </text>
-              </g>
-            ))}
+            {chart.points.map((point) => {
+              const isHovered = hoveredPointLabel === point.label;
+              return (
+                <g key={point.label}>
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={isHovered ? "6" : "4.5"}
+                    fill={lineColor}
+                    stroke={theme.palette.background.paper}
+                    strokeWidth="2"
+                    onMouseEnter={() => setHoveredPointLabel(point.label)}
+                    onMouseLeave={() => setHoveredPointLabel(null)}
+                  />
+                  {isHovered ? (
+                    <g>
+                      <rect
+                        x={point.x - 48}
+                        y={point.y - 34}
+                        width="96"
+                        height="24"
+                        rx="6"
+                        fill={theme.palette.grey[900]}
+                        opacity="0.92"
+                      />
+                      <text
+                        x={point.x}
+                        y={point.y - 18}
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill="#fff"
+                      >
+                        {`${point.label}: ${formatCurrency(point.value)}`}
+                      </text>
+                    </g>
+                  ) : null}
+                  <text
+                    x={point.x}
+                    y={chart.height - chart.bottom + 20}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fill={axisLabelColor}
+                  >
+                    {point.label}
+                  </text>
+                </g>
+              );
+            })}
           </svg>
         </Box>
       </Stack>
