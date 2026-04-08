@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import EditItemModal from "../components/inventory/editItemModal";
@@ -6,12 +6,14 @@ import {
   adjustStock,
   deleteItem,
   updateItem,
+  uploadItemImage,
 } from "../services/inventoryService";
 
 jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
   updateItem: jest.fn(),
   deleteItem: jest.fn(),
+  uploadItemImage: jest.fn(),
 }));
 
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
@@ -19,10 +21,13 @@ const mockedAdjustStock = adjustStock as jest.MockedFunction<
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
 const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
+const mockedUploadItemImage =
+  uploadItemImage as jest.MockedFunction<typeof uploadItemImage>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    URL.createObjectURL = jest.fn(() => "blob:preview") as typeof URL.createObjectURL;
   });
 
   function renderModal(
@@ -336,5 +341,55 @@ describe("EditItemModal - user story tests", () => {
     });
 
     expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("image upload counts as a change and enables save", async () => {
+    mockedUploadItemImage.mockResolvedValueOnce({
+      image_url: "/media/items/milk.png",
+      message: "Image uploaded",
+    });
+
+    const user = userEvent.setup();
+    const props = renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
+
+    expect(saveButton).toBeDisabled();
+
+    const fileInput = within(dialog).getByLabelText(/upload image/i);
+    const file = new File(["image-data"], "milk.png", { type: "image/png" });
+    await act(async () => {
+      await user.upload(fileInput, file);
+    });
+
+    expect(saveButton).toBeEnabled();
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(mockedUploadItemImage).toHaveBeenCalledWith(1, file);
+    });
+
+    expect(props.onItemUpdated).toHaveBeenCalledWith({
+      id: 1,
+      name: "Milk",
+      price: 25,
+      lowStockThreshold: null,
+      imageUrl: "/media/items/milk.png",
+    });
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("shows change image button when item already has an image", async () => {
+    renderModal({
+      canEditDetails: true,
+      initialImageUrl: "/media/items/existing.png",
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).getByRole("button", { name: /endre bilde/i }),
+    ).toBeInTheDocument();
   });
 });

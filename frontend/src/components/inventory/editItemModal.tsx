@@ -142,9 +142,11 @@ export default function EditItemModal({
       Number(priceNumber) !== Number(initialPrice) ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
 
+  const imageChanged = selectedImage !== null;
+
   const stockChanged = wantsStockChange && direction !== null;
 
-  const hasChanges = detailsChanged || stockChanged;
+  const hasChanges = detailsChanged || imageChanged || stockChanged;
 
   function handleClose() {
     if (!saving) {
@@ -362,7 +364,7 @@ export default function EditItemModal({
                   input?.click();
                 }}
               >
-                Upload image
+                {imagePreviewUrl ? "Endre bilde" : "Last opp bilde"}
               </Button>
               {selectedImage ? (
                 <Typography variant="body2" color="text.secondary">
