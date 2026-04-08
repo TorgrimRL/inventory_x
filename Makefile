@@ -50,6 +50,7 @@ reset:
 	docker compose up --build -d
 
 seed:
+	$(BACKEND_RUN) uv run python manage.py migrate
 	$(BACKEND_RUN) uv run python manage.py seed_users
 	$(BACKEND_RUN) uv run python manage.py seed_inventory
 
