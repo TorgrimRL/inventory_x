@@ -1,4 +1,3 @@
-from collections import defaultdict
 from datetime import datetime
 
 from drf_spectacular.utils import extend_schema
@@ -33,21 +32,19 @@ class InventoryHistoryView(views.APIView):
             .order_by("timestamp")
         )
 
-        latest_by_item_and_month: dict[tuple[int, int, str], StockLog] = {}
+        latest_by_item_and_month: dict[tuple[str, int], StockLog] = {}
         latest_before_year: dict[str, StockLog] = {}
 
         for log in logs:
             item_id = str(log.item_id)
+            month_key = (item_id, log.timestamp.month)
+
             if log.timestamp.year < year:
                 latest_before_year[item_id] = log
                 continue
 
             if log.timestamp.year == year:
-                latest_by_item_and_month[(
-                    log.timestamp.year,
-                    log.timestamp.month,
-                    item_id,
-                )] = log
+                latest_by_item_and_month[month_key] = log
 
         running_values = {
             item_id: int(log.current_stock or 0) * int(log.price or 0)
@@ -71,8 +68,8 @@ class InventoryHistoryView(views.APIView):
         ]
 
         for month_index, label in enumerate(month_labels, start=1):
-            for (log_year, log_month, item_id), log in latest_by_item_and_month.items():
-                if log_year == year and log_month == month_index:
+            for (item_id, log_month), log in latest_by_item_and_month.items():
+                if log_month == month_index:
                     running_values[item_id] = int(log.current_stock or 0) * int(
                         log.price or 0
                     )
