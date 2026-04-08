@@ -88,8 +88,8 @@ export default function EditItemModal({
   );
 
   const [amount, setAmount] = useState<string>("0");
-  const [direction, setDirection] = useState<"increase" | "decrease">(
-    "increase",
+  const [direction, setDirection] = useState<"increase" | "decrease" | null>(
+    null,
   );
 
   const [categories, setCategories] = useState<ItemCategory[]>([]);
@@ -109,7 +109,7 @@ export default function EditItemModal({
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
     setAmount("0");
-    setDirection("increase");
+    setDirection(null);
     setSelectedCategoryIds(initialCategoryIds || []);
     setError(null);
 

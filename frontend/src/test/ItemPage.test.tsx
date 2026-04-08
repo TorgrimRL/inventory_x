@@ -140,7 +140,7 @@ describe("ItemPage", () => {
     render(<ItemPage />);
 
     await screen.findByText("Milk");
-    const noCategoryElements = await screen.findAllByText("No category added");
+    const noCategoryElements = await screen.findAllByText("-");
     expect(noCategoryElements.length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /add item/i }));

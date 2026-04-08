@@ -789,7 +789,9 @@ export default function ItemPage() {
                             {item.name}
                           </TableCell>
                           <TableCell>
-                            {canEditDetails ? (
+                            {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
+                            {/* eslint-disable-next-line no-constant-condition */}
+                            {false ? (
                               <Stack
                                 spacing={1}
                                 sx={{ minWidth: 160, maxWidth: 190 }}
