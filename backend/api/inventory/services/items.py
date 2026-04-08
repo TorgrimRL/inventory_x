@@ -3,61 +3,85 @@ from uuid import UUID
 from django.db import transaction
 
 from api.inventory.decorators import audit_logger
-from api.inventory.models import InventoryItem
+from api.inventory.models import InventoryItem, ItemCategory
 
 
 def get_all_items(inventory_id: UUID):
-    """
-    Fetches all inventory items from the database.
-    Returns them as a list of dictionaries.
+    try:
+        items = InventoryItem.objects.filter(
+            inventory_id=inventory_id
+        ).prefetch_related("categories")
+        return [
+            {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
+                "category_ids": [str(cat.id) for cat in item.categories.all()],
+                "image_url": item.image.url if item.image else None,
+            }
+            for item in items
+        ]
+    except Exception as e:
+        raise Exception("Error fetching inventory items") from e
 
-    Args:
-        inventory_id:
-    """
-    queryset = InventoryItem.objects.filter(inventory_id=inventory_id).order_by(
-        "id"
+
+def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
+    """Ensures categories exist and returns the QuerySet."""
+    if not category_ids:
+        return ItemCategory.objects.none()
+
+    unique_category_ids = set(category_ids)
+    categories = ItemCategory.objects.filter(
+        id__in=unique_category_ids, inventory_id=inventory_id
     )
-    return [
-        {
-            "id": item.id,
-            "name": item.name,
-            "price": item.price,
-            "stock": item.stock,
-            "low_stock_threshold": item.low_stock_threshold,
-            "image_url": item.image.url if item.image else None,
-        }
-        for item in queryset
-    ]
+
+    if categories.count() != len(unique_category_ids):
+        raise ValueError(
+            "One or more categories are invalid "
+            "or do not belong to this inventory."
+        )
+
+    return categories
 
 
 @audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
-    name,
-    price,
-    stock,
+    name: str,
+    price: int,
+    stock: int,
     low_stock_threshold=None,
+    category_ids: list[UUID] | None = None,
     user=None,
 ):
-    """
-    Creates a new inventory item.
-    Returns the created item as a dictionary.
-    """
     try:
-        item = InventoryItem.objects.create(
-            inventory_id=inventory_id,
-            name=name,
-            price=price,
-            stock=stock,
-            low_stock_threshold=low_stock_threshold,
-        )
-        return {
-            "id": item.id,
-            "name": item.name,
-            "price": item.price,
-            "stock": item.stock,
-            "low_stock_threshold": item.low_stock_threshold,
-        }
+        with transaction.atomic():
+            categories = _get_validated_categories(
+                inventory_id, category_ids or []
+            )
+
+            item = InventoryItem.objects.create(
+                inventory_id=inventory_id,
+                name=name,
+                price=price,
+                stock=stock,
+                low_stock_threshold=low_stock_threshold,
+            )
+
+            if category_ids:
+                item.categories.set(categories)
+
+            return {
+                "id": item.id,
+                "name": item.name,
+                "price": item.price,
+                "stock": item.stock,
+                "low_stock_threshold": item.low_stock_threshold,
+                "category_ids": category_ids or [],
+                "image_url": item.image.url if item.image else None,
+            }
     except ValueError as ve:
         raise ve
     except Exception as e:
@@ -103,23 +127,35 @@ def adjust_stock(
 
 @audit_logger("update_item")
 def update_item(
+    inventory_id: UUID,
     item_id: UUID,
     name: str,
     price: int,
     low_stock_threshold: int | None,
+    category_ids: list[UUID] | None = None,
     user=None,
 ):
     """
-    Updates item fields (name, price) only. Stock is not changed here.
+    Updates item fields. Stock is not changed here.
     """
     try:
         with transaction.atomic():
-            item = InventoryItem.objects.select_for_update().get(id=item_id)
+            item = InventoryItem.objects.select_for_update().get(
+                id=item_id, inventory_id=inventory_id
+            )
+
+            if category_ids is not None:
+                categories = _get_validated_categories(
+                    item.inventory_id, category_ids
+                )
 
             item.name = name
             item.price = price
             item.low_stock_threshold = low_stock_threshold
             item.save(update_fields=["name", "price", "low_stock_threshold"])
+
+            if category_ids is not None:
+                item.categories.set(categories)
 
             return item
 

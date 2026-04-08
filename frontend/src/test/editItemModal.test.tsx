@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 import EditItemModal from "../components/inventory/editItemModal";
 import {
   adjustStock,
+  createActiveCategory,
   deleteItem,
+  listActiveCategories,
   updateItem,
   uploadItemImage,
 } from "../services/inventoryService";
@@ -13,6 +15,8 @@ jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
   updateItem: jest.fn(),
   deleteItem: jest.fn(),
+  listActiveCategories: jest.fn(),
+  createActiveCategory: jest.fn(),
   uploadItemImage: jest.fn(),
 }));
 
@@ -21,6 +25,12 @@ const mockedAdjustStock = adjustStock as jest.MockedFunction<
 >;
 const mockedUpdateItem = updateItem as jest.MockedFunction<typeof updateItem>;
 const mockedDeleteItem = deleteItem as jest.MockedFunction<typeof deleteItem>;
+const mockedListActiveCategories = listActiveCategories as jest.MockedFunction<
+  typeof listActiveCategories
+>;
+const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
+  typeof createActiveCategory
+>;
 const mockedUploadItemImage =
   uploadItemImage as jest.MockedFunction<typeof uploadItemImage>;
 
@@ -28,7 +38,17 @@ describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     URL.createObjectURL = jest.fn(() => "blob:preview") as typeof URL.createObjectURL;
+    mockedListActiveCategories.mockResolvedValue([
+      { id: "c1", name: "Cookies" },
+      { id: "c2", name: "Cakes" },
+      { id: "c3", name: "Dairy" },
+    ] as any);
+    mockedCreateActiveCategory.mockResolvedValue({
+      id: "c4",
+      name: "New",
+    } as any);
   });
+  jest.setTimeout(15000);
 
   function renderModal(
     overrides?: Partial<React.ComponentProps<typeof EditItemModal>>,
@@ -94,6 +114,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Skim Milk",
         price: 30,
         low_stock_threshold: 4,
+        category_ids: [],
       });
     });
 
@@ -106,11 +127,13 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
+      category_ids: [],
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
   });
+
   test("employee: name/price/threshold fields are disabled, but stock adjust still works", async () => {
     mockedAdjustStock.mockResolvedValueOnce({ stock: 10 } as any);
 
@@ -165,7 +188,6 @@ describe("EditItemModal - user story tests", () => {
     await user.clear(priceInput);
     await user.type(priceInput, "-1");
 
-    // Save should be disabled (because price invalid for owners)
     expect(
       within(dialog).getByRole("button", { name: /^save$/i }),
     ).toBeDisabled();
@@ -186,13 +208,10 @@ describe("EditItemModal - user story tests", () => {
     renderModal({ canEditDetails: true });
 
     const dialog = await screen.findByRole("dialog");
-
-    // change something to trigger updateItem
     const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
     await user.clear(nameInput);
     await user.type(nameInput, "New Name");
 
-    // amount can stay 0 (no stock change)
     const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
@@ -207,7 +226,6 @@ describe("EditItemModal - user story tests", () => {
       ),
     ).toBeInTheDocument();
 
-    // updateItem called, adjustStock should not be called because amount=0
     expect(mockedUpdateItem).toHaveBeenCalled();
     expect(mockedAdjustStock).not.toHaveBeenCalled();
   });
@@ -278,7 +296,6 @@ describe("EditItemModal - user story tests", () => {
     expect(mockedDeleteItem).not.toHaveBeenCalled();
     expect(props.onItemDeleted).not.toHaveBeenCalled();
 
-    // Check that the confirmation dialog text is gone
     await waitFor(() => {
       expect(
         screen.queryByText(/Are you sure you want to delete this item/i),
@@ -330,6 +347,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        category_ids: [],
       });
     });
 
@@ -338,6 +356,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      category_ids: [],
     });
 
     expect(props.onClose).toHaveBeenCalled();
@@ -375,6 +394,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      category_ids: [],
       imageUrl: "/media/items/milk.png",
     });
     expect(props.onClose).toHaveBeenCalled();
@@ -391,5 +411,31 @@ describe("EditItemModal - user story tests", () => {
     expect(
       within(dialog).getByRole("button", { name: /change image/i }),
     ).toBeInTheDocument();
+  });
+
+  test("blocks save and shows warning when amount is set but direction is not selected", async () => {
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    const amountInput = within(dialog).getByRole("spinbutton", {
+      name: /amount/i,
+    });
+    await user.clear(amountInput);
+    await user.type(amountInput, "5");
+
+    expect(
+      await within(dialog).findByText(
+        /Please select increase or decrease to update stock/i,
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      within(dialog).getByRole("button", { name: /^save$/i }),
+    ).toBeDisabled();
+
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+    expect(mockedAdjustStock).not.toHaveBeenCalled();
   });
 });

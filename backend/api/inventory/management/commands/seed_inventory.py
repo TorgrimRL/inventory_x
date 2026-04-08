@@ -11,6 +11,7 @@ from api.inventory.models import (
     Inventory,
     InventoryItem,
     InventoryMembership,
+    ItemCategory,
     StockLog,
 )
 
@@ -73,6 +74,7 @@ class Command(BaseCommand):
             # Delete in safe order for FK changes
             InventoryMembership.objects.all().delete()
             InventoryItem.objects.all().delete()
+            ItemCategory.objects.all().delete()
             Inventory.objects.all().delete()
 
             # --- Inventories ---
@@ -98,6 +100,35 @@ class Command(BaseCommand):
                 inv.save()
                 inventories.append(inv)
                 inventories_by_name[name] = inv
+
+            # --- Categories (inventory-specific) ---
+            categories_by_inventory: dict[str, dict[str, ItemCategory]] = {}
+
+            for inv in inventories:
+                if inv.name == "Jessica Cookies AS":
+                    category_names = [
+                        "Frozen",
+                        "Bread",
+                        "Loaf",
+                        "Milk",
+                        "Dairy",
+                        "Snacks",
+                        "Drinks",
+                    ]
+                elif inv.name == "Ola AS":
+                    category_names = ["Books", "Crime", "Non-fiction"]
+                else:
+                    category_names = ["General", "Supplies"]
+
+                categories_for_inv: dict[str, ItemCategory] = {}
+                for category_name in category_names:
+                    created_category = ItemCategory.objects.create(
+                        inventory=inv,
+                        name=category_name,
+                    )
+                    categories_for_inv[category_name] = created_category
+
+                categories_by_inventory[str(inv.id)] = categories_for_inv
 
             # --- Memberships ---
             # Admin owns everything
@@ -337,7 +368,7 @@ class Command(BaseCommand):
                         )
 
             self.stdout.write(
-                "Generating items and historical logs with randomized members."
+                "Generating items and historical logs with randomized members.."
             )
 
             # Run Ola's Catalog
@@ -355,16 +386,127 @@ class Command(BaseCommand):
                 if name not in ["Ola AS", "Jessica Cookies AS"]:
                     seed_items_with_random_actor(inv, generic_catalog)
 
-        # --- Statistics ---
-        self.stdout.write(
-            self.style.SUCCESS("\n✅ Seed completed successfully")
-        )
-        self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
-        self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
-        self.stdout.write(
-            f"- Stock Logs: {StockLog.objects.count()} (with history & random"
-            "actors)"
-        )
-        self.stdout.write(
-            f"- Memberships: {InventoryMembership.objects.count()}"
-        )
+            # --- Category assignment for items ---
+            self.stdout.write("Assigning categories to items...")
+
+            for item in InventoryItem.objects.select_related("inventory").all():
+                inv_name = item.inventory.name
+                inv_categories = categories_by_inventory.get(
+                    str(item.inventory_id), {}
+                )
+
+                # Keep some uncategorized to support "No category added" testing
+                if item.name in {
+                    "Tape (6-pack)",
+                    "Label Roll",
+                    "Disposable Gloves (100 pcs)",
+                }:
+                    continue
+
+                category = None
+                if inv_name == "Jessica Cookies AS":
+                    lower_name = item.name.lower()
+                    if any(
+                        keyword in lower_name
+                        for keyword in ["milk", "white chocolate"]
+                    ):
+                        category = inv_categories.get("Milk")
+                    elif any(
+                        keyword in lower_name for keyword in ["bread", "roll"]
+                    ):
+                        category = inv_categories.get("Bread")
+                    elif any(
+                        keyword in lower_name for keyword in ["frozen", "ice"]
+                    ):
+                        category = inv_categories.get("Frozen")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "cookie",
+                            "brownie",
+                            "blondie",
+                            "brookie",
+                        ]
+                    ):
+                        category = inv_categories.get("Snacks")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "vanilla",
+                            "dairy",
+                            "butter",
+                            "yogurt",
+                            "cream",
+                            "eggs",
+                        ]
+                    ):
+                        category = inv_categories.get("Dairy")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "drink",
+                            "soda",
+                            "juice",
+                            "coffee",
+                            "tea",
+                        ]
+                    ):
+                        category = inv_categories.get("Drinks")
+                    else:
+                        category = inv_categories.get("Loaf")
+                elif inv_name == "Ola AS":
+                    lower_name = item.name.lower()
+                    if any(
+                        keyword in lower_name
+                        for keyword in [
+                            "nesbø",
+                            "kepler",
+                            "engman",
+                            "holt",
+                            "horst",
+                        ]
+                    ):
+                        category = inv_categories.get("Crime")
+                    elif any(
+                        keyword in lower_name
+                        for keyword in [
+                            "quiz",
+                            "juleroser",
+                            "den fantastiske bussen",
+                        ]
+                    ):
+                        category = inv_categories.get("Books")
+                    else:
+                        category = inv_categories.get("Non-fiction")
+                else:
+                    category = inv_categories.get(
+                        "Supplies"
+                    ) or inv_categories.get("General")
+
+                if category:
+                    item.categories.set([category])
+
+            # --- Statistics ---
+            counts_by_inventory_name = {
+                inv.name: InventoryItem.objects.filter(inventory=inv).count()
+                for inv in inventories
+            }
+
+            self.stdout.write(
+                self.style.SUCCESS("\n✅ Seed completed successfully")
+            )
+            self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
+            self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
+            self.stdout.write(
+                f"- Stock Logs: {StockLog.objects.count()} "
+                "(with history & random actors)"
+            )
+            self.stdout.write(
+                f"- Memberships: {InventoryMembership.objects.count()}"
+            )
+
+            self.stdout.write(self.style.SUCCESS("\n📦 Items per inventory:"))
+            for inv_name in sorted(counts_by_inventory_name.keys()):
+                self.stdout.write(
+                    f"  - {inv_name}: {counts_by_inventory_name[inv_name]}"
+                )
