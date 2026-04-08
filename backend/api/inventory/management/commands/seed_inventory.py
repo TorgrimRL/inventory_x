@@ -357,12 +357,13 @@ class Command(BaseCommand):
                     )
                 ]
 
-                for index, (name, price) in enumerate(catalog):
+                for index, (name, base_price) in enumerate(catalog):
                     final_stock, low_stock_threshold = (
                         seeded_stock_and_threshold(index)
                     )
-                    initial_stock = final_stock + random.randint(8, 28)
+                    initial_stock = final_stock + random.randint(20, 80)
                     current_stock = initial_stock
+                    current_price = base_price
 
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID
@@ -370,7 +371,7 @@ class Command(BaseCommand):
                         else uuid.uuid4(),
                         inventory=inventory,
                         name=name,
-                        price=price,
+                        price=base_price,
                         stock=final_stock,
                         low_stock_threshold=low_stock_threshold,
                     )
@@ -388,78 +389,78 @@ class Command(BaseCommand):
                         action="create_item",
                         amount=initial_stock,
                         current_stock=initial_stock,
-                        price=item.price,
+                        price=current_price,
                         performed_by=actor,
                     )
                     StockLog.objects.filter(pk=log.pk).update(
                         timestamp=ts_creation
                     )
 
-                    steps = random.randint(3, 7)
-                    remaining_delta = initial_stock - final_stock
-
-                    for step_index in range(steps):
+                    timeline_months = random.randint(6, 11)
+                    for month_step in range(timeline_months):
                         ts_adj = get_next_timestamp()
                         adj_actor = random.choice(members)
-                        is_last_step = step_index == steps - 1
 
-                        if is_last_step:
-                            adj_amount = remaining_delta
+                        if month_step in {2, 5, 8}:
+                            restock_amount = random.randint(8, 30)
+                            current_stock += restock_amount
+                            direction = "increase"
+                            amount = restock_amount
                         else:
-                            max_reduction = max(
-                                1,
-                                remaining_delta - (steps - step_index - 1),
-                            )
-                            adj_amount = random.randint(1, max_reduction)
+                            seasonal_multiplier = 1.0
+                            if inventory.name == "Jessica Cookies AS" and month_step in {9, 10, 11}:
+                                seasonal_multiplier = 1.8
+                            elif inventory.name == "Ola AS" and month_step in {5, 10}:
+                                seasonal_multiplier = 1.5
 
-                        current_stock -= adj_amount
-                        remaining_delta -= adj_amount
+                            max_decrease = max(3, int((initial_stock * 0.22) * seasonal_multiplier))
+                            amount = min(
+                                current_stock,
+                                random.randint(3, max_decrease),
+                            )
+                            if amount <= 0:
+                                amount = 1
+                            current_stock = max(0, current_stock - amount)
+                            direction = "decrease"
+
+                        if random.random() < 0.18:
+                            price_shift = random.choice([-0.12, -0.08, 0.08, 0.15])
+                            current_price = max(
+                                10,
+                                int(round(current_price * (1 + price_shift))),
+                            )
 
                         adj_log = StockLog.objects.create(
                             item_id=item.id,
                             item_name=item.name,
                             action="adjust_stock",
-                            amount=adj_amount,
-                            direction="decrease",
+                            amount=amount,
+                            direction=direction,
                             current_stock=current_stock,
-                            price=item.price,
+                            price=current_price,
                             performed_by=adj_actor,
                         )
                         StockLog.objects.filter(pk=adj_log.pk).update(
                             timestamp=ts_adj
                         )
 
-                    if random.random() < 0.35:
-                        restock_amount = random.randint(2, 10)
-                        current_stock += restock_amount
+                    item.stock = final_stock
+                    item.price = current_price
+                    item.save(update_fields=["stock", "price"])
 
-                        restock_log = StockLog.objects.create(
-                            item_id=item.id,
-                            item_name=item.name,
-                            action="adjust_stock",
-                            amount=restock_amount,
-                            direction="increase",
-                            current_stock=current_stock,
-                            price=item.price,
-                            performed_by=random.choice(members),
-                        )
-                        StockLog.objects.filter(pk=restock_log.pk).update(
-                            timestamp=get_next_timestamp()
-                        )
-
-                        correction_log = StockLog.objects.create(
-                            item_id=item.id,
-                            item_name=item.name,
-                            action="adjust_stock",
-                            amount=restock_amount,
-                            direction="decrease",
-                            current_stock=final_stock,
-                            price=item.price,
-                            performed_by=random.choice(members),
-                        )
-                        StockLog.objects.filter(pk=correction_log.pk).update(
-                            timestamp=get_next_timestamp()
-                        )
+                    final_log = StockLog.objects.create(
+                        item_id=item.id,
+                        item_name=item.name,
+                        action="adjust_stock",
+                        amount=abs(current_stock - final_stock),
+                        direction="increase" if final_stock > current_stock else "decrease",
+                        current_stock=final_stock,
+                        price=current_price,
+                        performed_by=random.choice(members),
+                    )
+                    StockLog.objects.filter(pk=final_log.pk).update(
+                        timestamp=get_next_timestamp()
+                    )
 
             self.stdout.write(
                 "Generating items and historical logs with randomized members.."
