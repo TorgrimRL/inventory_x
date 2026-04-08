@@ -26,7 +26,7 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
     if pattern == 2:
         return 9, 5  # above threshold
 
-    return random.randint(0, 50), None  # no threshold
+    return random.randint(6, 18), None  # no threshold
 
 
 class Command(BaseCommand):
@@ -350,7 +350,6 @@ class Command(BaseCommand):
                 return [default_category] if default_category else []
 
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
-                # Fetch members specifically for this inventory
                 members = [
                     m.user
                     for m in InventoryMembership.objects.filter(
@@ -359,7 +358,11 @@ class Command(BaseCommand):
                 ]
 
                 for index, (name, price) in enumerate(catalog):
-                    current_stock = random.randint(5, 40)
+                    final_stock, low_stock_threshold = (
+                        seeded_stock_and_threshold(index)
+                    )
+                    initial_stock = final_stock + random.randint(8, 28)
+                    current_stock = initial_stock
 
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID
@@ -368,14 +371,14 @@ class Command(BaseCommand):
                         inventory=inventory,
                         name=name,
                         price=price,
-                        stock=current_stock,
+                        stock=final_stock,
+                        low_stock_threshold=low_stock_threshold,
                     )
 
                     selected_categories = pick_categories_for_item(inventory, name)
                     if selected_categories:
                         item.categories.set(selected_categories)
 
-                    # LOG: Creation (Random member as actor)
                     actor = random.choice(members)
                     ts_creation = get_next_timestamp()
 
@@ -383,46 +386,79 @@ class Command(BaseCommand):
                         item_id=item.id,
                         item_name=item.name,
                         action="create_item",
-                        amount=item.stock,
-                        current_stock=item.stock,
+                        amount=initial_stock,
+                        current_stock=initial_stock,
                         price=item.price,
                         performed_by=actor,
                     )
-                    # Force the historical timestamp
                     StockLog.objects.filter(pk=log.pk).update(
                         timestamp=ts_creation
                     )
 
-                    # LOG: 1-3 Random Adjustments later in time
-                    for _ in range(random.randint(1, 3)):
+                    steps = random.randint(3, 7)
+                    remaining_delta = initial_stock - final_stock
+
+                    for step_index in range(steps):
                         ts_adj = get_next_timestamp()
-                        adj_amount = random.randint(1, 10)
-                        direction = random.choice(["increase", "decrease"])
-
-                        # New actor for the adjustment
                         adj_actor = random.choice(members)
+                        is_last_step = step_index == steps - 1
 
-                        if (
-                            direction == "decrease"
-                            and current_stock > adj_amount
-                        ):
-                            current_stock -= adj_amount
+                        if is_last_step:
+                            adj_amount = remaining_delta
                         else:
-                            direction = "increase"
-                            current_stock += adj_amount
+                            max_reduction = max(
+                                1,
+                                remaining_delta - (steps - step_index - 1),
+                            )
+                            adj_amount = random.randint(1, max_reduction)
+
+                        current_stock -= adj_amount
+                        remaining_delta -= adj_amount
 
                         adj_log = StockLog.objects.create(
                             item_id=item.id,
                             item_name=item.name,
                             action="adjust_stock",
                             amount=adj_amount,
-                            direction=direction,
+                            direction="decrease",
                             current_stock=current_stock,
                             price=item.price,
                             performed_by=adj_actor,
                         )
                         StockLog.objects.filter(pk=adj_log.pk).update(
                             timestamp=ts_adj
+                        )
+
+                    if random.random() < 0.35:
+                        restock_amount = random.randint(2, 10)
+                        current_stock += restock_amount
+
+                        restock_log = StockLog.objects.create(
+                            item_id=item.id,
+                            item_name=item.name,
+                            action="adjust_stock",
+                            amount=restock_amount,
+                            direction="increase",
+                            current_stock=current_stock,
+                            price=item.price,
+                            performed_by=random.choice(members),
+                        )
+                        StockLog.objects.filter(pk=restock_log.pk).update(
+                            timestamp=get_next_timestamp()
+                        )
+
+                        correction_log = StockLog.objects.create(
+                            item_id=item.id,
+                            item_name=item.name,
+                            action="adjust_stock",
+                            amount=restock_amount,
+                            direction="decrease",
+                            current_stock=final_stock,
+                            price=item.price,
+                            performed_by=random.choice(members),
+                        )
+                        StockLog.objects.filter(pk=correction_log.pk).update(
+                            timestamp=get_next_timestamp()
                         )
 
             self.stdout.write(
