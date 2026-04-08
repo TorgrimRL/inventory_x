@@ -10,7 +10,7 @@ from api.inventory.context import get_request_active_membership
 from api.inventory.contracts.inventory_history import (
     INVENTORY_HISTORY_RESPONSES,
 )
-from api.inventory.models import StockLog
+from api.inventory.models import InventoryItem, StockLog
 from api.inventory.permissions import IsActiveInventoryMember
 
 
@@ -25,8 +25,14 @@ class InventoryHistoryView(views.APIView):
         membership = get_request_active_membership(request)
         year = int(request.query_params.get("year", datetime.now().year))
 
+        inventory_item_ids = list(
+            InventoryItem.objects.filter(
+                inventory_id=membership.inventory.id
+            ).values_list("id", flat=True)
+        )
+
         logs = (
-            StockLog.objects.filter(item__inventory_id=membership.inventory.id)
+            StockLog.objects.filter(item_id__in=inventory_item_ids)
             .exclude(current_stock__isnull=True)
             .exclude(price__isnull=True)
             .order_by("timestamp")
