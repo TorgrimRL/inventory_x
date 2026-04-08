@@ -350,20 +350,37 @@ function InventoryValueLineChartCard({
   const theme = useTheme();
   const axisLabelColor = theme.palette.text.primary;
 
-  const lineChartMax = useMemo(
-    () => Math.max(...monthlyValues.map((point) => point.value), 1),
+  const rawMax = useMemo(
+    () => Math.max(...monthlyValues.map((point) => point.value), 0),
     [monthlyValues],
   );
+  const rawMin = useMemo(
+    () => Math.min(...monthlyValues.map((point) => point.value), 0),
+    [monthlyValues],
+  );
+
+  const chartMin = rawMin <= 0 ? 0 : Math.max(0, rawMin * 0.9);
+  const chartMax = rawMax <= 0 ? 1 : rawMax * 1.05;
+  const chartRange = Math.max(chartMax - chartMin, 1);
+
+  const yAxisTicks = useMemo(() => {
+    const tickValues = [chartMax, chartMin + chartRange * 0.5, chartMin];
+    return tickValues.map((value) => ({
+      value,
+      label: formatCurrency(Math.round(value)),
+      y: 120 - ((value - chartMin) / chartRange) * 90,
+    }));
+  }, [chartMax, chartMin, chartRange]);
 
   const linePath = useMemo(() => {
     return monthlyValues
       .map((point, index) => {
-        const x = 20 + (index / (monthlyValues.length - 1 || 1)) * 280;
-        const y = 120 - (point.value / lineChartMax) * 90;
+        const x = 44 + (index / (monthlyValues.length - 1 || 1)) * 256;
+        const y = 120 - ((point.value - chartMin) / chartRange) * 90;
         return `${index === 0 ? "M" : "L"} ${x} ${y}`;
       })
       .join(" ");
-  }, [lineChartMax, monthlyValues]);
+  }, [chartMin, chartRange, monthlyValues]);
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -399,8 +416,30 @@ function InventoryValueLineChartCard({
             viewBox="0 0 320 150"
             aria-label="Inventory value line chart"
           >
+            {yAxisTicks.map((tick) => (
+              <g key={tick.label}>
+                <line
+                  x1="44"
+                  y1={tick.y}
+                  x2="300"
+                  y2={tick.y}
+                  stroke="#e0e0e0"
+                  strokeWidth="1"
+                />
+                <text
+                  x="40"
+                  y={tick.y}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                  fontSize="9"
+                  fill={axisLabelColor}
+                >
+                  {tick.label}
+                </text>
+              </g>
+            ))}
             <line
-              x1="20"
+              x1="44"
               y1="120"
               x2="300"
               y2="120"
@@ -408,9 +447,9 @@ function InventoryValueLineChartCard({
               strokeWidth="1"
             />
             <line
-              x1="20"
+              x1="44"
               y1="20"
-              x2="20"
+              x2="44"
               y2="120"
               stroke="#c4c4c4"
               strokeWidth="1"
@@ -423,8 +462,8 @@ function InventoryValueLineChartCard({
               strokeLinecap="round"
             />
             {monthlyValues.map((point, index) => {
-              const x = 20 + (index / (monthlyValues.length - 1 || 1)) * 280;
-              const y = 120 - (point.value / lineChartMax) * 90;
+              const x = 44 + (index / (monthlyValues.length - 1 || 1)) * 256;
+              const y = 120 - ((point.value - chartMin) / chartRange) * 90;
               return (
                 <g key={point.label}>
                   <circle cx={x} cy={y} r="3" fill="#3f51b5" />
