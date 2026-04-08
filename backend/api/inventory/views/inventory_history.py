@@ -70,11 +70,7 @@ class InventoryHistoryView(views.APIView):
             "Dec",
         ]
 
-        max_month = 6 if year == 2026 else 12
-
         for month_index, label in enumerate(month_labels, start=1):
-            if month_index > max_month:
-                break
             for (log_year, log_month, item_id), log in latest_by_item_and_month.items():
                 if log_year == year and log_month == month_index:
                     running_values[item_id] = int(log.current_stock or 0) * int(
