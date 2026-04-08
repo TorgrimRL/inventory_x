@@ -76,9 +76,9 @@ class Command(BaseCommand):
 
         def get_next_timestamp():
             if self.simulated_time.year == 2025:
-                self.simulated_time += timedelta(days=random.randint(3, 12))
+                self.simulated_time += timedelta(days=random.randint(10, 24))
             else:
-                self.simulated_time += timedelta(days=random.randint(2, 6))
+                self.simulated_time += timedelta(days=random.randint(18, 35))
             return self.simulated_time
 
         with transaction.atomic():
@@ -361,6 +361,13 @@ class Command(BaseCommand):
                     final_stock, low_stock_threshold = (
                         seeded_stock_and_threshold(index)
                     )
+                    item_seed_start = self.simulated_time
+                    final_target_date = item_seed_start.replace(
+                        year=2026,
+                        month=12,
+                        day=min(item_seed_start.day, 28),
+                    )
+
                     initial_stock = final_stock + random.randint(20, 80)
                     current_stock = initial_stock
                     current_price = base_price
@@ -396,35 +403,44 @@ class Command(BaseCommand):
                         timestamp=ts_creation
                     )
 
-                    timeline_months = random.randint(6, 11)
-                    for month_step in range(timeline_months):
-                        ts_adj = get_next_timestamp()
+                    current_ts = ts_creation
+                    for month_step in range(1, 13):
+                        month = month_step
+                        year = 2026
+                        ts_adj = current_ts.replace(
+                            year=year,
+                            month=month,
+                            day=min(5 + (index % 20), 28),
+                        )
                         adj_actor = random.choice(members)
 
-                        if month_step in {2, 5, 8}:
-                            restock_amount = random.randint(8, 30)
+                        if month in {3, 6, 9, 12}:
+                            restock_amount = random.randint(12, 40)
                             current_stock += restock_amount
                             direction = "increase"
                             amount = restock_amount
                         else:
                             seasonal_multiplier = 1.0
-                            if inventory.name == "Jessica Cookies AS" and month_step in {9, 10, 11}:
-                                seasonal_multiplier = 1.8
-                            elif inventory.name == "Ola AS" and month_step in {5, 10}:
-                                seasonal_multiplier = 1.5
+                            if inventory.name == "Jessica Cookies AS" and month in {10, 11, 12}:
+                                seasonal_multiplier = 2.2
+                            elif inventory.name == "Ola AS" and month in {6, 11, 12}:
+                                seasonal_multiplier = 1.7
 
-                            max_decrease = max(3, int((initial_stock * 0.22) * seasonal_multiplier))
+                            max_decrease = max(
+                                4,
+                                int((initial_stock * 0.16) * seasonal_multiplier),
+                            )
                             amount = min(
                                 current_stock,
-                                random.randint(3, max_decrease),
+                                random.randint(4, max_decrease),
                             )
                             if amount <= 0:
                                 amount = 1
                             current_stock = max(0, current_stock - amount)
                             direction = "decrease"
 
-                        if random.random() < 0.18:
-                            price_shift = random.choice([-0.12, -0.08, 0.08, 0.15])
+                        if month in {2, 5, 8, 11} or random.random() < 0.12:
+                            price_shift = random.choice([-0.10, -0.05, 0.06, 0.12])
                             current_price = max(
                                 10,
                                 int(round(current_price * (1 + price_shift))),
@@ -443,6 +459,7 @@ class Command(BaseCommand):
                         StockLog.objects.filter(pk=adj_log.pk).update(
                             timestamp=ts_adj
                         )
+                        current_ts = ts_adj
 
                     item.stock = final_stock
                     item.price = current_price
@@ -453,13 +470,15 @@ class Command(BaseCommand):
                         item_name=item.name,
                         action="adjust_stock",
                         amount=abs(current_stock - final_stock),
-                        direction="increase" if final_stock > current_stock else "decrease",
+                        direction=(
+                            "increase" if final_stock > current_stock else "decrease"
+                        ),
                         current_stock=final_stock,
                         price=current_price,
                         performed_by=random.choice(members),
                     )
                     StockLog.objects.filter(pk=final_log.pk).update(
-                        timestamp=get_next_timestamp()
+                        timestamp=final_target_date
                     )
 
             self.stdout.write(
