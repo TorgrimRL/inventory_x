@@ -152,4 +152,16 @@ describe("Login Component", () => {
       await screen.findByText(/please enter password/i),
     ).toBeInTheDocument();
   });
+  test("renders Google login option alongside existing email/password login form", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+
+    render(<Login />);
+
+    await screen.findByLabelText(/email/i);
+
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue with google/i }),
+    ).toBeInTheDocument();
+  });
 });
