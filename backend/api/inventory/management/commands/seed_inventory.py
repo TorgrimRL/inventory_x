@@ -63,9 +63,9 @@ class Command(BaseCommand):
         bob = users["bob@example.com"]
 
         # --- Simulated Time Helper ---
-        # Starts in early 2025 and moves forward to simulate longer history
+        # Starts in early 2024 and moves forward to simulate longer history
         self.simulated_time = timezone.now().replace(
-            year=2025,
+            year=2024,
             month=1,
             day=5,
             hour=9,
@@ -75,7 +75,7 @@ class Command(BaseCommand):
         )
 
         def get_next_timestamp():
-            if self.simulated_time.year == 2025:
+            if self.simulated_time.year <= 2024:
                 self.simulated_time += timedelta(days=random.randint(10, 24))
             else:
                 self.simulated_time += timedelta(days=random.randint(18, 35))
@@ -361,11 +361,14 @@ class Command(BaseCommand):
                     final_stock, low_stock_threshold = (
                         seeded_stock_and_threshold(index)
                     )
-                    item_seed_start = self.simulated_time
-                    final_target_date = item_seed_start.replace(
+                    final_target_date = timezone.now().replace(
                         year=2026,
-                        month=12,
-                        day=min(item_seed_start.day, 28),
+                        month=6,
+                        day=min(10 + (index % 18), 28),
+                        hour=9,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
                     )
 
                     initial_stock = final_stock + random.randint(20, 80)
@@ -404,9 +407,26 @@ class Command(BaseCommand):
                     )
 
                     current_ts = ts_creation
-                    for month_step in range(1, 13):
-                        month = month_step
-                        year = 2026
+                    timeline_points = [
+                        (2024, 3),
+                        (2024, 6),
+                        (2024, 9),
+                        (2024, 12),
+                        (2025, 2),
+                        (2025, 4),
+                        (2025, 6),
+                        (2025, 8),
+                        (2025, 10),
+                        (2025, 12),
+                        (2026, 1),
+                        (2026, 2),
+                        (2026, 3),
+                        (2026, 4),
+                        (2026, 5),
+                        (2026, 6),
+                    ]
+
+                    for year, month in timeline_points:
                         ts_adj = current_ts.replace(
                             year=year,
                             month=month,
@@ -421,9 +441,21 @@ class Command(BaseCommand):
                             amount = restock_amount
                         else:
                             seasonal_multiplier = 1.0
-                            if inventory.name == "Jessica Cookies AS" and month in {10, 11, 12}:
+                            if inventory.name == "Jessica Cookies AS" and (year, month) in {
+                                (2024, 12),
+                                (2025, 12),
+                                (2026, 4),
+                                (2026, 5),
+                                (2026, 6),
+                            }:
                                 seasonal_multiplier = 2.2
-                            elif inventory.name == "Ola AS" and month in {6, 11, 12}:
+                            elif inventory.name == "Ola AS" and (year, month) in {
+                                (2024, 6),
+                                (2024, 12),
+                                (2025, 6),
+                                (2025, 12),
+                                (2026, 6),
+                            }:
                                 seasonal_multiplier = 1.7
 
                             max_decrease = max(
@@ -439,7 +471,14 @@ class Command(BaseCommand):
                             current_stock = max(0, current_stock - amount)
                             direction = "decrease"
 
-                        if month in {2, 5, 8, 11} or random.random() < 0.12:
+                        if (year, month) in {
+                            (2024, 6),
+                            (2024, 12),
+                            (2025, 5),
+                            (2025, 11),
+                            (2026, 3),
+                            (2026, 6),
+                        } or random.random() < 0.08:
                             price_shift = random.choice([-0.10, -0.05, 0.06, 0.12])
                             current_price = max(
                                 10,
