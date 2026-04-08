@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import uuid
 from typing import TYPE_CHECKING, ClassVar
 
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import IntegrityError, models, transaction
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 
 org_number_validator = RegexValidator(
     regex=r"^\d{9}$",
@@ -30,7 +34,7 @@ class Inventory(models.Model):
 
     # NOTE: Type hint for dynamic reverse relationship
     if TYPE_CHECKING:
-        memberships: models.Manager["InventoryMembership"]
+        memberships: models.Manager[InventoryMembership]
 
     @classmethod
     @transaction.atomic
@@ -40,7 +44,7 @@ class Inventory(models.Model):
         user,
         name: str,
         org_number: str,
-    ) -> tuple["Inventory", "InventoryMembership"]:
+    ) -> tuple[Inventory, InventoryMembership]:
         inventory = cls(name=name, org_number=org_number)
         inventory.full_clean(validate_unique=False)
 
@@ -82,14 +86,45 @@ class Inventory(models.Model):
         return f"{self.name} ({self.org_number})"
 
 
+class ItemCategory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
+        "Inventory",
+        on_delete=models.CASCADE,
+        related_name="categories",
+        db_index=True,
+    )
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["inventory", "name"],
+                name="unique_category_name_per_inventory",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class InventoryItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
         "Inventory",
         on_delete=models.CASCADE,
         related_name="items",
         db_index=True,
     )
+    categories: models.ManyToManyField[ItemCategory, InventoryItem] = (
+        models.ManyToManyField(
+            "ItemCategory",
+            related_name="items",
+            blank=True,
+        )
+    )
+    inventory_id: uuid.UUID
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
@@ -105,7 +140,7 @@ class InventoryMembership(models.Model):
         EMPLOYEE = "employee", "Employee"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    inventory: models.ForeignKey["Inventory"] = models.ForeignKey(
+    inventory: models.ForeignKey[Inventory] = models.ForeignKey(
         Inventory, on_delete=models.CASCADE, related_name="memberships"
     )
     user = models.ForeignKey(
@@ -126,6 +161,31 @@ class InventoryMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.inventory} as {self.role}"
+
+
+@receiver(m2m_changed, sender=InventoryItem.categories.through)
+def enforce_category_inventory_match(
+    sender, instance, action, pk_set, **kwargs
+):
+    """
+    Ensures that an InventoryItem and its ItemCategories always belong
+    to the same Inventory. This runs automatically on .set() or .add().
+    """
+    if action == "pre_add" and pk_set:
+        # pk_set contains the UUIDs of the categories being added.
+        # We query to see if ANY of these categories have a different
+        # inventory_id than the item (instance) they are being attached to.
+        invalid_count = (
+            ItemCategory.objects.filter(id__in=pk_set)
+            .exclude(inventory_id=instance.inventory_id)
+            .count()
+        )
+
+        if invalid_count > 0:
+            raise ValueError(
+                "Model Guard: Item and Category must belong "
+                "to the same inventory."
+            )
 
 
 class StockLog(models.Model):
