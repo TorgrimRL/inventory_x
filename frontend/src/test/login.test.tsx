@@ -177,4 +177,20 @@ describe("Login Component", () => {
 
     expect(startSocialLogin).toHaveBeenCalledWith("google");
   });
+  test("shows error message when Google login fails", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+    (startSocialLogin as jest.Mock).mockRejectedValue(
+      new Error("Social login failed."),
+    );
+
+    render(<Login />);
+
+    const googleButton = await screen.findByRole("button", {
+      name: /continue with google/i,
+    });
+
+    fireEvent.click(googleButton);
+
+    expect(await screen.findByText(/social login failed/i)).toBeInTheDocument();
+  });
 });
