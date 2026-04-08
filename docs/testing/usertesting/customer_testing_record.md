@@ -56,7 +56,15 @@
 * Completed: Yes / Partly / No
 * Comments:
 
-### Task O5 — Manage employees and permissions
+### Task O5 — Manage item categories
+
+* Task description: Try creating a new category, adding that to some item
+* Expected outcome: The owner can manage categories and categorise items
+* Actual outcome:
+* Completed: Yes / Partly / No
+* Comments:
+
+### Task O6 — Manage employees and permissions
 
 * Task description: Invite an employee and verify that sensitive actions remain owner-only.
 * Expected outcome: The owner can invite employees, and restricted actions are protected.
