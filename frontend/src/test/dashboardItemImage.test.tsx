@@ -49,16 +49,21 @@ describe("Item image upload", () => {
     });
 
     await user.upload(fileInput, file);
-    await user.click(within(dialog).getByRole("button", { name: /upload/i }));
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalled();
     });
 
+    const thumbnail = await screen.findByAltText(/milk image thumbnail/i);
     expect(await screen.findByText(/image uploaded/i)).toBeInTheDocument();
-    expect(await screen.findByAltText(/milk image thumbnail/i)).toBeInTheDocument();
+    expect(thumbnail).toBeInTheDocument();
+    expect(thumbnail).toHaveAttribute(
+      "src",
+      expect.stringMatching(/\/media\/items\/milk\.png$/i),
+    );
 
-    await user.click(screen.getByAltText(/milk image thumbnail/i));
+    await user.click(thumbnail);
     expect(await screen.findByAltText(/milk image preview/i)).toBeInTheDocument();
   });
 
@@ -74,7 +79,7 @@ describe("Item image upload", () => {
     const file = new File(["gifdata"], "milk.gif", { type: "image/gif" });
 
     await user.upload(fileInput, file);
-    await user.click(within(dialog).getByRole("button", { name: /upload/i }));
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     expect(
       await within(dialog).findByText(/file type not supported/i),
@@ -95,7 +100,7 @@ describe("Item image upload", () => {
     });
 
     await user.upload(fileInput, file);
-    await user.click(within(dialog).getByRole("button", { name: /upload/i }));
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     expect(
       await within(dialog).findByText(/file is too large \(max 5 mb\)/i),

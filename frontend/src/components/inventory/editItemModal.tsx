@@ -364,7 +364,7 @@ export default function EditItemModal({
                   input?.click();
                 }}
               >
-                {imagePreviewUrl ? "Endre bilde" : "Last opp bilde"}
+                {imagePreviewUrl ? "Change image" : "Upload image"}
               </Button>
               {selectedImage ? (
                 <Typography variant="body2" color="text.secondary">

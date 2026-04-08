@@ -389,7 +389,7 @@ describe("EditItemModal - user story tests", () => {
     const dialog = await screen.findByRole("dialog");
 
     expect(
-      within(dialog).getByRole("button", { name: /endre bilde/i }),
+      within(dialog).getByRole("button", { name: /change image/i }),
     ).toBeInTheDocument();
   });
 });

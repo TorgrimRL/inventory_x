@@ -1,5 +1,13 @@
 import apiClient from "./apiClient";
 
+function toAbsoluteMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const baseUrl = apiClient.defaults.baseURL ?? window.location.origin;
+  return new URL(url, baseUrl).toString();
+}
+
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
@@ -117,7 +125,11 @@ export async function uploadItemImage(
   const res = await apiClient.post(`/api/inventory/${itemId}/image/`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return res.data as { image_url: string; message: string };
+
+  return {
+    ...(res.data as { image_url: string; message: string }),
+    image_url: toAbsoluteMediaUrl(res.data?.image_url) ?? "",
+  };
 }
 
 export async function removeItemImage(
