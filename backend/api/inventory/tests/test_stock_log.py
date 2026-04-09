@@ -74,6 +74,7 @@ class StockLogTests(TestCase):
 
         # Act: Update the item (this creates log #2)
         update_item(
+            inventory_id=self.inventory.id,
             item_id=item.id,
             name="Gaming Mouse",
             price=500,
@@ -150,6 +151,7 @@ class StockLogTests(TestCase):
         fake_uuid = uuid.uuid4()
         with self.assertRaises(LookupError):
             update_item(
+                inventory_id=self.inventory.id,
                 item_id=fake_uuid,
                 name="Ghost Item Update",
                 price=999,

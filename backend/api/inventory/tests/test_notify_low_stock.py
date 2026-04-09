@@ -96,6 +96,7 @@ class LowStockNotificationTests(BaseAPITestCase):
 
         # Action: Decrease stock below threshold.
         update_item(
+            inventory_id=self.inventory_id,
             name="silent_item",
             item_id=silent_item["id"],
             low_stock_threshold=5,
@@ -148,6 +149,7 @@ class LowStockNotificationTests(BaseAPITestCase):
         """
 
         item = update_item(
+            inventory_id=self.inventory_id,
             name="test_widget",
             item_id=self.item["id"],
             low_stock_threshold=None,
