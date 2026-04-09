@@ -229,19 +229,20 @@ Even-numbered items:
 ## H. Final Summary
 
 * Overall result: 
-- The participant completed all tasks successfully
+    - The participant completed all tasks successfully
 * Main strengths: 
-- Easy to use and understand
-- Tasks such as adding, updating and searching for items work smoothly
-- Role-based access control is mostly effective
+    - Easy to use and understand
+    - Tasks such as adding, updating and searching for items work smoothly
+    - Role-based access control is mostly effective
 * Main weaknesses:
-- The filter/search functionality is difficult to understand and presents too much information at once
-- The dashboard does not clearly shows where to find items, making navigation less intuitive
-- Some role restrictions are not fully enforced
-- Lack of immediate feedback when updating stock (new value not visible before saving)
+    - The filter/search functionality is difficult to understand and presents too much information at once
+    - The dashboard does not clearly shows where to find items, making navigation less intuitive
+    - Some role restrictions are not fully enforced
+    - Lack of immediate feedback when updating stock (new value not visible before saving)
 * Recommended improvements before next release:
-- Simplify the filter or reduce the amount of information displayed
-- Improve dashboard structure and visibility
-- Show updated stock before saving
-- Fix role-based permission issues
-* Would the participant use InventoryX in practice? Yes 
+    - Simplify the filter or reduce the amount of information displayed
+    - Improve dashboard structure and visibility
+    - Show updated stock before saving
+    - Fix role-based permission issues
+* Would the participant use InventoryX in practice? 
+    - Yes 
