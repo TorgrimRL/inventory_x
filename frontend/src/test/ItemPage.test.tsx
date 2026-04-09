@@ -133,6 +133,7 @@ describe("ItemPage", () => {
         stock: 5,
         category_ids: [],
         low_stock_threshold: null,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -171,6 +172,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: null,
+        low_stock_notification: false,
         category_ids: [],
       });
     });
@@ -187,6 +189,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -227,6 +230,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        low_stock_notification: false,
         category_ids: [],
       });
     });
@@ -335,6 +339,7 @@ describe("ItemPage", () => {
         price: 20,
         category_ids: ["c1", "c3"],
         low_stock_threshold: 8,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -363,6 +368,7 @@ describe("ItemPage", () => {
         price: 20,
         low_stock_threshold: 8,
         category_ids: ["c1", "c3"],
+        low_stock_notification: false,
       });
     });
   });
