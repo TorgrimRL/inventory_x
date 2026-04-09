@@ -28,7 +28,7 @@ describe("LandingPage - user story tests", () => {
     );
 
     expect(
-      screen.getByRole("heading", { level: 2, name: /inventory x/i }),
+      screen.getByRole("heading", { level: 1, name: /inventory x/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /get started/i }),
