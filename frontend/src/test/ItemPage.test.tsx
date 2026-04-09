@@ -368,6 +368,7 @@ describe("ItemPage", () => {
         price: 20,
         low_stock_threshold: 8,
         category_ids: ["c1", "c3"],
+        low_stock_notification: false,
       });
     });
   });

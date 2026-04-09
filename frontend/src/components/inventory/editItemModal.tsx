@@ -415,14 +415,14 @@ export default function EditItemModal({
                   selectedCategoryIds.length === 0
                     ? "No category added"
                     : selectedCategoryIds
-                      .map(
-                        (id) =>
-                          categories.find(
-                            (category) => String(category.id) === String(id),
-                          )?.name,
-                      )
-                      .filter(Boolean)
-                      .join(", ") || "No category added"
+                        .map(
+                          (id) =>
+                            categories.find(
+                              (category) => String(category.id) === String(id),
+                            )?.name,
+                        )
+                        .filter(Boolean)
+                        .join(", ") || "No category added"
                 }
                 disabled
                 fullWidth
@@ -499,8 +499,8 @@ export default function EditItemModal({
                 <Alert severity="error">Stock cannot be negative.</Alert>
               )}
             </Stack>
-          </Stack >
-        </DialogContent >
+          </Stack>
+        </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
           <Box>
@@ -539,7 +539,7 @@ export default function EditItemModal({
             </Button>
           </Box>
         </DialogActions>
-      </Dialog >
+      </Dialog>
 
       <Dialog
         open={deleteConfirmOpen}

@@ -320,13 +320,13 @@ export default function ItemPage() {
       selectedCategoryIds.length === 0
         ? searched
         : searched.filter((item) => {
-          const ids = (item.category_ids || []).map(String);
-          return selectedCategoryIds.every((selectedId) =>
-            selectedId === "__no_category__"
-              ? ids.length === 0
-              : ids.includes(selectedId),
-          );
-        });
+            const ids = (item.category_ids || []).map(String);
+            return selectedCategoryIds.every((selectedId) =>
+              selectedId === "__no_category__"
+                ? ids.length === 0
+                : ids.includes(selectedId),
+            );
+          });
 
     const filtered = byCategory.filter(
       (item) => !lowStockOnly || item.stock <= lowStockFilterThreshold,
@@ -513,7 +513,7 @@ export default function ItemPage() {
                 value={searchInput}
                 disabled={loading}
                 onChange={setSearchInput}
-                onSearch={() => { }}
+                onSearch={() => {}}
                 onClear={handleClearSearch}
               />
             </Box>
@@ -1031,13 +1031,13 @@ export default function ItemPage() {
               prev.map((it) =>
                 it.id === updated.id
                   ? {
-                    ...it,
-                    name: updated.name,
-                    price: updated.price,
-                    low_stock_threshold: updated.lowStockThreshold,
-                    low_stock_notification: updated.low_stock_notification,
-                    category_ids: updated.category_ids,
-                  }
+                      ...it,
+                      name: updated.name,
+                      price: updated.price,
+                      low_stock_threshold: updated.lowStockThreshold,
+                      low_stock_notification: updated.low_stock_notification,
+                      category_ids: updated.category_ids,
+                    }
                   : it,
               ),
             );
