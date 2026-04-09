@@ -126,11 +126,24 @@ export async function updateItem(
   payload: {
     name: string;
     price: number;
-    low_stock_threshold?: null | number;
+    low_stock_threshold: null | number;
+    low_stock_notification: boolean;
     category_ids?: string[];
   },
 ) {
   const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
+  return res.data;
+}
+
+export async function createItem(payload: {
+  name: string;
+  price: number;
+  stock: number;
+  low_stock_threshold: number | null;
+  low_stock_notification: boolean;
+  category_ids?: string[];
+}) {
+  const res = await apiClient.post("/api/inventory/", payload);
   return res.data;
 }
 
