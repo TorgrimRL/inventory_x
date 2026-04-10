@@ -42,7 +42,10 @@ class InventoryHistoryView(views.APIView):
         latest_before_year: dict[str, StockLog] = {}
 
         for log in logs:
-            item_id = str(log.item_id)
+            if log.item is None:
+                continue
+
+            item_id = str(log.item.id)
             month_key = (item_id, log.timestamp.month)
 
             if log.timestamp.year < year:
