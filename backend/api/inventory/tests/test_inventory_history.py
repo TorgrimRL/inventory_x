@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.urls import reverse
 
@@ -6,7 +6,12 @@ from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts.inventory_history import (
     INVENTORY_HISTORY_RESPONSES,
 )
-from api.inventory.models import Inventory, InventoryItem, InventoryMembership, StockLog
+from api.inventory.models import (
+    Inventory,
+    InventoryItem,
+    InventoryMembership,
+    StockLog,
+)
 from api.tests.base import BaseAPITestCase
 
 
@@ -60,7 +65,7 @@ class InventoryHistoryViewTests(BaseAPITestCase):
             performed_by=self.user,
         )
         StockLog.objects.filter(pk=log.pk).update(
-            timestamp=datetime(2025, 12, 20, tzinfo=timezone.utc)
+            timestamp=datetime(2025, 12, 20, tzinfo=UTC)
         )
 
         log = StockLog.objects.create(
@@ -72,7 +77,7 @@ class InventoryHistoryViewTests(BaseAPITestCase):
             performed_by=self.user,
         )
         StockLog.objects.filter(pk=log.pk).update(
-            timestamp=datetime(2025, 12, 22, tzinfo=timezone.utc)
+            timestamp=datetime(2025, 12, 22, tzinfo=UTC)
         )
 
         log = StockLog.objects.create(
@@ -84,7 +89,7 @@ class InventoryHistoryViewTests(BaseAPITestCase):
             performed_by=self.user,
         )
         StockLog.objects.filter(pk=log.pk).update(
-            timestamp=datetime(2026, 2, 15, tzinfo=timezone.utc)
+            timestamp=datetime(2026, 2, 15, tzinfo=UTC)
         )
 
         log = StockLog.objects.create(
@@ -96,7 +101,7 @@ class InventoryHistoryViewTests(BaseAPITestCase):
             performed_by=self.user,
         )
         StockLog.objects.filter(pk=log.pk).update(
-            timestamp=datetime(2026, 4, 10, tzinfo=timezone.utc)
+            timestamp=datetime(2026, 4, 10, tzinfo=UTC)
         )
 
         log = StockLog.objects.create(
@@ -108,7 +113,7 @@ class InventoryHistoryViewTests(BaseAPITestCase):
             performed_by=self.user,
         )
         StockLog.objects.filter(pk=log.pk).update(
-            timestamp=datetime(2026, 3, 1, tzinfo=timezone.utc)
+            timestamp=datetime(2026, 3, 1, tzinfo=UTC)
         )
 
         self.url = reverse("inventory-history")

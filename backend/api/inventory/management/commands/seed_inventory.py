@@ -307,19 +307,68 @@ class Command(BaseCommand):
             ]
 
             def pick_categories_for_item(inventory, item_name: str):
-                category_map = categories_by_inventory.get(str(inventory.id), {})
+                category_map = categories_by_inventory.get(
+                    str(inventory.id), {}
+                )
 
                 if inventory.name == "Jessica Cookies AS":
                     lowered = item_name.lower()
                     picked: list[str] = []
 
-                    if any(word in lowered for word in ["cookie", "brownie", "blondie", "brookie", "cupcake"]):
+                    if any(
+                        word in lowered
+                        for word in [
+                            "cookie",
+                            "brownie",
+                            "blondie",
+                            "brookie",
+                            "cupcake",
+                        ]
+                    ):
                         picked.append("Snacks")
-                    if any(word in lowered for word in ["dip", "vanilla cream"]):
+                    if any(
+                        word in lowered for word in ["dip", "vanilla cream"]
+                    ):
                         picked.append("Drinks")
-                    if any(word in lowered for word in ["flour", "sugar", "butter", "eggs", "chocolate", "cocoa", "vanilla", "baking powder", "salt", "biscoff", "hazelnut", "macadamia", "peanut butter", "oats", "raisins"]):
-                        picked.append("Dairy" if "butter" in lowered or "eggs" in lowered else "Milk")
-                    if any(word in lowered for word in ["boxes", "paper bags", "labels", "napkins", "gloves", "takeaway", "shipping", "bubble wrap", "tape"]):
+                    if any(
+                        word in lowered
+                        for word in [
+                            "flour",
+                            "sugar",
+                            "butter",
+                            "eggs",
+                            "chocolate",
+                            "cocoa",
+                            "vanilla",
+                            "baking powder",
+                            "salt",
+                            "biscoff",
+                            "hazelnut",
+                            "macadamia",
+                            "peanut butter",
+                            "oats",
+                            "raisins",
+                        ]
+                    ):
+                        picked.append(
+                            "Dairy"
+                            if "butter" in lowered or "eggs" in lowered
+                            else "Milk"
+                        )
+                    if any(
+                        word in lowered
+                        for word in [
+                            "boxes",
+                            "paper bags",
+                            "labels",
+                            "napkins",
+                            "gloves",
+                            "takeaway",
+                            "shipping",
+                            "bubble wrap",
+                            "tape",
+                        ]
+                    ):
                         picked.append("Bread")
 
                     return [
@@ -331,9 +380,24 @@ class Command(BaseCommand):
                 if inventory.name == "Ola AS":
                     lowered = item_name.lower()
                     picked = []
-                    if "jo nesbø" in lowered or "pascal engman" in lowered or "jussi adler-olsen" in lowered or "lars kepler" in lowered or "jørn lier horst" in lowered:
+                    if (
+                        "jo nesbø" in lowered
+                        or "pascal engman" in lowered
+                        or "jussi adler-olsen" in lowered
+                        or "lars kepler" in lowered
+                        or "jørn lier horst" in lowered
+                    ):
                         picked.append("Crime")
-                    elif any(word in lowered for word in ["ledelse", "statsbudsjett", "vagusnerven", "hele deg", "sjøfareren"]):
+                    elif any(
+                        word in lowered
+                        for word in [
+                            "ledelse",
+                            "statsbudsjett",
+                            "vagusnerven",
+                            "hele deg",
+                            "sjøfareren",
+                        ]
+                    ):
                         picked.append("Non-fiction")
                     else:
                         picked.append("Books")
@@ -386,7 +450,9 @@ class Command(BaseCommand):
                         low_stock_threshold=low_stock_threshold,
                     )
 
-                    selected_categories = pick_categories_for_item(inventory, name)
+                    selected_categories = pick_categories_for_item(
+                        inventory, name
+                    )
                     if selected_categories:
                         item.categories.set(selected_categories)
 
@@ -441,7 +507,10 @@ class Command(BaseCommand):
                             amount = restock_amount
                         else:
                             seasonal_multiplier = 1.0
-                            if inventory.name == "Jessica Cookies AS" and (year, month) in {
+                            if inventory.name == "Jessica Cookies AS" and (
+                                year,
+                                month,
+                            ) in {
                                 (2024, 12),
                                 (2025, 12),
                                 (2026, 4),
@@ -449,7 +518,10 @@ class Command(BaseCommand):
                                 (2026, 6),
                             }:
                                 seasonal_multiplier = 2.2
-                            elif inventory.name == "Ola AS" and (year, month) in {
+                            elif inventory.name == "Ola AS" and (
+                                year,
+                                month,
+                            ) in {
                                 (2024, 6),
                                 (2024, 12),
                                 (2025, 6),
@@ -460,7 +532,9 @@ class Command(BaseCommand):
 
                             max_decrease = max(
                                 4,
-                                int((initial_stock * 0.16) * seasonal_multiplier),
+                                int(
+                                    (initial_stock * 0.16) * seasonal_multiplier
+                                ),
                             )
                             amount = min(
                                 current_stock,
@@ -479,10 +553,12 @@ class Command(BaseCommand):
                             (2026, 3),
                             (2026, 6),
                         } or random.random() < 0.08:
-                            price_shift = random.choice([-0.10, -0.05, 0.06, 0.12])
+                            price_shift = random.choice(
+                                [-0.10, -0.05, 0.06, 0.12]
+                            )
                             current_price = max(
                                 10,
-                                int(round(current_price * (1 + price_shift))),
+                                round(current_price * (1 + price_shift)),
                             )
 
                         adj_log = StockLog.objects.create(
@@ -510,7 +586,9 @@ class Command(BaseCommand):
                         action="adjust_stock",
                         amount=abs(current_stock - final_stock),
                         direction=(
-                            "increase" if final_stock > current_stock else "decrease"
+                            "increase"
+                            if final_stock > current_stock
+                            else "decrease"
                         ),
                         current_stock=final_stock,
                         price=current_price,
