@@ -7,7 +7,12 @@ from rest_framework import status
 from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts.adjust_stock import ADJUST_STOCK_RESPONSES
 from api.inventory.contracts.update_item import UPDATE_ITEM_RESPONSES
-from api.inventory.models import Inventory, InventoryItem, InventoryMembership
+from api.inventory.models import (
+    Inventory,
+    InventoryItem,
+    InventoryMembership,
+    ItemCategory,
+)
 from api.inventory.services.items import adjust_stock, get_all_items
 from api.tests.base import BaseAPITestCase
 
@@ -304,7 +309,7 @@ class UpdateItemViewTests(BaseAPITestCase):
     def test_update_item_success(self):
         response = self.client.patch(
             self.url,
-            {"name": "Skim Milk", "price": 30},
+            {"name": "Skim Milk", "price": 30, "low_stock_notification": False},
             format="json",
         )
 
@@ -415,3 +420,134 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assertEqual(self.item.name, "Milk")
         self.assertEqual(self.item.price, 25)
         self.assertEqual(self.item.stock, 10)
+
+    def test_update_item_add_single_category(self):
+        category = ItemCategory.objects.create(
+            inventory=self.inventory, name="Dairy"
+        )
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 25, "category_ids": [str(category.id)]},
+            format="json",
+        )
+
+        data = self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_200_OK
+        )
+        self.assertIn(
+            str(category.id), [str(cat_id) for cat_id in data["category_ids"]]
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.categories.count(), 1)
+
+    def test_update_item_add_multiple_categories(self):
+        cat1 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Dairy"
+        )
+        cat2 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Cold"
+        )
+
+        response = self.client.patch(
+            self.url,
+            {
+                "name": "Milk",
+                "price": 25,
+                "category_ids": [str(cat1.id), str(cat2.id)],
+            },
+            format="json",
+        )
+
+        self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_200_OK
+        )
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.categories.count(), 2)
+
+    def test_update_item_remove_all_categories(self):
+        cat1 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Dairy"
+        )
+        cat2 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Cold"
+        )
+        self.item.categories.set([cat1, cat2])
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 25, "category_ids": []},
+            format="json",
+        )
+
+        data = self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_200_OK
+        )
+        self.assertEqual(len(data["category_ids"]), 0)
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.categories.count(), 0)
+
+    def test_update_item_partial_remove_categories(self):
+        cat1 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Dairy"
+        )
+        cat2 = ItemCategory.objects.create(
+            inventory=self.inventory, name="Cold"
+        )
+        self.item.categories.set([cat1, cat2])
+
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 25, "category_ids": [str(cat1.id)]},
+            format="json",
+        )
+
+        self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.categories.count(), 1)
+        self.assertEqual(self.item.categories.all()[0].id, cat1.id)
+
+        first_category = self.item.categories.first()
+        assert first_category is not None
+        self.assertEqual(first_category.id, cat1.id)
+
+    def test_update_item_with_non_existent_category_returns_400(self):
+        response = self.client.patch(
+            self.url,
+            {"name": "Milk", "price": 25, "category_ids": [str(uuid.uuid4())]},
+            format="json",
+        )
+
+        self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.categories.count(), 0)
+
+    def test_update_item_with_category_from_other_inventory_returns_400(self):
+        other_inv = Inventory.objects.create(
+            name="Other Inv", org_number="222222222"
+        )
+        other_category = ItemCategory.objects.create(
+            inventory=other_inv, name="Other Cat"
+        )
+
+        response = self.client.patch(
+            self.url,
+            {
+                "name": "Milk",
+                "price": 25,
+                "category_ids": [str(other_category.id)],
+            },
+            format="json",
+        )
+
+        self.assert_contract(
+            response, UPDATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )

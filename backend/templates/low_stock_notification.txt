@@ -1,0 +1,12 @@
+Dear {{ display_name }},
+
+This is an automated notification to inform you that an item in your inventory is running low.
+
+Item: {{ item_name }}
+Current Stock: {{ current_stock }}
+Threshold: {{ threshold }}
+
+Please log in to your dashboard to review and restock this item.
+
+Kind Regards
+Inventory X
