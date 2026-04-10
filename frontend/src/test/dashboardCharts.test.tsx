@@ -366,7 +366,9 @@ describe("Dashboard charts", () => {
     fireEvent.mouseEnter(points[0]!);
 
     await waitFor(() => {
-      expect(screen.getByText((content) => content.includes("Jan:"))).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => content.includes("Jan:")),
+      ).toBeInTheDocument();
     });
   });
 

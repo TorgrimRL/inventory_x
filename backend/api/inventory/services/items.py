@@ -20,9 +20,7 @@ def _get_validated_categories(
     )
 
     if len(categories) != len(set(category_ids)):
-        raise ValueError(
-            "All categories must belong to the active inventory."
-        )
+        raise ValueError("All categories must belong to the active inventory.")
 
     return categories
 
@@ -45,7 +43,9 @@ def get_all_items(inventory_id: UUID):
             "price": item.price,
             "stock": item.stock,
             "low_stock_threshold": item.low_stock_threshold,
-            "category_ids": [str(category.id) for category in item.categories.all()],
+            "category_ids": [
+                str(category.id) for category in item.categories.all()
+            ],
         }
         for item in items_qs
     ]

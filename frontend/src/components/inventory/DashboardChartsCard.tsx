@@ -43,14 +43,27 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function roundToNearest(value: number, step: number) {
-  return Math.round(value / step) * step;
+function roundUpToNearest(value: number, step: number) {
+  return Math.ceil(value / step) * step;
+}
+
+function getAxisStep(maxValue: number) {
+  if (maxValue <= 250_000) return 50_000;
+  if (maxValue <= 1_000_000) return 100_000;
+  if (maxValue <= 2_000_000) return 250_000;
+  if (maxValue <= 5_000_000) return 500_000;
+  return 1_000_000;
 }
 
 function formatCompactAxisValue(value: number) {
+  if (value === 0) return "0";
+
   if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+    const millions = value / 1_000_000;
+    const roundedMillions = Math.round(millions * 10) / 10;
+    return `${String(roundedMillions).replace(/\.0$/, "")}M`;
   }
+
   return `${Math.round(value / 1000)}k`;
 }
 
@@ -362,12 +375,14 @@ function InventoryValueLineChartCard({
   const axisLabelColor = theme.palette.text.secondary;
   const lineColor = theme.palette.primary.main;
   const fillColor = theme.palette.primary.light;
-  const [hoveredPointLabel, setHoveredPointLabel] = useState<string | null>(null);
+  const [hoveredPointLabel, setHoveredPointLabel] = useState<string | null>(
+    null,
+  );
 
   const chart = useMemo(() => {
     const width = 720;
     const height = 280;
-    const left = 88;
+    const left = 116;
     const right = 24;
     const top = 20;
     const bottom = 48;
@@ -378,28 +393,26 @@ function InventoryValueLineChartCard({
     const maxValue = Math.max(...values, 0);
     const minValue = Math.min(...values, 0);
     const paddedMin = minValue <= 0 ? 0 : Math.max(0, minValue * 0.92);
-    const paddedMax = maxValue <= 0 ? 50_000 : maxValue * 1.08;
+    const axisStep = getAxisStep(maxValue);
+    const targetTickCount = 4;
+    const paddedMax =
+      maxValue <= 0
+        ? axisStep * (targetTickCount - 1)
+        : roundUpToNearest(maxValue * 1.08, axisStep * (targetTickCount - 1));
     const range = Math.max(paddedMax - paddedMin, 1);
+    const tickStep = Math.max(paddedMax / (targetTickCount - 1), 1);
 
-    const rawTicks = Array.from({ length: 5 }, (_, index) => {
-      const ratio = index / 4;
-      const value = paddedMax - range * ratio;
-      const roundedValue = roundToNearest(value, 50_000);
+    const ticks = Array.from({ length: targetTickCount }, (_, index) => {
+      const value = Math.max(paddedMax - tickStep * index, 0);
+      const ratio = index / (targetTickCount - 1);
       const y = top + plotHeight * ratio;
+
       return {
-        value: roundedValue,
-        label: formatCompactAxisValue(roundedValue),
+        value,
+        label: formatCompactAxisValue(value),
         y,
       };
     });
-
-    const ticks = rawTicks.map((tick, index) => ({
-      ...tick,
-      value:
-        index === 0
-          ? Math.max(rawTicks[0]?.value ?? tick.value, 50_000)
-          : tick.value,
-    }));
 
     const points = monthlyValues.map((point, index) => {
       const x =
@@ -409,9 +422,7 @@ function InventoryValueLineChartCard({
     });
 
     const linePath = points
-      .map((point, index) =>
-        `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`,
-      )
+      .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
       .join(" ");
 
     const areaPath = points.length
@@ -488,11 +499,11 @@ function InventoryValueLineChartCard({
                   strokeWidth="1"
                 />
                 <text
-                  x={chart.left - 10}
+                  x={chart.left - 12}
                   y={tick.y}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize="11"
+                  fontSize="10"
                   fill={axisLabelColor}
                 >
                   {tick.label}
@@ -592,7 +603,9 @@ export default function DashboardChartsCard({
   categoryNameById: Map<string, string>;
 }) {
   const [selectedYear, setSelectedYear] = useState(2026);
-  const [historyPoints, setHistoryPoints] = useState<InventoryHistoryPoint[]>([]);
+  const [historyPoints, setHistoryPoints] = useState<InventoryHistoryPoint[]>(
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
