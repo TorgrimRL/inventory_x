@@ -8,9 +8,11 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   ListItemText,
   MenuItem,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -33,6 +35,7 @@ type Props = {
   currentStock: number;
   initialCategoryIds?: string[];
   initialLowStockThreshold?: number | null;
+  low_stock_notification: boolean;
   // owner => true, employee => false
   canEditDetails: boolean;
 
@@ -43,6 +46,7 @@ type Props = {
     name: string;
     price: number;
     lowStockThreshold: null | number;
+    low_stock_notification: boolean;
     category_ids?: string[];
   }) => void;
   onStockUpdated: (newStock: number) => void;
@@ -73,6 +77,7 @@ export default function EditItemModal({
   initialName,
   initialPrice,
   initialLowStockThreshold,
+  low_stock_notification,
   currentStock,
   initialCategoryIds,
   canEditDetails,
@@ -85,6 +90,9 @@ export default function EditItemModal({
   const [price, setPrice] = useState(String(initialPrice));
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
+  );
+  const [notification, setNotifications] = useState(
+    Boolean(low_stock_notification),
   );
 
   const [amount, setAmount] = useState<string>("0");
@@ -108,11 +116,11 @@ export default function EditItemModal({
     setLowStockThreshold(
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
+    setNotifications(Boolean(low_stock_notification));
     setAmount("0");
     setDirection(null);
     setSelectedCategoryIds(initialCategoryIds || []);
     setError(null);
-
     listActiveCategories()
       .then((list) => setCategories(list))
       .catch(() => setCategories([]));
@@ -122,6 +130,7 @@ export default function EditItemModal({
     initialName,
     initialPrice,
     initialLowStockThreshold,
+    low_stock_notification,
   ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
@@ -163,8 +172,9 @@ export default function EditItemModal({
     canEditDetails &&
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
+      lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
       initialCategoryKey !== selectedCategoryKey ||
-      lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
+      notification !== Boolean(low_stock_notification));
 
   const stockChanged = wantsStockChange && direction !== null;
 
@@ -213,7 +223,7 @@ export default function EditItemModal({
 
     setSaving(true);
     try {
-      // 1) Update name/price (only if owner AND changed)
+      // 1) Update name/price/threshold/notifications (only if owner AND changed)
       if (canEditDetails) {
         const trimmed = name.trim();
 
@@ -225,14 +235,16 @@ export default function EditItemModal({
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
+          lowStockThresholdNumber !== initialThresholdValue ||
           initialIds.join(",") !== currentIds.join(",") ||
-          lowStockThresholdNumber !== initialThresholdValue;
+          notification !== Boolean(low_stock_notification);
 
         if (changed) {
           const payload = {
             name: trimmed,
             price: priceNumber,
             low_stock_threshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
             category_ids: categoryIdsToSave,
           };
 
@@ -242,6 +254,7 @@ export default function EditItemModal({
             name: trimmed,
             price: priceNumber,
             lowStockThreshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
             category_ids: payload.category_ids,
           });
         }
@@ -344,7 +357,18 @@ export default function EditItemModal({
                   : "Leave empty if no threshold should be set"
               }
             />
-
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={notification}
+                  onChange={(e) => setNotifications(e.target.checked)}
+                  disabled={!canEditDetails || saving}
+                  color="primary"
+                />
+              }
+              label="Enable low stock mail notifications for this item"
+            />
+            <Divider sx={{ my: 1 }} />
             {canEditDetails ? (
               <TextField
                 select
@@ -406,8 +430,7 @@ export default function EditItemModal({
             )}
 
             <Divider />
-
-            <Typography variant="subtitle1">Stock</Typography>
+            <Typography variant="subtitle1">Stock Adjustment</Typography>
 
             <Typography variant="body2" color="text.secondary">
               Current stock: {currentStock}

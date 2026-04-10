@@ -69,6 +69,7 @@ class StockLogTests(TestCase):
             price=100,
             stock=5,
             low_stock_threshold=5,
+            low_stock_notification=False,
         )
 
         # Act: Update the item (this creates log #2)
@@ -78,6 +79,7 @@ class StockLogTests(TestCase):
             name="Gaming Mouse",
             price=500,
             low_stock_threshold=10,
+            low_stock_notification=False,
             user=self.user,
         )
 
@@ -155,6 +157,7 @@ class StockLogTests(TestCase):
                 price=999,
                 low_stock_threshold=5,
                 user=self.user,
+                low_stock_notification=False,
             )
 
         self.assertEqual(StockLog.objects.count(), initial_log_count)

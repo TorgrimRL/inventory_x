@@ -129,6 +129,7 @@ class InventoryItem(models.Model):
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
+    low_stock_notification = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
