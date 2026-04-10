@@ -5,18 +5,20 @@ global.TextEncoder = TextEncoder;
 // @ts-expect-error: test env shim
 global.TextDecoder = TextDecoder;
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Dashboard from "../pages/dashboard";
 import {
   getActiveInventory,
+  getInventoryHistory,
   listActiveCategories,
   listInventoryItems,
 } from "../services/inventoryService";
 
 jest.mock("../services/inventoryService", () => ({
   getActiveInventory: jest.fn(),
+  getInventoryHistory: jest.fn(),
   listActiveCategories: jest.fn(),
   listInventoryItems: jest.fn(),
 }));
@@ -27,6 +29,9 @@ jest.mock("../components/inventory/LowStockWarningsCard.tsx", () => () => (
 
 const mockedGetActiveInventory = getActiveInventory as jest.MockedFunction<
   typeof getActiveInventory
+>;
+const mockedGetInventoryHistory = getInventoryHistory as jest.MockedFunction<
+  typeof getInventoryHistory
 >;
 const mockedListActiveCategories = listActiveCategories as jest.MockedFunction<
   typeof listActiveCategories
@@ -49,6 +54,20 @@ describe("Dashboard charts", () => {
       { id: "c1", name: "Cookies" },
       { id: "c2", name: "Cakes" },
       { id: "c3", name: "Dairy" },
+    ]);
+    mockedGetInventoryHistory.mockResolvedValue([
+      { month: "Jan", value: 450000 },
+      { month: "Feb", value: 400000 },
+      { month: "Mar", value: 600000 },
+      { month: "Apr", value: 550000 },
+      { month: "May", value: 500000 },
+      { month: "Jun", value: 750000 },
+      { month: "Jul", value: 700000 },
+      { month: "Aug", value: 650000 },
+      { month: "Sep", value: 900000 },
+      { month: "Oct", value: 800000 },
+      { month: "Nov", value: 700000 },
+      { month: "Dec", value: 450000 },
     ]);
   });
 
@@ -293,9 +312,62 @@ describe("Dashboard charts", () => {
     expect(screen.getByText(/jan/i)).toBeInTheDocument();
     expect(screen.getByText(/jun/i)).toBeInTheDocument();
     expect(screen.getByText(/dec/i)).toBeInTheDocument();
-    expect(
-      screen.getByTestId("inventory-value-line-chart"),
-    ).toBeInTheDocument();
+    const chartContainer = screen.getByTestId("inventory-value-line-chart");
+    expect(chartContainer).toBeInTheDocument();
+    expect(chartContainer.querySelectorAll("circle").length).toBe(12);
+    expect(mockedGetInventoryHistory).toHaveBeenCalledWith(2026);
+  });
+
+  test("requests inventory history for the default selected year", async () => {
+    mockedListInventoryItems.mockResolvedValue([
+      {
+        id: 1,
+        name: "Milk",
+        stock: 2,
+        price: 30,
+        low_stock_threshold: 3,
+        category_ids: ["c1"],
+      },
+    ] as any);
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockedGetInventoryHistory).toHaveBeenCalledWith(2026);
+    });
+  });
+
+  test("shows exact monthly value on chart point hover", async () => {
+    mockedListInventoryItems.mockResolvedValue([
+      {
+        id: 1,
+        name: "Milk",
+        stock: 2,
+        price: 30,
+        low_stock_threshold: 3,
+        category_ids: ["c1"],
+      },
+    ] as any);
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+
+    const chart = await screen.findByLabelText(/inventory value line chart/i);
+    const points = chart.querySelectorAll("circle");
+    expect(points.length).toBeGreaterThan(0);
+
+    fireEvent.mouseEnter(points[0]!);
+
+    await waitFor(() => {
+      expect(screen.getByText((content) => content.includes("Jan:"))).toBeInTheDocument();
+    });
   });
 
   test("shows an empty state when there is not enough data to show charts", async () => {
