@@ -1,5 +1,6 @@
 import "./App.css";
 
+import { Box } from "@mui/material";
 import type { Dispatch, SetStateAction } from "react";
 import { Route, Routes } from "react-router-dom";
 
@@ -40,7 +41,7 @@ interface AppProps {
 }
 function App({ mode, setMode }: AppProps) {
   return (
-    <div>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <Navbar mode={mode} setMode={setMode} />
       <Routes>
         {/* --- PUBLIC ROUTES --- */}
@@ -93,7 +94,7 @@ function App({ mode, setMode }: AppProps) {
           />
         </Route>
       </Routes>
-    </div>
+    </Box>
   );
 }
 
