@@ -77,11 +77,13 @@ export default function LandingPage() {
           component="h1"
           fontWeight={700}
           sx={{
-            background: theme.gradients?.text || theme.palette.primary.main,
+            fontSize: { xs: "2.5rem", sm: "3.75rem" },
+            letterSpacing: { xs: 1, sm: 2 },
+            whiteSpace: "nowrap",
+            background: theme.gradients.text,
             backgroundSize: "200% auto",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            mb: 3,
           }}
         >
           INVENTORY X
@@ -101,11 +103,21 @@ export default function LandingPage() {
           direction={{ xs: "column", sm: "row" }}
           spacing={3}
           justifyContent="center"
+          alignItems="center"
         >
           <Button
             variant="contained"
             size="large"
-            sx={primaryButtonSx}
+            sx={{
+              minWidth: 170,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 600,
+              background: theme.gradients.button,
+              color: "background.default",
+              boxShadow: `0 8px 20px ${theme.palette.primary.main}55`,
+            }}
             onClick={() => navigate(PATHS.REGISTRATION)}
           >
             Get Started
@@ -115,14 +127,14 @@ export default function LandingPage() {
             variant="outlined"
             size="large"
             sx={{
-              px: 5,
+              minWidth: 170,
+              px: 4,
+              py: 1.5,
               borderRadius: 2,
-              borderColor: alpha(theme.palette.primary.main, 0.5),
-              borderWidth: 2,
+              borderColor: "primary.main",
+              color: "primary.main",
               "&:hover": {
-                borderWidth: 2,
-                borderColor: "primary.main",
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                backgroundColor: `${theme.palette.primary.main}15`,
               },
             }}
             onClick={() => navigate(PATHS.LOGIN)}
@@ -225,6 +237,7 @@ export default function LandingPage() {
         }}
       >
         <Button
+          size="large"
           variant="contained"
           sx={{ ...primaryButtonSx, my: "auto" }}
           onClick={() => navigate(PATHS.REGISTRATION)}

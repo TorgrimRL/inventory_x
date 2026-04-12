@@ -15,6 +15,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -178,55 +179,57 @@ export default function InventoryMembersPage() {
 
         {!loading && !error && (
           <Paper variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
 
-              <TableBody>
-                {sortedMembers.map((member) => {
-                  const removable = canRemove(member);
+                <TableBody>
+                  {sortedMembers.map((member) => {
+                    const removable = canRemove(member);
 
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>{normalizeRole(member.role)}</TableCell>
-                      <TableCell align="right">
-                        {removable ? (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => setSelectedMember(member)}
-                          >
-                            Remove access
-                          </Button>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            {normalizeRole(member.role) === "OWNER"
-                              ? "Access cannot be removed"
-                              : "Only owners can remove members"}
-                          </Typography>
-                        )}
+                    return (
+                      <TableRow key={member.id}>
+                        <TableCell>{member.email}</TableCell>
+                        <TableCell>{normalizeRole(member.role)}</TableCell>
+                        <TableCell align="right">
+                          {removable ? (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => setSelectedMember(member)}
+                            >
+                              Remove access
+                            </Button>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              {normalizeRole(member.role) === "OWNER"
+                                ? "Access cannot be removed"
+                                : "Only owners can remove members"}
+                            </Typography>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  {sortedMembers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography color="text.secondary">
+                          No members found.
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-
-                {sortedMembers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      <Typography color="text.secondary">
-                        No members found.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Paper>
         )}
       </Stack>
