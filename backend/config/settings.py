@@ -210,9 +210,9 @@ LOGGING = {
 # ==============================================================================
 # Auth 0 variables
 # ==============================================================================
-AUTH0_DOMAIN = env("AUTH0_DOMAIN")
-AUTH0_CLIENT_ID = env("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = env("AUTH0_CLIENT_SECRET")
+AUTH0_DOMAIN = env("AUTH0_DOMAIN", default="test-auth0.example.com")
+AUTH0_CLIENT_ID = env("AUTH0_CLIENT_ID", default="test-client-id")
+AUTH0_CLIENT_SECRET = env("AUTH0_CLIENT_SECRET", default="test-client-secret")
 BACKEND_PUBLIC_URL = env("BACKEND_PUBLIC_URL", default="http://localhost:8000")
 AUTH0_CALLBACK_URL = env(
     "AUTH0_CALLBACK_URL",
