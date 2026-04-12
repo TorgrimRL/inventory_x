@@ -27,6 +27,7 @@ type InventoryItem = {
   stock: number;
   price: number;
   low_stock_threshold: number | null;
+  low_stock_notification: boolean;
   category_ids?: string[];
   order_id?: string;
 };

@@ -121,16 +121,59 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
     .filter((category) => category.id && category.name);
 }
 
+export type InventoryItem = {
+  id: number | string;
+  name: string;
+  stock: number;
+  price: number;
+  low_stock_threshold: number | null;
+  category_ids?: string[];
+  category_names?: string[];
+};
+
+export async function listInventoryItems(): Promise<InventoryItem[]> {
+  const res = await apiClient.get("/api/inventory/");
+  const data = res.data;
+  return (data.data || data) as InventoryItem[];
+}
+
 export async function updateItem(
   itemId: number | string,
   payload: {
     name: string;
     price: number;
-    low_stock_threshold?: null | number;
+    low_stock_threshold: null | number;
+    low_stock_notification: boolean;
     category_ids?: string[];
   },
 ) {
   const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
+  return res.data;
+}
+
+export type InventoryHistoryPoint = {
+  month: string;
+  value: number;
+};
+
+export async function getInventoryHistory(
+  year: number,
+): Promise<InventoryHistoryPoint[]> {
+  const res = await apiClient.get("/api/inventory/active/history/", {
+    params: { year },
+  });
+  return res.data as InventoryHistoryPoint[];
+}
+
+export async function createItem(payload: {
+  name: string;
+  price: number;
+  stock: number;
+  low_stock_threshold: number | null;
+  low_stock_notification: boolean;
+  category_ids?: string[];
+}) {
+  const res = await apiClient.post("/api/inventory/", payload);
   return res.data;
 }
 

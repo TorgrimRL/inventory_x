@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   IconButton,
   ListItemText,
   MenuItem,
@@ -42,6 +43,7 @@ import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDial
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
+  createItem,
   getActiveInventory,
   listActiveCategories,
   updateItem,
@@ -53,6 +55,7 @@ type InventoryItem = {
   stock: number;
   price: number;
   low_stock_threshold: number | null;
+  low_stock_notification: boolean;
   category_ids?: string[];
   order_id?: string;
 };
@@ -154,6 +157,7 @@ export default function ItemPage() {
   const handleCloseStockLog = () => {
     setSelectedLogItemId(null);
   };
+  const [enableNotification, setEnableNotification] = useState(false);
 
   async function loadItems() {
     setLoading(true);
@@ -234,18 +238,19 @@ export default function ItemPage() {
 
     const categoryIdsToSave = [...newItemCategoryIds];
 
-    try {
-      const payload = {
-        name: name.trim(),
-        price: Number(price),
-        stock: s,
-        low_stock_threshold: newItemLowStockThresholdNumber,
-        category_ids: categoryIdsToSave,
-      };
+    const payload = {
+      name: name.trim(),
+      price: Number(price),
+      stock: s,
+      low_stock_threshold: newItemLowStockThresholdNumber,
+      low_stock_notification: enableNotification,
+      category_ids: categoryIdsToSave,
+    };
 
-      const res = await ApiClient.post("/api/inventory/", payload);
+    try {
+      const createdData = await createItem(payload);
       const created = {
-        ...(res.data as InventoryItem),
+        ...createdData,
         category_ids: categoryIdsToSave,
       } as InventoryItem;
 
@@ -266,6 +271,7 @@ export default function ItemPage() {
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
+      setEnableNotification(false);
     } catch (err) {
       console.error(err);
       setError(extractBackendMessage(err));
@@ -404,6 +410,7 @@ export default function ItemPage() {
         name: item.name,
         price: Number(item.price),
         low_stock_threshold: item.low_stock_threshold ?? null,
+        low_stock_notification: item.low_stock_notification,
         category_ids: nextCategoryIds,
       });
       setItems((prev) =>
@@ -512,10 +519,11 @@ export default function ItemPage() {
             </Box>
 
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              alignItems="center"
-              sx={{ mb: 2, mt: 1 }}
+              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ mb: 4, mt: 1, rowGap: 1 }}
+              flexWrap="wrap"
             >
               <TextField
                 select
@@ -534,10 +542,8 @@ export default function ItemPage() {
                     nextIds.includes("__no_category__");
 
                   if (!wasNoCategorySelected && isNoCategoryInNext) {
-                    // User just checked "No category": clear all other categories
                     setSelectedCategoryIds(["__no_category__"]);
                   } else if (wasNoCategorySelected && nextIds.length > 1) {
-                    // User had "No category" checked, but just clicked a real category: uncheck "No category"
                     setSelectedCategoryIds(
                       nextIds.filter((id) => id !== "__no_category__"),
                     );
@@ -599,7 +605,11 @@ export default function ItemPage() {
               spacing={1.5}
               sx={{ mb: 2 }}
             >
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                sx={{ flexWrap: "wrap" }}
+              >
                 <TextField
                   size="small"
                   type="number"
@@ -625,27 +635,27 @@ export default function ItemPage() {
                     }
                   }}
                   inputProps={{ min: 0, step: 1 }}
-                  sx={{ width: 130 }}
+                  sx={{ width: { xs: "100%", sm: 150 } }}
                 />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="body2">Low stock only</Typography>
+                    <Switch
+                      checked={lowStockOnly}
+                      onChange={(e) => setLowStockOnly(e.target.checked)}
+                      inputProps={{ "aria-label": "Low stock only" }}
+                    />
+                  </Stack>
 
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography variant="body2">Low stock only</Typography>
-                  <Switch
-                    checked={lowStockOnly}
-                    onChange={(e) => setLowStockOnly(e.target.checked)}
-                    inputProps={{ "aria-label": "Low stock only" }}
-                  />
+                  <Button
+                    onClick={resetListControls}
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                  >
+                    Reset
+                  </Button>
                 </Stack>
-
-                <Button
-                  onClick={resetListControls}
-                  variant="outlined"
-                  color="inherit"
-                  size="small"
-                  sx={{ alignSelf: "center" }}
-                >
-                  Reset
-                </Button>
               </Stack>
             </Stack>
 
@@ -951,6 +961,17 @@ export default function ItemPage() {
                   helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
               </Stack>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableNotification}
+                    onChange={(e) => setEnableNotification(e.target.checked)}
+                    disabled={saving}
+                    color="primary"
+                  />
+                }
+                label="Enable low stock notifications for this item"
+              />
 
               <TextField
                 label="Low stock threshold"
@@ -1000,9 +1021,17 @@ export default function ItemPage() {
           currentStock={selectedItem.stock}
           initialCategoryIds={(selectedItem.category_ids || []).map(String)}
           initialLowStockThreshold={selectedItem.low_stock_threshold ?? null}
+          low_stock_notification={selectedItem.low_stock_notification}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
-          onItemUpdated={(updated) => {
+          onItemUpdated={(updated: {
+            id: number | string;
+            name: string;
+            price: number;
+            lowStockThreshold: number | null;
+            low_stock_notification: boolean;
+            category_ids?: string[];
+          }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
@@ -1011,6 +1040,7 @@ export default function ItemPage() {
                       name: updated.name,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
+                      low_stock_notification: updated.low_stock_notification,
                       category_ids: updated.category_ids,
                     }
                   : it,

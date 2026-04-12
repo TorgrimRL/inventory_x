@@ -32,6 +32,7 @@ export default function LogoutButton() {
         borderColor: "primary.main",
         color: "primary.main",
         textTransform: "none",
+        whiteSpace: "nowrap",
         "&:hover": {
           backgroundColor: `${theme.palette.primary.main}15`,
         },
