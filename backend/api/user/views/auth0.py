@@ -23,8 +23,10 @@ class Auth0CallbackView(APIView):
                 {"detail": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        auth0_user = exchange_auth0_code(serializer.validated_data["code"])
+
         return Response(
-            {"username": "stub@example.com"},
+            {"username": auth0_user["email"]},
             status=status.HTTP_200_OK,
         )
 
