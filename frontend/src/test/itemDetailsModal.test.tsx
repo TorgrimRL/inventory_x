@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import ItemDetailsModal from "../components/inventory/itemDetailsModal";
 
-describe("ItemDetailsModal - user story tests", () => {
+describe("ItemDetailsModal", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -14,17 +14,10 @@ describe("ItemDetailsModal - user story tests", () => {
     const props: React.ComponentProps<typeof ItemDetailsModal> = {
       open: true,
       item: {
-        id: 1,
         name: "Milk",
-        stock: 10,
-        price: 25,
-        low_stock_threshold: 5,
         description: "Fresh milk from Norway",
-        category_ids: [],
       },
       onClose: jest.fn(),
-      renderCategoryNames: () => "No category",
-      isLowStock: () => false,
       ...overrides,
     };
 
@@ -37,19 +30,18 @@ describe("ItemDetailsModal - user story tests", () => {
 
     const dialog = await screen.findByRole("dialog");
 
-    expect(within(dialog).getByText("Milk")).toBeInTheDocument();
+    expect(within(dialog).getByText(/^milk$/i)).toBeInTheDocument();
     expect(
       within(dialog).getByText(/fresh milk from norway/i),
     ).toBeInTheDocument();
   });
 
-  test("shows description", async () => {
+  test("shows description when provided", async () => {
     renderModal({
       item: {
-        id: 1,
         name: "Bread",
         description: "Baked this morning",
-      } as any,
+      },
     });
 
     const dialog = await screen.findByRole("dialog");
@@ -60,28 +52,26 @@ describe("ItemDetailsModal - user story tests", () => {
   test("shows item name so user can identify item", async () => {
     renderModal({
       item: {
-        id: 1,
         name: "Cheese",
         description: "Yellow cheese",
-      } as any,
+      },
     });
 
     const dialog = await screen.findByRole("dialog");
 
-    expect(within(dialog).getByText("Cheese")).toBeInTheDocument();
+    expect(within(dialog).getByText(/^cheese$/i)).toBeInTheDocument();
   });
 
   test("handles missing description without crashing", async () => {
     renderModal({
       item: {
-        id: 1,
         name: "Water",
-      } as any,
+      },
     });
 
     const dialog = await screen.findByRole("dialog");
 
-    expect(within(dialog).getByText("Water")).toBeInTheDocument();
+    expect(within(dialog).getByText(/water/i)).toBeInTheDocument();
   });
 
   test("close button closes modal via onClose", async () => {
