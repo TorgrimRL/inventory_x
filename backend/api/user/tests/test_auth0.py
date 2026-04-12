@@ -46,3 +46,10 @@ class Auth0Tests(BaseAPITestCase):
         self.assertEqual(query["redirect_uri"], [settings.AUTH0_CALLBACK_URL])
         self.assertEqual(query["response_type"], ["code"])
         self.assertIn("openid", query["scope"][0])
+
+    def test_auth0_callback_returns_400_when_code_is_missing(self):
+        response = self.client.get(self.callback_url)
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )

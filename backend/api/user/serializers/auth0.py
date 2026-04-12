@@ -2,9 +2,8 @@ from rest_framework import serializers
 
 
 class Auth0CallbackSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    provider_id = serializers.CharField(required=True)
-    display_name = serializers.CharField(required=False, allow_blank=True)
+    code = serializers.CharField(required=True)
+    state = serializers.CharField(required=False)
 
 
 class Auth0ResponseSerializer(serializers.Serializer):
@@ -12,11 +11,8 @@ class Auth0ResponseSerializer(serializers.Serializer):
 
 
 class Auth0ErrorDetailSerializer(serializers.Serializer):
-    email = serializers.ListField(child=serializers.CharField(), required=False)
-    provider_id = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
-    display_name = serializers.ListField(
+    code = serializers.ListField(child=serializers.CharField(), required=False)
+    state = serializers.ListField(
         child=serializers.CharField(), required=False
     )
 

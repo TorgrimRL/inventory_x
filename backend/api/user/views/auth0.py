@@ -15,8 +15,8 @@ class Auth0CallbackView(APIView):
         request=Auth0CallbackSerializer,
         responses=AUTH0_RESPONSES,
     )
-    def post(self, request):
-        serializer = Auth0CallbackSerializer(data=request.data)
+    def get(self, request):
+        serializer = Auth0CallbackSerializer(data=request.query_params)
 
         if not serializer.is_valid():
             return Response(
@@ -25,7 +25,7 @@ class Auth0CallbackView(APIView):
             )
 
         return Response(
-            {"username": serializer.validated_data["email"]},
+            {"username": "stub@example.com"},
             status=status.HTTP_200_OK,
         )
 
@@ -47,6 +47,7 @@ class Auth0StartView(APIView):
             "client_id": settings.AUTH0_CLIENT_ID,
             "redirect_uri": settings.AUTH0_CALLBACK_URL,
             "scope": "openid profile email",
+            "connection": "google-oauth2",
         }
 
         authorize_url = (
