@@ -104,3 +104,36 @@ class Auth0Tests(BaseAPITestCase):
 
         self.assertTrue(User.objects.filter(email="social@test.com").exists())
         self.assertEqual(data["username"], "social@test.com")
+
+    from unittest.mock import patch
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_reuses_existing_user_when_email_matches(
+            self, mock_exchange
+    ):
+        User = get_user_model()
+
+        existing_user = User(
+            email="social@test.com",
+            display_name="Existing User",
+        )
+        existing_user.set_unusable_password()
+        existing_user.save()
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code"},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(User.objects.filter(email="social@test.com").count(), 1)
+        self.assertEqual(data["username"], "social@test.com")
