@@ -1,4 +1,8 @@
-from django.contrib.auth import get_user_model
+from urllib.parse import urlencode
+
+from django.conf import settings
+from django.contrib.auth import get_user_model, login
+from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -37,19 +41,13 @@ class Auth0CallbackView(APIView):
             )
             user.set_unusable_password()
             user.save()
+        # Create Session
+        login(request._request, user)
 
         return Response(
             {"username": user.email},
             status=status.HTTP_200_OK,
         )
-
-
-from urllib.parse import urlencode
-
-from django.conf import settings
-from django.shortcuts import redirect
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
 
 
 class Auth0StartView(APIView):

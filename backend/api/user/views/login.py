@@ -1,5 +1,3 @@
-# Created By Inventory X
-# 2026-01-24
 import logging
 from typing import cast
 
