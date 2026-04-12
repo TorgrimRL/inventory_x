@@ -8,6 +8,7 @@ from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
 from api.user.contracts.auth0 import AUTH0_RESPONSES
+from api.user.contracts.verify import VERIFY_RESPONSES
 
 
 class Auth0Tests(BaseAPITestCase):
@@ -157,3 +158,33 @@ class Auth0Tests(BaseAPITestCase):
             response, AUTH0_RESPONSES, status.HTTP_200_OK
         )
         self.assertIsNotNone(response.cookies.get("sessionid"))
+
+    from unittest.mock import patch
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_verify_succeeds_after_auth0_callback(
+            self, mock_exchange
+    ):
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+        }
+
+        callback_response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code"},
+        )
+
+        self.assert_contract(
+            callback_response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+        self.assertIsNotNone(callback_response.cookies.get("sessionid"))
+
+        verify_response = self.client.get(reverse("verify"))
+
+        verify_data = self.assert_contract(
+            verify_response, VERIFY_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(verify_data["username"], "Social User")
