@@ -28,3 +28,28 @@ class Auth0CallbackView(APIView):
             {"username": serializer.validated_data["email"]},
             status=status.HTTP_200_OK,
         )
+
+
+from urllib.parse import urlencode
+
+from django.conf import settings
+from django.shortcuts import redirect
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+
+
+class Auth0StartView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        params = {
+            "response_type": "code",
+            "client_id": settings.AUTH0_CLIENT_ID,
+            "redirect_uri": settings.AUTH0_CALLBACK_URL,
+            "scope": "openid profile email",
+        }
+
+        authorize_url = (
+            f"https://{settings.AUTH0_DOMAIN}/authorize?{urlencode(params)}"
+        )
+        return redirect(authorize_url)
