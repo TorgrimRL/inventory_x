@@ -137,3 +137,23 @@ class Auth0Tests(BaseAPITestCase):
 
         self.assertEqual(User.objects.filter(email="social@test.com").count(), 1)
         self.assertEqual(data["username"], "social@test.com")
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_creates_session_when_code_exchange_succeeds(
+            self, mock_exchange
+    ):
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code"},
+        )
+
+        self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+        self.assertIsNotNone(response.cookies.get("sessionid"))
