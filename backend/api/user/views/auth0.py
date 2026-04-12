@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -25,8 +26,20 @@ class Auth0CallbackView(APIView):
             )
         auth0_user = exchange_auth0_code(serializer.validated_data["code"])
 
+        User = get_user_model()
+
+        user = User.objects.filter(email=auth0_user["email"]).first()
+
+        if user is None:
+            user = User(
+                email=auth0_user["email"],
+                display_name=auth0_user.get("display_name", ""),
+            )
+            user.set_unusable_password()
+            user.save()
+
         return Response(
-            {"username": auth0_user["email"]},
+            {"username": user.email},
             status=status.HTTP_200_OK,
         )
 

@@ -2,6 +2,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
@@ -76,4 +77,30 @@ class Auth0Tests(BaseAPITestCase):
             response, AUTH0_RESPONSES, status.HTTP_200_OK
         )
 
+        self.assertEqual(data["username"], "social@test.com")
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_creates_user_when_code_exchange_succeeds(
+            self, mock_exchange
+    ):
+        User = get_user_model()
+
+        self.assertFalse(User.objects.filter(email="social@test.com").exists())
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code"},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertTrue(User.objects.filter(email="social@test.com").exists())
         self.assertEqual(data["username"], "social@test.com")
