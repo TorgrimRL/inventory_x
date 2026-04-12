@@ -7,7 +7,7 @@
 * **Date:** 9.04.2026
 * **Test facilitator:** Torgrim
 * **Participant name or ID:** Eskil
-* **Participant role:** Owner
+* **Participant role:** Owner and Employee
 * **Business context:** Bookstore
 * **Test environment:** Isolated at work
 * **Device / browser / platform:** mac OS, firefox,
