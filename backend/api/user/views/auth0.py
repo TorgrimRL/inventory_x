@@ -1,6 +1,5 @@
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
@@ -68,5 +67,43 @@ class Auth0StartView(APIView):
         return redirect(authorize_url)
 
 
+import requests
+from django.conf import settings
+
+
 def exchange_auth0_code(code: str) -> dict:
-    raise NotImplementedError("Auth0 code exchange not implemented yet")
+    token_response = requests.post(
+        f"https://{settings.AUTH0_DOMAIN}/oauth/token",
+        json={
+            "grant_type": "authorization_code",
+            "client_id": settings.AUTH0_CLIENT_ID,
+            "client_secret": settings.AUTH0_CLIENT_SECRET,
+            "code": code,
+            "redirect_uri": settings.AUTH0_CALLBACK_URL,
+        },
+        timeout=10,
+    )
+    token_response.raise_for_status()
+    tokens = token_response.json()
+
+    access_token = tokens.get("access_token")
+    if not access_token:
+        raise ValueError("Auth0 did not return an access token")
+
+    userinfo_response = requests.get(
+        f"https://{settings.AUTH0_DOMAIN}/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=10,
+    )
+    userinfo_response.raise_for_status()
+    userinfo = userinfo_response.json()
+
+    email = userinfo.get("email")
+    if not email:
+        raise ValueError("Auth0 did not return an email")
+
+    return {
+        "email": email,
+        "provider_id": userinfo.get("sub", ""),
+        "display_name": userinfo.get("name", ""),
+    }
