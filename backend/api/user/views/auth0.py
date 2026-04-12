@@ -1,3 +1,4 @@
+import secrets
 from urllib.parse import urlencode
 
 import requests
@@ -29,10 +30,19 @@ class Auth0CallbackView(APIView):
                 {"detail": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        expected_state = request.session.pop("auth0_oauth_state", None)
+        received_state = serializer.validated_data["state"]
+
+        if not expected_state or received_state != expected_state:
+            return Response(
+                {"detail": {"state": ["Invalid state."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         auth0_user = exchange_auth0_code(serializer.validated_data["code"])
 
         User = get_user_model()
-
         user = User.objects.filter(email=auth0_user["email"]).first()
 
         if user is None:
@@ -42,11 +52,15 @@ class Auth0CallbackView(APIView):
             )
             user.set_unusable_password()
             user.save()
-        # Create Session
+
         login(request._request, user)
 
         return Response(
-            {"username": user.email},
+            {
+                "username": str(user),
+                "email": user.email,
+                "picture": auth0_user.get("picture"),
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -55,12 +69,15 @@ class Auth0StartView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request):
+        state = secrets.token_urlsafe(32)
+        request.session["auth0_oauth_state"] = state
         params = {
             "response_type": "code",
             "client_id": settings.AUTH0_CLIENT_ID,
             "redirect_uri": settings.AUTH0_CALLBACK_URL,
             "scope": "openid profile email",
             "connection": "google-oauth2",
+            "state": state,
         }
 
         authorize_url = (
@@ -104,4 +121,5 @@ def exchange_auth0_code(code: str) -> dict:
         "email": email,
         "provider_id": userinfo.get("sub", ""),
         "display_name": userinfo.get("name", ""),
+        "picture": userinfo.get("picture"),
     }
