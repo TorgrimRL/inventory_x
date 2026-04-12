@@ -6,43 +6,49 @@ from api.inventory.decorators import audit_logger, notify_low_stock
 from api.inventory.models import InventoryItem, ItemCategory
 
 
-def get_all_items(inventory_id: UUID):
-    try:
-        items = InventoryItem.objects.filter(
-            inventory_id=inventory_id
-        ).prefetch_related("categories")
-        return [
-            {
-                "id": item.id,
-                "name": item.name,
-                "price": item.price,
-                "stock": item.stock,
-                "low_stock_threshold": item.low_stock_threshold,
-                "category_ids": [cat.id for cat in item.categories.all()],
-            }
-            for item in items
-        ]
-    except Exception as e:
-        raise Exception("Error fetching inventory items") from e
-
-
-def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
-    """Ensures categories exist and returns the QuerySet."""
+def _get_validated_categories(
+    inventory_id: UUID, category_ids: list[UUID]
+) -> list[ItemCategory]:
     if not category_ids:
-        return ItemCategory.objects.none()
+        return []
 
-    unique_category_ids = set(category_ids)
-    categories = ItemCategory.objects.filter(
-        id__in=unique_category_ids, inventory_id=inventory_id
+    categories = list(
+        ItemCategory.objects.filter(
+            inventory_id=inventory_id,
+            id__in=set(category_ids),
+        )
     )
 
-    if categories.count() != len(unique_category_ids):
-        raise ValueError(
-            "One or more categories are invalid "
-            "or do not belong to this inventory."
-        )
+    if len(categories) != len(set(category_ids)):
+        raise ValueError("All categories must belong to the active inventory.")
 
     return categories
+
+
+def get_all_items(inventory_id: UUID):
+    """
+    Fetches all inventory items from the database.
+    Returns them as a list of dictionaries.
+    """
+    items_qs = (
+        InventoryItem.objects.filter(inventory_id=inventory_id)
+        .prefetch_related("categories")
+        .order_by("id")
+    )
+
+    return [
+        {
+            "id": item.id,
+            "name": item.name,
+            "price": item.price,
+            "stock": item.stock,
+            "low_stock_threshold": item.low_stock_threshold,
+            "category_ids": [
+                str(category.id) for category in item.categories.all()
+            ],
+        }
+        for item in items_qs
+    ]
 
 
 @audit_logger("create_item")
@@ -81,7 +87,7 @@ def create_item(
                 "stock": item.stock,
                 "low_stock_threshold": item.low_stock_threshold,
                 "low_stock_notification": item.low_stock_notification,
-                "category_ids": category_ids or [],
+                "category_ids": [str(category.id) for category in categories],
             }
     except ValueError as ve:
         raise ve
@@ -148,6 +154,7 @@ def update_item(
                 id=item_id, inventory_id=inventory_id
             )
 
+            categories: list[ItemCategory] = []
             if category_ids is not None:
                 categories = _get_validated_categories(
                     item.inventory_id, category_ids

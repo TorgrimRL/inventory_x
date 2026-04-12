@@ -1,188 +1,253 @@
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Container,
+  Grid,
+  Paper,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { alpha } from "@mui/material/styles";
+import { Package, PieChart, TrendingUp, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { PATHS } from "../App";
+import { PATHS } from "../App.tsx";
 
-const LandingPage = () => {
+const topoBg = "/topography-2000x600.svg";
+
+const FEATURES = [
+  {
+    icon: Package,
+    title: "Real-Time Inventory",
+    description:
+      "Maintain complete oversight with instant stock updates directly from your dashboard.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Low-Stock Intelligence",
+    description:
+      "Anticipate shortages before they affect your operations with automated low-stock alerts.",
+  },
+  {
+    icon: Users,
+    title: "Role-Based Access",
+    description:
+      "Control permissions with structured team management and granular access roles.",
+  },
+  {
+    icon: PieChart,
+    title: "Insightful Metrics",
+    description:
+      "Make informed decisions with elegant, easy-to-read data visualization metrics.",
+  },
+];
+
+export default function LandingPage() {
   const navigate = useNavigate();
-  const theme = useTheme();
+  const theme = useTheme() as any;
+
+  const primaryButtonSx = {
+    px: { xs: 4, md: 5 },
+    py: 1.5,
+    borderRadius: 2,
+    fontWeight: 600,
+    background: theme.gradients?.button || theme.palette.primary.main,
+    color: "background.default",
+    boxShadow: `0px 8px 16px ${alpha(theme.palette.primary.main, 0.25)}`,
+  };
 
   return (
     <Box
       sx={{
-        minHeight: "100vh",
         bgcolor: "background.default",
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        flexGrow: 1,
       }}
     >
-      {/* HERO */}
-      <Container maxWidth="md">
-        <Box
-          textAlign="center"
+      {/* HERO SECTION */}
+      <Container
+        maxWidth="md"
+        sx={{ textAlign: "center", py: { xs: 6, md: 10 } }}
+      >
+        <Typography
+          variant="h2"
+          component="h1"
+          fontWeight={700}
           sx={{
-            pt: { xs: 10, sm: 15 },
-            pb: { xs: 8, sm: 12 },
+            fontSize: { xs: "2.5rem", sm: "3.75rem" },
+            letterSpacing: { xs: 1, sm: 2 },
+            whiteSpace: "nowrap",
+            background: theme.gradients.text,
+            backgroundSize: "200% auto",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
           }}
         >
-          <Typography
-            variant="h2"
-            fontWeight={700}
+          INVENTORY X
+        </Typography>
+
+        <Typography
+          variant="h6"
+          component="p"
+          color="text.secondary"
+          sx={{ mb: 4, maxWidth: "600px", mx: "auto" }}
+        >
+          Track items and manage stock for your business seamlessly with our
+          centralized platform.
+        </Typography>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={3}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Button
+            variant="contained"
+            size="large"
             sx={{
-              fontSize: { xs: "2.5rem", sm: "3.75rem" },
-              letterSpacing: { xs: 1, sm: 2 },
-              whiteSpace: "nowrap",
-              background: theme.gradients.text,
-              backgroundSize: "200% auto",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              minWidth: 170,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 600,
+              background: theme.gradients.button,
+              color: "background.default",
+              boxShadow: `0 8px 20px ${theme.palette.primary.main}55`,
             }}
-            gutterBottom
+            onClick={() => navigate(PATHS.REGISTRATION)}
           >
-            INVENTORY X
-          </Typography>
+            Get Started
+          </Button>
 
-          <Typography
-            variant="h6"
-            color="text.primary"
-            sx={{ opacity: 0.85, mb: 4 }}
+          <Button
+            variant="outlined"
+            size="large"
+            sx={{
+              minWidth: 170,
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              borderColor: "primary.main",
+              color: "primary.main",
+              "&:hover": {
+                backgroundColor: `${theme.palette.primary.main}15`,
+              },
+            }}
+            onClick={() => navigate(PATHS.LOGIN)}
           >
-            Track items and manage stock for your business
-          </Typography>
-
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={3}
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Button
-              size="large"
-              variant="contained"
-              sx={{
-                minWidth: 170,
-                px: 4,
-                py: 1.5,
-                borderRadius: 2,
-                fontWeight: 600,
-                background: theme.gradients.button,
-                color: "background.default",
-                boxShadow: `0 8px 20px ${theme.palette.primary.main}55`,
-              }}
-              onClick={() => navigate(PATHS.REGISTRATION)}
-            >
-              Get Started
-            </Button>
-
-            <Button
-              size="large"
-              variant="outlined"
-              sx={{
-                minWidth: 170,
-                px: 4,
-                py: 1.5,
-                borderRadius: 2,
-                borderColor: "primary.main",
-                color: "primary.main",
-                "&:hover": {
-                  backgroundColor: `${theme.palette.primary.main}15`,
-                },
-              }}
-              onClick={() => navigate(PATHS.LOGIN)}
-            >
-              Log In
-            </Button>
-          </Stack>
-        </Box>
-      </Container>
-
-      {/* FEATURES */}
-      <Container maxWidth="sm">
-        <Stack spacing={4} sx={{ pb: 14 }}>
-          {[
-            {
-              title: "Real-Time Inventory",
-              text: "Maintain complete oversight with instant stock updates.",
-            },
-            {
-              title: "Low-Stock Intelligence",
-              text: "Anticipate shortages before they affect your operations.",
-            },
-            {
-              title: "Role-Based Access",
-              text: "Control permissions with structured team management.",
-            },
-            {
-              title: "Insightful Metrics",
-              text: "Make informed decisions with elegant data visualization.",
-            },
-          ].map((item) => (
-            <Card
-              key={item.title}
-              elevation={0}
-              sx={{
-                bgcolor: "background.paper",
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 3,
-                transition: "0.3s",
-                "&:hover": {
-                  borderColor: "primary.main",
-                  boxShadow: `0 10px 30px ${theme.palette.primary.main}33`,
-                },
-              }}
-            >
-              <CardContent>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                  {item.title}
-                </Typography>
-
-                <Typography color="text.secondary" sx={{ opacity: 0.9 }}>
-                  {item.text}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
+            Log In
+          </Button>
         </Stack>
       </Container>
 
-      {/* CTA */}
+      {/* FEATURES SECTION */}
       <Box
-        textAlign="center"
         sx={{
-          pb: { xs: 10, md: 16 },
+          position: "relative",
+          borderTop: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          py: { xs: 6, md: 10 },
+          display: "flex",
+          alignItems: "center",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url("${topoBg}")`,
+            backgroundPosition: "center",
+            opacity: 0.15,
+            pointerEvents: "none",
+          },
         }}
       >
-        <Typography variant="h5" color="primary.main" sx={{ mb: 3 }}>
-          Refine Your Inventory Experience
-        </Typography>
+        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
+          <Grid container spacing={4}>
+            {FEATURES.map((feat, index) => (
+              <Grid size={{ xs: 12, sm: 6 }} key={index}>
+                <Paper
+                  elevation={1}
+                  sx={{
+                    p: { xs: 3, md: 4 },
+                    borderRadius: 4,
+                    border: 1,
+                    borderColor: alpha(theme.palette.primary.main, 0.15),
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    transition: theme.transitions.create([
+                      "border-color",
+                      "transform",
+                      "box-shadow",
+                    ]),
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      boxShadow: theme.shadows[6],
+                      transform: "translateY(-4px)",
+                      "& .icon-wrapper": { transform: "scale(1.1)" },
+                    },
+                  }}
+                >
+                  <Box
+                    className="icon-wrapper"
+                    sx={{
+                      color: "primary.main",
+                      mb: 2,
+                      transition: theme.transitions.create("transform"),
+                    }}
+                  >
+                    <feat.icon size={40} strokeWidth={1.5} />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    component="h3"
+                    sx={{ color: "text.primary", fontWeight: 600, mb: 1.5 }}
+                  >
+                    {feat.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ lineHeight: 1.6 }}
+                  >
+                    {feat.description}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
 
+      {/* FOOTER SECTION */}
+      <Box
+        sx={{
+          pt: 4,
+          pb: 2,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          bgcolor: "background.default",
+        }}
+      >
         <Button
           size="large"
           variant="contained"
-          sx={{
-            px: 6,
-            py: 1.8,
-            borderRadius: 2,
-            fontWeight: 600,
-            background: theme.gradients.button,
-            color: theme.palette.background.default,
-            boxShadow: `0 10px 30px ${theme.palette.primary.main}55`,
-          }}
+          sx={{ ...primaryButtonSx, my: "auto" }}
           onClick={() => navigate(PATHS.REGISTRATION)}
         >
-          Create Account
+          CREATE ACCOUNT
         </Button>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
+          Copyright © 2026. All rights reserved.
+        </Typography>
       </Box>
     </Box>
   );
-};
-
-export default LandingPage;
+}
