@@ -61,7 +61,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_returns_200_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         mock_exchange.return_value = {
             "email": "social@test.com",
@@ -82,7 +82,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_user_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         User = get_user_model()
 
@@ -110,7 +110,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_reuses_existing_user_when_email_matches(
-            self, mock_exchange
+        self, mock_exchange
     ):
         User = get_user_model()
 
@@ -136,12 +136,14 @@ class Auth0Tests(BaseAPITestCase):
             response, AUTH0_RESPONSES, status.HTTP_200_OK
         )
 
-        self.assertEqual(User.objects.filter(email="social@test.com").count(), 1)
+        self.assertEqual(
+            User.objects.filter(email="social@test.com").count(), 1
+        )
         self.assertEqual(data["username"], "social@test.com")
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_session_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         mock_exchange.return_value = {
             "email": "social@test.com",
@@ -154,17 +156,13 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code"},
         )
 
-        self.assert_contract(
-            response, AUTH0_RESPONSES, status.HTTP_200_OK
-        )
+        self.assert_contract(response, AUTH0_RESPONSES, status.HTTP_200_OK)
         self.assertIsNotNone(response.cookies.get("sessionid"))
 
     from unittest.mock import patch
 
     @patch("api.user.views.auth0.exchange_auth0_code")
-    def test_verify_succeeds_after_auth0_callback(
-            self, mock_exchange
-    ):
+    def test_verify_succeeds_after_auth0_callback(self, mock_exchange):
         mock_exchange.return_value = {
             "email": "social@test.com",
             "provider_id": "google-oauth2|123",

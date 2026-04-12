@@ -1,5 +1,7 @@
 from urllib.parse import urlencode
 
+import requests
+from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
@@ -65,10 +67,6 @@ class Auth0StartView(APIView):
             f"https://{settings.AUTH0_DOMAIN}/authorize?{urlencode(params)}"
         )
         return redirect(authorize_url)
-
-
-import requests
-from django.conf import settings
 
 
 def exchange_auth0_code(code: str) -> dict:

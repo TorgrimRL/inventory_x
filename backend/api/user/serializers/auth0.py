@@ -12,9 +12,7 @@ class Auth0ResponseSerializer(serializers.Serializer):
 
 class Auth0ErrorDetailSerializer(serializers.Serializer):
     code = serializers.ListField(child=serializers.CharField(), required=False)
-    state = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
+    state = serializers.ListField(child=serializers.CharField(), required=False)
 
 
 class Auth0ValidationErrorSerializer(serializers.Serializer):

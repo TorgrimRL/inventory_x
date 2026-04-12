@@ -1,6 +1,7 @@
 from django.urls import path
 
 from api.user.views.logout import LogoutView
+
 from .views.auth0 import Auth0CallbackView, Auth0StartView
 from .views.login import LoginView
 from .views.password_reset import PasswordResetView
