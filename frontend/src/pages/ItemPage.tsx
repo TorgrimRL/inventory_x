@@ -519,10 +519,11 @@ export default function ItemPage() {
             </Box>
 
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              alignItems="center"
-              sx={{ mb: 2, mt: 1 }}
+              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ mb: 4, mt: 1, rowGap: 1 }}
+              flexWrap="wrap"
             >
               <TextField
                 select
@@ -604,7 +605,11 @@ export default function ItemPage() {
               spacing={1.5}
               sx={{ mb: 2 }}
             >
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                sx={{ flexWrap: "wrap" }}
+              >
                 <TextField
                   size="small"
                   type="number"
@@ -630,27 +635,27 @@ export default function ItemPage() {
                     }
                   }}
                   inputProps={{ min: 0, step: 1 }}
-                  sx={{ width: 130 }}
+                  sx={{ width: { xs: "100%", sm: 150 } }}
                 />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="body2">Low stock only</Typography>
+                    <Switch
+                      checked={lowStockOnly}
+                      onChange={(e) => setLowStockOnly(e.target.checked)}
+                      inputProps={{ "aria-label": "Low stock only" }}
+                    />
+                  </Stack>
 
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography variant="body2">Low stock only</Typography>
-                  <Switch
-                    checked={lowStockOnly}
-                    onChange={(e) => setLowStockOnly(e.target.checked)}
-                    inputProps={{ "aria-label": "Low stock only" }}
-                  />
+                  <Button
+                    onClick={resetListControls}
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                  >
+                    Reset
+                  </Button>
                 </Stack>
-
-                <Button
-                  onClick={resetListControls}
-                  variant="outlined"
-                  color="inherit"
-                  size="small"
-                  sx={{ alignSelf: "center" }}
-                >
-                  Reset
-                </Button>
               </Stack>
             </Stack>
 

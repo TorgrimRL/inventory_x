@@ -153,3 +153,18 @@ sx={(theme) => ({
 This allows us to reuse styles and change them globally later if needed.
 
 ---
+
+## 8. Responsive design
+
+The UI should be responsive and mobile-friendly.
+
+We aim to support screen widths down to 320px, so components should adapt well to smaller screens.
+
+**Recommendations:**
+
+- Use MUI's responsive system (`xs`, `sm`, `md`, etc.)
+- Prefer flexible layouts (`Stack`, `Box`) over fixed sizes
+- Avoid hardcoded widths where possible
+- Test components on smaller screen sizes
+
+---
