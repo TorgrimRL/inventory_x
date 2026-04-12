@@ -23,7 +23,6 @@ class Auth0CallbackView(APIView):
                 {"detail": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         return Response(
             {"username": "stub@example.com"},
             status=status.HTTP_200_OK,
@@ -54,3 +53,7 @@ class Auth0StartView(APIView):
             f"https://{settings.AUTH0_DOMAIN}/authorize?{urlencode(params)}"
         )
         return redirect(authorize_url)
+
+
+def exchange_auth0_code(code: str) -> dict:
+    raise NotImplementedError("Auth0 code exchange not implemented yet")

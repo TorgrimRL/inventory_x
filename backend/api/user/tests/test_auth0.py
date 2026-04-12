@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
@@ -53,3 +54,26 @@ class Auth0Tests(BaseAPITestCase):
         data = self.assert_contract(
             response, AUTH0_RESPONSES, status.HTTP_400_BAD_REQUEST
         )
+        self.assertIn("code", data["detail"])
+        self.assertIsNone(response.cookies.get("sessionid"))
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_200_when_code_exchange_succeeds(
+            self, mock_exchange
+    ):
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code"},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(data["username"], "social@test.com")
