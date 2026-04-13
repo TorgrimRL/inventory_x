@@ -241,24 +241,43 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                   transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
                   <MenuItem
-                    onClick={() => {
-                      toggleTheme();
-                      closeUserMenu();
+                    disableRipple
+                    disableTouchRipple
+                    sx={{
+                      cursor: "default",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
                     }}
                   >
-                    {mode === "dark" ? (
-                      <>
-                        <LightModeIcon sx={{ mr: 1 }} />
-                        Light mode
-                      </>
-                    ) : (
-                      <>
-                        <DarkModeIcon sx={{ mr: 1 }} />
-                        Dark mode
-                      </>
-                    )}
-                  </MenuItem>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        gap: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        {mode === "dark" ? (
+                          <DarkModeIcon sx={{ fontSize: 20 }} />
+                        ) : (
+                          <LightModeIcon sx={{ fontSize: 20 }} />
+                        )}
+                        <Typography>Dark mode</Typography>
+                      </Box>
 
+                      <ThemeSwitch
+                        checked={mode === "dark"}
+                        onChange={toggleTheme}
+                        onClick={(e) => e.stopPropagation()}
+                        slotProps={{ input: { "aria-label": "Toggle theme" } }}
+                      />
+                    </Box>
+                  </MenuItem>{" "}
                   <MenuItem
                     onClick={() => {
                       closeUserMenu();
