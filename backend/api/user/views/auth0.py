@@ -1,7 +1,5 @@
-import secrets
-from urllib.parse import urlencode
-
 import requests
+import secrets
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.shortcuts import redirect
@@ -10,6 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from urllib.parse import urlencode
 
 from api.user.contracts.auth0 import AUTH0_RESPONSES
 from api.user.serializers.auth0 import Auth0CallbackSerializer
@@ -54,15 +53,9 @@ class Auth0CallbackView(APIView):
             user.save()
 
         login(request._request, user)
+        request.session["auth0_picture"] = auth0_user.get("picture")
 
-        return Response(
-            {
-                "username": str(user),
-                "email": user.email,
-                "picture": auth0_user.get("picture"),
-            },
-            status=status.HTTP_200_OK,
-        )
+        return redirect(settings.AUTH0_LOGIN_SUCCESS_RETURN_TO)
 
 
 class Auth0StartView(APIView):

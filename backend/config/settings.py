@@ -2,10 +2,9 @@
 Django settings for backend project.
 """
 
+import environ
 import sys
 from pathlib import Path
-
-import environ
 
 # ==============================================================================
 # ENVIRONMENT SETUP
@@ -221,4 +220,8 @@ AUTH0_CALLBACK_URL = env(
 AUTH0_LOGOUT_RETURN_TO = env(
     "AUTH0_LOGOUT_RETURN_TO",
     default=f"{HOST_ENDPOINT}/login",
+)
+AUTH0_LOGIN_SUCCESS_RETURN_TO = env(
+    "AUTH0_LOGIN_SUCCESS_RETURN_TO",
+    default=f"{HOST_ENDPOINT}/inventories",
 )

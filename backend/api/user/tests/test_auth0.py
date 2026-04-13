@@ -18,7 +18,7 @@ class Auth0Tests(BaseAPITestCase):
 
     def _start_auth0_flow(self) -> str:
         response = self.client.get(self.start_url)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
         location = response["Location"]
         query = parse_qs(urlparse(location).query)
@@ -27,7 +27,7 @@ class Auth0Tests(BaseAPITestCase):
     def test_auth0_start_redirects_to_auth0_authorize_url(self):
         response = self.client.get(self.start_url)
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
         location = response["Location"]
         parsed = urlparse(location)
@@ -64,8 +64,8 @@ class Auth0Tests(BaseAPITestCase):
         self.assertNotIn("_auth_user_id", self.client.session)
 
     @patch("api.user.views.auth0.exchange_auth0_code")
-    def test_auth0_callback_returns_200_when_code_exchange_succeeds(
-        self, mock_exchange
+    def test_auth0_callback_redirects_when_code_exchange_succeeds(
+            self, mock_exchange
     ):
         state = self._start_auth0_flow()
 
@@ -81,17 +81,15 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code", "state": state},
         )
 
-        data = self.assert_contract(
-            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            response["Location"],
+            settings.AUTH0_LOGIN_SUCCESS_RETURN_TO,
         )
-
-        self.assertEqual(data["username"], "Social User")
-        self.assertEqual(data["email"], "social@test.com")
-        self.assertEqual(data["picture"], "https://example.com/avatar.png")
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_user_when_code_exchange_succeeds(
-        self, mock_exchange
+            self, mock_exchange
     ):
         User = get_user_model()
         state = self._start_auth0_flow()
@@ -110,18 +108,19 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code", "state": state},
         )
 
-        data = self.assert_contract(
-            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            response["Location"],
+            settings.AUTH0_LOGIN_SUCCESS_RETURN_TO,
         )
 
-        self.assertTrue(User.objects.filter(email="social@test.com").exists())
-        self.assertEqual(data["username"], "Social User")
-        self.assertEqual(data["email"], "social@test.com")
-        self.assertEqual(data["picture"], "https://example.com/avatar.png")
+        user = User.objects.get(email="social@test.com")
+        self.assertEqual(user.display_name, "Social User")
+        self.assertFalse(user.has_usable_password())
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_reuses_existing_user_when_email_matches(
-        self, mock_exchange
+            self, mock_exchange
     ):
         User = get_user_model()
         state = self._start_auth0_flow()
@@ -145,20 +144,22 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code", "state": state},
         )
 
-        data = self.assert_contract(
-            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            response["Location"],
+            settings.AUTH0_LOGIN_SUCCESS_RETURN_TO,
         )
 
         self.assertEqual(
             User.objects.filter(email="social@test.com").count(), 1
         )
-        self.assertEqual(data["username"], "Existing User")
-        self.assertEqual(data["email"], "social@test.com")
-        self.assertEqual(data["picture"], "https://example.com/avatar.png")
+
+        reused_user = User.objects.get(email="social@test.com")
+        self.assertEqual(reused_user.display_name, "Existing User")
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_session_when_code_exchange_succeeds(
-        self, mock_exchange
+            self, mock_exchange
     ):
         state = self._start_auth0_flow()
 
@@ -174,8 +175,12 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code", "state": state},
         )
 
-        self.assert_contract(response, AUTH0_RESPONSES, status.HTTP_200_OK)
-        self.assertIsNotNone(response.cookies.get("sessionid"))
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            response["Location"],
+            settings.AUTH0_LOGIN_SUCCESS_RETURN_TO,
+        )
+        self.assertIn("_auth_user_id", self.client.session)
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_verify_succeeds_after_auth0_callback(self, mock_exchange):
@@ -193,10 +198,12 @@ class Auth0Tests(BaseAPITestCase):
             {"code": "valid-code", "state": state},
         )
 
-        self.assert_contract(
-            callback_response, AUTH0_RESPONSES, status.HTTP_200_OK
+        self.assertEqual(callback_response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            callback_response["Location"],
+            settings.AUTH0_LOGIN_SUCCESS_RETURN_TO,
         )
-        self.assertIsNotNone(callback_response.cookies.get("sessionid"))
+        self.assertIn("_auth_user_id", self.client.session)
 
         verify_response = self.client.get(reverse("verify"))
 
