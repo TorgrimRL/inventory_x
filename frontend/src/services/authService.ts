@@ -16,7 +16,8 @@ export const checkSession = async () => {
 };
 
 export const getCurrentUser = async (): Promise<CurrentUser> => {
-  throw new Error("getCurrentUser not implemented");
+  const response = await axios.get("/api/user/verify/");
+  return response.data;
 };
 export const startSocialLogin = (provider: "google") => {
   if (provider !== "google") {

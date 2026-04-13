@@ -3,6 +3,7 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   Container,
@@ -18,7 +19,11 @@ import { useEffect, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
-import { checkSession } from "../../services/authService";
+import {
+  checkSession,
+  type CurrentUser,
+  getCurrentUser,
+} from "../../services/authService";
 import {
   type ActiveInventory,
   getActiveInventory,
@@ -32,6 +37,7 @@ interface NavbarProps {
   mode: ThemeMode;
   setMode: Dispatch<SetStateAction<ThemeMode>>;
 }
+
 export default function Navbar({ mode, setMode }: NavbarProps) {
   const theme = useTheme();
   const location = useLocation();
@@ -40,8 +46,8 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
   const toggleTheme = () => {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
-
   const [isValidSession, setIsValidSession] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeInventory, setActiveInventory] =
     useState<ActiveInventory | null>(null);
 
@@ -73,6 +79,24 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
 
     verifySession();
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isValidSession) {
+      setCurrentUser(null);
+      return;
+    }
+
+    async function loadCurrentUser() {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      }
+    }
+
+    loadCurrentUser();
+  }, [location.pathname, isValidSession]);
 
   /* Load active inventory. Runs when: session changes or route changes */
   useEffect(() => {
@@ -187,7 +211,13 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     ? `${activeInventory.name}`
                     : "No inventory selected"}
                 </Typography>
-
+                {currentUser?.picture && (
+                  <Avatar
+                    alt={currentUser.username}
+                    src={currentUser.picture}
+                    sx={{ width: 32, height: 32 }}
+                  />
+                )}
                 <LogoutButton />
               </>
             ) : (
