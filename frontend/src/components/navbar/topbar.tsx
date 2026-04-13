@@ -114,6 +114,16 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
     loadInventory();
   }, [location.pathname, isValidSession]);
 
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+  const openUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const closeUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
   return (
     <AppBar
       position="static"
@@ -211,14 +221,35 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     ? `${activeInventory.name}`
                     : "No inventory selected"}
                 </Typography>
-                {currentUser?.picture && (
+                <IconButton
+                  aria-label="Open user menu"
+                  onClick={openUserMenu}
+                  sx={{ p: 0 }}
+                >
                   <Avatar
-                    alt={currentUser.username}
-                    src={currentUser.picture}
+                    alt={currentUser?.username ?? "User"}
+                    src={currentUser?.picture ?? undefined}
                     sx={{ width: 32, height: 32 }}
-                  />
-                )}
-                <LogoutButton />
+                  >
+                    {currentUser?.username?.[0] ?? "U"}
+                  </Avatar>
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorElUser}
+                  open={Boolean(anchorElUser)}
+                  onClose={closeUserMenu}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      closeUserMenu();
+                    }}
+                  >
+                    <LogoutButton />
+                  </MenuItem>
+                </Menu>
               </>
             ) : (
               <>
