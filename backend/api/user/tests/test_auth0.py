@@ -1,0 +1,225 @@
+from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import status
+
+from api.tests.base import BaseAPITestCase
+from api.user.contracts.auth0 import AUTH0_RESPONSES
+from api.user.contracts.verify import VERIFY_RESPONSES
+
+
+class Auth0Tests(BaseAPITestCase):
+    def setUp(self):
+        self.callback_url = reverse("auth0-callback")
+        self.start_url = reverse("auth0-start")
+
+    def _start_auth0_flow(self) -> str:
+        response = self.client.get(self.start_url)
+        self.assertEqual(response.status_code, 302)
+
+        location = response["Location"]
+        query = parse_qs(urlparse(location).query)
+        return query["state"][0]
+
+    def test_auth0_start_redirects_to_auth0_authorize_url(self):
+        response = self.client.get(self.start_url)
+
+        self.assertEqual(response.status_code, 302)
+
+        location = response["Location"]
+        parsed = urlparse(location)
+        query = parse_qs(parsed.query)
+
+        self.assertEqual(parsed.scheme, "https")
+        self.assertEqual(parsed.netloc, settings.AUTH0_DOMAIN)
+        self.assertEqual(parsed.path, "/authorize")
+
+        self.assertEqual(query["client_id"], [settings.AUTH0_CLIENT_ID])
+        self.assertEqual(query["redirect_uri"], [settings.AUTH0_CALLBACK_URL])
+        self.assertEqual(query["response_type"], ["code"])
+        self.assertIn("openid", query["scope"][0])
+        self.assertIn("state", query)
+        self.assertTrue(query["state"][0])
+        self.assertEqual(
+            self.client.session["auth0_oauth_state"],
+            query["state"][0],
+        )
+
+    def test_auth0_callback_returns_400_when_code_is_missing(self):
+        state = self._start_auth0_flow()
+
+        response = self.client.get(
+            self.callback_url,
+            {"state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        self.assertIn("code", data["detail"])
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_200_when_code_exchange_succeeds(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(data["username"], "Social User")
+        self.assertEqual(data["email"], "social@test.com")
+        self.assertEqual(data["picture"], "https://example.com/avatar.png")
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_creates_user_when_code_exchange_succeeds(
+        self, mock_exchange
+    ):
+        User = get_user_model()
+        state = self._start_auth0_flow()
+
+        self.assertFalse(User.objects.filter(email="social@test.com").exists())
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertTrue(User.objects.filter(email="social@test.com").exists())
+        self.assertEqual(data["username"], "Social User")
+        self.assertEqual(data["email"], "social@test.com")
+        self.assertEqual(data["picture"], "https://example.com/avatar.png")
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_reuses_existing_user_when_email_matches(
+        self, mock_exchange
+    ):
+        User = get_user_model()
+        state = self._start_auth0_flow()
+
+        existing_user = User(
+            email="social@test.com",
+            display_name="Existing User",
+        )
+        existing_user.set_unusable_password()
+        existing_user.save()
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(
+            User.objects.filter(email="social@test.com").count(), 1
+        )
+        self.assertEqual(data["username"], "Existing User")
+        self.assertEqual(data["email"], "social@test.com")
+        self.assertEqual(data["picture"], "https://example.com/avatar.png")
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_creates_session_when_code_exchange_succeeds(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        self.assert_contract(response, AUTH0_RESPONSES, status.HTTP_200_OK)
+        self.assertIsNotNone(response.cookies.get("sessionid"))
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_verify_succeeds_after_auth0_callback(self, mock_exchange):
+        state = self._start_auth0_flow()
+
+        mock_exchange.return_value = {
+            "email": "social@test.com",
+            "provider_id": "google-oauth2|123",
+            "display_name": "Social User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+        callback_response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        self.assert_contract(
+            callback_response, AUTH0_RESPONSES, status.HTTP_200_OK
+        )
+        self.assertIsNotNone(callback_response.cookies.get("sessionid"))
+
+        verify_response = self.client.get(reverse("verify"))
+
+        verify_data = self.assert_contract(
+            verify_response, VERIFY_RESPONSES, status.HTTP_200_OK
+        )
+
+        self.assertEqual(verify_data["username"], "Social User")
+
+    def test_auth0_callback_returns_400_when_state_is_invalid(self):
+        self._start_auth0_flow()
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": "wrong-state"},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_400_BAD_REQUEST
+        )
+
+        self.assertIn("state", data["detail"])
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        verify_response = self.client.get(reverse("verify"))
+        self.assertEqual(verify_response.status_code, status.HTTP_403_FORBIDDEN)
