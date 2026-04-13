@@ -17,6 +17,7 @@ class InventoryItemUpdateSerializer(serializers.Serializer):
         min_value=0, required=False, allow_null=True
     )
     custom_fields = serializers.JSONField(required=False)
+    low_stock_notification = serializers.BooleanField(required=False)
 
     def validate_custom_fields(self, value: dict[str, Any]) -> dict[str, Any]:
         if not value:

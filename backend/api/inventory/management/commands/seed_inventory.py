@@ -26,7 +26,7 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
     if pattern == 2:
         return 9, 5  # above threshold
 
-    return random.randint(0, 50), None  # no threshold
+    return random.randint(6, 18), None  # no threshold
 
 
 class Command(BaseCommand):
@@ -63,11 +63,22 @@ class Command(BaseCommand):
         bob = users["bob@example.com"]
 
         # --- Simulated Time Helper ---
-        # Starts 30 days ago and moves forward to simulate history
-        self.simulated_time = timezone.now() - timedelta(days=30)
+        # Starts in early 2024 and moves forward to simulate longer history
+        self.simulated_time = timezone.now().replace(
+            year=2024,
+            month=1,
+            day=5,
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
         def get_next_timestamp():
-            self.simulated_time += timedelta(minutes=random.randint(10, 480))
+            if self.simulated_time.year <= 2024:
+                self.simulated_time += timedelta(days=random.randint(10, 24))
+            else:
+                self.simulated_time += timedelta(days=random.randint(18, 35))
             return self.simulated_time
 
         with transaction.atomic():
@@ -295,8 +306,114 @@ class Command(BaseCommand):
                 ("Disposable Gloves (100 pcs)", 99),
             ]
 
+            def pick_categories_for_item(inventory, item_name: str):
+                category_map = categories_by_inventory.get(
+                    str(inventory.id), {}
+                )
+
+                if inventory.name == "Jessica Cookies AS":
+                    lowered = item_name.lower()
+                    picked: list[str] = []
+
+                    if any(
+                        word in lowered
+                        for word in [
+                            "cookie",
+                            "brownie",
+                            "blondie",
+                            "brookie",
+                            "cupcake",
+                        ]
+                    ):
+                        picked.append("Snacks")
+                    if any(
+                        word in lowered for word in ["dip", "vanilla cream"]
+                    ):
+                        picked.append("Drinks")
+                    if any(
+                        word in lowered
+                        for word in [
+                            "flour",
+                            "sugar",
+                            "butter",
+                            "eggs",
+                            "chocolate",
+                            "cocoa",
+                            "vanilla",
+                            "baking powder",
+                            "salt",
+                            "biscoff",
+                            "hazelnut",
+                            "macadamia",
+                            "peanut butter",
+                            "oats",
+                            "raisins",
+                        ]
+                    ):
+                        picked.append(
+                            "Dairy"
+                            if "butter" in lowered or "eggs" in lowered
+                            else "Milk"
+                        )
+                    if any(
+                        word in lowered
+                        for word in [
+                            "boxes",
+                            "paper bags",
+                            "labels",
+                            "napkins",
+                            "gloves",
+                            "takeaway",
+                            "shipping",
+                            "bubble wrap",
+                            "tape",
+                        ]
+                    ):
+                        picked.append("Bread")
+
+                    return [
+                        category_map[name]
+                        for name in picked
+                        if name in category_map
+                    ]
+
+                if inventory.name == "Ola AS":
+                    lowered = item_name.lower()
+                    picked = []
+                    if (
+                        "jo nesbø" in lowered
+                        or "pascal engman" in lowered
+                        or "jussi adler-olsen" in lowered
+                        or "lars kepler" in lowered
+                        or "jørn lier horst" in lowered
+                    ):
+                        picked.append("Crime")
+                    elif any(
+                        word in lowered
+                        for word in [
+                            "ledelse",
+                            "statsbudsjett",
+                            "vagusnerven",
+                            "hele deg",
+                            "sjøfareren",
+                        ]
+                    ):
+                        picked.append("Non-fiction")
+                    else:
+                        picked.append("Books")
+
+                    return [
+                        category_map[name]
+                        for name in picked
+                        if name in category_map
+                    ]
+
+                default_category = category_map.get("General") or next(
+                    iter(category_map.values()), None
+                )
+                return [default_category] if default_category else []
+
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
-                # Fetch members specifically for this inventory
                 members = [
                     m.user
                     for m in InventoryMembership.objects.filter(
@@ -304,8 +421,23 @@ class Command(BaseCommand):
                     )
                 ]
 
-                for index, (name, price) in enumerate(catalog):
-                    current_stock = random.randint(5, 40)
+                for index, (name, base_price) in enumerate(catalog):
+                    final_stock, low_stock_threshold = (
+                        seeded_stock_and_threshold(index)
+                    )
+                    final_target_date = timezone.now().replace(
+                        year=2026,
+                        month=6,
+                        day=min(10 + (index % 18), 28),
+                        hour=9,
+                        minute=0,
+                        second=0,
+                        microsecond=0,
+                    )
+
+                    initial_stock = final_stock + random.randint(20, 80)
+                    current_stock = initial_stock
+                    current_price = base_price
 
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID
@@ -313,11 +445,17 @@ class Command(BaseCommand):
                         else uuid.uuid4(),
                         inventory=inventory,
                         name=name,
-                        price=price,
-                        stock=current_stock,
+                        price=base_price,
+                        stock=final_stock,
+                        low_stock_threshold=low_stock_threshold,
                     )
 
-                    # LOG: Creation (Random member as actor)
+                    selected_categories = pick_categories_for_item(
+                        inventory, name
+                    )
+                    if selected_categories:
+                        item.categories.set(selected_categories)
+
                     actor = random.choice(members)
                     ts_creation = get_next_timestamp()
 
@@ -325,168 +463,155 @@ class Command(BaseCommand):
                         item_id=item.id,
                         item_name=item.name,
                         action="create_item",
-                        amount=item.stock,
-                        current_stock=item.stock,
-                        price=item.price,
+                        amount=initial_stock,
+                        current_stock=initial_stock,
+                        price=current_price,
                         performed_by=actor,
                     )
-                    # Force the historical timestamp
                     StockLog.objects.filter(pk=log.pk).update(
                         timestamp=ts_creation
                     )
 
-                    # LOG: 1-3 Random Adjustments later in time
-                    for _ in range(random.randint(1, 3)):
-                        ts_adj = get_next_timestamp()
-                        adj_amount = random.randint(1, 10)
-                        direction = random.choice(["increase", "decrease"])
+                    current_ts = ts_creation
+                    timeline_points = [
+                        (2024, 3),
+                        (2024, 6),
+                        (2024, 9),
+                        (2024, 12),
+                        (2025, 2),
+                        (2025, 4),
+                        (2025, 6),
+                        (2025, 8),
+                        (2025, 10),
+                        (2025, 12),
+                        (2026, 1),
+                        (2026, 2),
+                        (2026, 3),
+                        (2026, 4),
+                        (2026, 5),
+                        (2026, 6),
+                    ]
 
-                        # New actor for the adjustment
+                    for year, month in timeline_points:
+                        ts_adj = current_ts.replace(
+                            year=year,
+                            month=month,
+                            day=min(5 + (index % 20), 28),
+                        )
                         adj_actor = random.choice(members)
 
-                        if (
-                            direction == "decrease"
-                            and current_stock > adj_amount
-                        ):
-                            current_stock -= adj_amount
-                        else:
+                        if month in {3, 6, 9, 12}:
+                            restock_amount = random.randint(12, 40)
+                            current_stock += restock_amount
                             direction = "increase"
-                            current_stock += adj_amount
+                            amount = restock_amount
+                        else:
+                            seasonal_multiplier = 1.0
+                            if inventory.name == "Jessica Cookies AS" and (
+                                year,
+                                month,
+                            ) in {
+                                (2024, 12),
+                                (2025, 12),
+                                (2026, 4),
+                                (2026, 5),
+                                (2026, 6),
+                            }:
+                                seasonal_multiplier = 2.2
+                            elif inventory.name == "Ola AS" and (
+                                year,
+                                month,
+                            ) in {
+                                (2024, 6),
+                                (2024, 12),
+                                (2025, 6),
+                                (2025, 12),
+                                (2026, 6),
+                            }:
+                                seasonal_multiplier = 1.7
+
+                            max_decrease = max(
+                                4,
+                                int(
+                                    (initial_stock * 0.16) * seasonal_multiplier
+                                ),
+                            )
+                            amount = min(
+                                current_stock,
+                                random.randint(4, max_decrease),
+                            )
+                            if amount <= 0:
+                                amount = 1
+                            current_stock = max(0, current_stock - amount)
+                            direction = "decrease"
+
+                        if (year, month) in {
+                            (2024, 6),
+                            (2024, 12),
+                            (2025, 5),
+                            (2025, 11),
+                            (2026, 3),
+                            (2026, 6),
+                        } or random.random() < 0.08:
+                            price_shift = random.choice(
+                                [-0.10, -0.05, 0.06, 0.12]
+                            )
+                            current_price = max(
+                                10,
+                                round(current_price * (1 + price_shift)),
+                            )
 
                         adj_log = StockLog.objects.create(
                             item_id=item.id,
                             item_name=item.name,
                             action="adjust_stock",
-                            amount=adj_amount,
+                            amount=amount,
                             direction=direction,
                             current_stock=current_stock,
-                            price=item.price,
+                            price=current_price,
                             performed_by=adj_actor,
                         )
                         StockLog.objects.filter(pk=adj_log.pk).update(
                             timestamp=ts_adj
                         )
+                        current_ts = ts_adj
+
+                    item.stock = final_stock
+                    item.price = current_price
+                    item.save(update_fields=["stock", "price"])
+
+                    final_log = StockLog.objects.create(
+                        item_id=item.id,
+                        item_name=item.name,
+                        action="adjust_stock",
+                        amount=abs(current_stock - final_stock),
+                        direction=(
+                            "increase"
+                            if final_stock > current_stock
+                            else "decrease"
+                        ),
+                        current_stock=final_stock,
+                        price=current_price,
+                        performed_by=random.choice(members),
+                    )
+                    StockLog.objects.filter(pk=final_log.pk).update(
+                        timestamp=final_target_date
+                    )
 
             self.stdout.write(
                 "Generating items and historical logs with randomized members.."
             )
 
-            # Run Ola's Catalog
             seed_items_with_random_actor(
                 inventories_by_name["Ola AS"], ola_catalog, is_ola=True
             )
-
-            # Run Jessica's Catalog
             seed_items_with_random_actor(
                 inventories_by_name["Jessica Cookies AS"], jessica_catalog
             )
-
-            # Run Generic Catalog for the rest
             for name, inv in inventories_by_name.items():
                 if name not in ["Ola AS", "Jessica Cookies AS"]:
                     seed_items_with_random_actor(inv, generic_catalog)
 
-            # --- Category assignment for items ---
-            self.stdout.write("Assigning categories to items...")
-
-            for item in InventoryItem.objects.select_related("inventory").all():
-                inv_name = item.inventory.name
-                inv_categories = categories_by_inventory.get(
-                    str(item.inventory_id), {}
-                )
-
-                # Keep some uncategorized to support "No category added" testing
-                if item.name in {
-                    "Tape (6-pack)",
-                    "Label Roll",
-                    "Disposable Gloves (100 pcs)",
-                }:
-                    continue
-
-                category = None
-                if inv_name == "Jessica Cookies AS":
-                    lower_name = item.name.lower()
-                    if any(
-                        keyword in lower_name
-                        for keyword in ["milk", "white chocolate"]
-                    ):
-                        category = inv_categories.get("Milk")
-                    elif any(
-                        keyword in lower_name for keyword in ["bread", "roll"]
-                    ):
-                        category = inv_categories.get("Bread")
-                    elif any(
-                        keyword in lower_name for keyword in ["frozen", "ice"]
-                    ):
-                        category = inv_categories.get("Frozen")
-                    elif any(
-                        keyword in lower_name
-                        for keyword in [
-                            "cookie",
-                            "brownie",
-                            "blondie",
-                            "brookie",
-                        ]
-                    ):
-                        category = inv_categories.get("Snacks")
-                    elif any(
-                        keyword in lower_name
-                        for keyword in [
-                            "vanilla",
-                            "dairy",
-                            "butter",
-                            "yogurt",
-                            "cream",
-                            "eggs",
-                        ]
-                    ):
-                        category = inv_categories.get("Dairy")
-                    elif any(
-                        keyword in lower_name
-                        for keyword in [
-                            "drink",
-                            "soda",
-                            "juice",
-                            "coffee",
-                            "tea",
-                        ]
-                    ):
-                        category = inv_categories.get("Drinks")
-                    else:
-                        category = inv_categories.get("Loaf")
-                elif inv_name == "Ola AS":
-                    lower_name = item.name.lower()
-                    if any(
-                        keyword in lower_name
-                        for keyword in [
-                            "nesbø",
-                            "kepler",
-                            "engman",
-                            "holt",
-                            "horst",
-                        ]
-                    ):
-                        category = inv_categories.get("Crime")
-                    elif any(
-                        keyword in lower_name
-                        for keyword in [
-                            "quiz",
-                            "juleroser",
-                            "den fantastiske bussen",
-                        ]
-                    ):
-                        category = inv_categories.get("Books")
-                    else:
-                        category = inv_categories.get("Non-fiction")
-                else:
-                    category = inv_categories.get(
-                        "Supplies"
-                    ) or inv_categories.get("General")
-
-                if category:
-                    item.categories.set([category])
-
-            # --- Statistics ---
             counts_by_inventory_name = {
                 inv.name: InventoryItem.objects.filter(inventory=inv).count()
                 for inv in inventories

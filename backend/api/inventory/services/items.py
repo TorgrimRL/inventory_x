@@ -3,7 +3,7 @@ from uuid import UUID
 
 from django.db import transaction
 
-from api.inventory.decorators import audit_logger
+from api.inventory.decorators import audit_logger, notify_low_stock
 from api.inventory.models import InventoryItem, ItemCategory
 
 
@@ -28,21 +28,21 @@ def get_all_items(inventory_id: UUID):
         raise Exception("Error fetching inventory items") from e
 
 
-def _get_validated_categories(inventory_id: UUID, category_ids: list[UUID]):
-    """Ensures categories exist and returns the QuerySet."""
+def _get_validated_categories(
+    inventory_id: UUID, category_ids: list[UUID]
+) -> list[ItemCategory]:
     if not category_ids:
-        return ItemCategory.objects.none()
+        return []
 
-    unique_category_ids = set(category_ids)
-    categories = ItemCategory.objects.filter(
-        id__in=unique_category_ids, inventory_id=inventory_id
+    categories = list(
+        ItemCategory.objects.filter(
+            inventory_id=inventory_id,
+            id__in=set(category_ids),
+        )
     )
 
-    if categories.count() != len(unique_category_ids):
-        raise ValueError(
-            "One or more categories are invalid "
-            "or do not belong to this inventory."
-        )
+    if len(categories) != len(set(category_ids)):
+        raise ValueError("All categories must belong to the active inventory.")
 
     return categories
 
@@ -54,6 +54,7 @@ def create_item(
     price: int,
     stock: int,
     low_stock_threshold=None,
+    low_stock_notification=False,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
     user=None,
@@ -71,6 +72,7 @@ def create_item(
                 stock=stock,
                 low_stock_threshold=low_stock_threshold,
                 custom_fields=custom_fields or {},
+                low_stock_notification=low_stock_notification,
             )
 
             if category_ids:
@@ -84,6 +86,7 @@ def create_item(
                 "low_stock_threshold": item.low_stock_threshold,
                 "category_ids": category_ids or [],
                 "custom_fields": item.custom_fields,
+                "low_stock_notification": item.low_stock_notification,
             }
     except ValueError as ve:
         raise ve
@@ -91,6 +94,7 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@notify_low_stock
 @audit_logger("adjust_stock")
 def adjust_stock(
     inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
@@ -128,13 +132,15 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@notify_low_stock
 @audit_logger("update_item")
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
-    name: str,
-    price: int,
-    low_stock_threshold: int | None,
+    name: str | None = None,
+    price: int | None = None,
+    low_stock_threshold: int | None = None,
+    low_stock_notification: bool | None = None,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
     user=None,
@@ -148,6 +154,7 @@ def update_item(
                 id=item_id, inventory_id=inventory_id
             )
 
+            categories: list[ItemCategory] = []
             if category_ids is not None:
                 categories = _get_validated_categories(
                     item.inventory_id, category_ids
@@ -166,6 +173,9 @@ def update_item(
                     item.custom_fields = {}
                 item.custom_fields.update(custom_fields)
 
+            if low_stock_notification is not None:
+                item.low_stock_notification = low_stock_notification
+
             item.save()
             return {
                 "id": str(item.id),
@@ -177,6 +187,7 @@ def update_item(
                 "category_ids": [
                     category.id for category in item.categories.all()
                 ],
+                "low_stock_notification": item.low_stock_notification,
             }
 
     except InventoryItem.DoesNotExist as err:

@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   CircularProgress,
+  IconButton,
   Paper,
   Stack,
   Typography,
@@ -31,6 +32,7 @@ export default function LowStockWarningsCard() {
 
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     async function loadItems() {
@@ -59,9 +61,24 @@ export default function LowStockWarningsCard() {
     });
   }, [items]);
 
+  const pageSize = 5;
+  const pageCount = Math.max(1, Math.ceil(lowStockItems.length / pageSize));
+  const visibleItems = lowStockItems.slice(
+    page * pageSize,
+    (page + 1) * pageSize,
+  );
+
   function handleOpenAdjust(item: InventoryItem) {
     setSelectedItem(item);
     setAdjustOpen(true);
+  }
+
+  function handlePreviousPage() {
+    setPage((prev) => Math.max(0, prev - 1));
+  }
+
+  function handleNextPage() {
+    setPage((prev) => Math.min(pageCount - 1, prev + 1));
   }
 
   function handleCloseAdjust() {
@@ -79,6 +96,10 @@ export default function LowStockWarningsCard() {
 
     setSelectedItem((prev) => (prev ? { ...prev, stock: newStock } : prev));
   }
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, pageCount - 1));
+  }, [pageCount]);
 
   return (
     <>
@@ -109,64 +130,80 @@ export default function LowStockWarningsCard() {
           ) : lowStockItems.length === 0 ? (
             <Alert severity="success">No low-stock warnings.</Alert>
           ) : (
-            <Stack
-              spacing={1.25}
-              sx={{
-                maxHeight: 320,
-                overflowY: "auto",
-                pr: 1.5,
-                scrollbarGutter: "stable",
-              }}
-            >
-              {lowStockItems.map((item) => (
-                <Box
-                  key={item.id}
-                  component="button"
-                  type="button"
-                  onClick={() => handleOpenAdjust(item)}
-                  sx={{
-                    width: "100%",
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 2,
-                    px: 2,
-                    py: 1.5,
-                    minHeight: 72,
-                    bgcolor: "background.paper",
-                    textAlign: "left",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                    cursor: "pointer",
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    outline: "none",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      borderColor: "text.secondary",
-                    },
-                  }}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={700} color="text.primary">
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Stock: {item.stock} / Threshold:{" "}
-                      {item.low_stock_threshold}
+            <Stack spacing={1.5}>
+              <Stack spacing={1.25}>
+                {visibleItems.map((item) => (
+                  <Box
+                    key={item.id}
+                    component="button"
+                    type="button"
+                    onClick={() => handleOpenAdjust(item)}
+                    sx={{
+                      width: "100%",
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 2,
+                      px: 2,
+                      py: 1.5,
+                      minHeight: 72,
+                      bgcolor: "background.paper",
+                      textAlign: "left",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 2,
+                      cursor: "pointer",
+                      appearance: "none",
+                      WebkitAppearance: "none",
+                      outline: "none",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        borderColor: "text.secondary",
+                      },
+                    }}
+                  >
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography fontWeight={700} color="text.primary">
+                        {item.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Stock: {item.stock} / Threshold:{" "}
+                        {item.low_stock_threshold}
+                      </Typography>
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      color="primary"
+                      sx={{ flexShrink: 0, fontWeight: 600 }}
+                    >
+                      Adjust
                     </Typography>
                   </Box>
+                ))}
+              </Stack>
 
-                  <Typography
-                    variant="body2"
-                    color="primary"
-                    sx={{ flexShrink: 0, fontWeight: 600 }}
+              {pageCount > 1 && (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <IconButton
+                    aria-label="Previous page"
+                    onClick={handlePreviousPage}
+                    disabled={page === 0}
                   >
-                    Adjust
+                    <Typography variant="body2">‹</Typography>
+                  </IconButton>
+                  <Typography variant="body2" color="text.secondary">
+                    Page {page + 1} of {pageCount}
                   </Typography>
-                </Box>
-              ))}
+                  <IconButton
+                    aria-label="Next page"
+                    onClick={handleNextPage}
+                    disabled={page >= pageCount - 1}
+                  >
+                    <Typography variant="body2">›</Typography>
+                  </IconButton>
+                </Stack>
+              )}
             </Stack>
           )}
         </Stack>

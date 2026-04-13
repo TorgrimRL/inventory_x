@@ -19,6 +19,9 @@ class InventoryItemCreateSerializer(serializers.Serializer):
     )
 
     custom_fields = serializers.JSONField(required=False, default=dict)
+    low_stock_notification = serializers.BooleanField(
+        required=False, default=False
+    )
 
     def validate_custom_fields(self, value: dict[str, Any]) -> dict[str, Any]:
         """

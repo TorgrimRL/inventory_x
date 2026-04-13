@@ -8,6 +8,7 @@ from api.inventory.views.custom_field import (
     CustomFieldListView,
 )
 from api.inventory.views.inventory import InventoryView
+from api.inventory.views.inventory_history import InventoryHistoryView
 from api.inventory.views.invite_user import InviteUserView
 from api.inventory.views.item_detail import ItemDetailView
 from api.inventory.views.list_inventories import ListInventoriesView
@@ -40,6 +41,11 @@ urlpatterns = [
         name="inventory-invite",
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
+    path(
+        "active/history/",
+        InventoryHistoryView.as_view(),
+        name="inventory-history",
+    ),
     path(
         "active/<uuid:item_id>/stock-log/",
         StockLogView.as_view(),

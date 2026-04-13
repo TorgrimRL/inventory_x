@@ -167,6 +167,7 @@ class InventoryItem(models.Model):
                 "{'field_id': 'value'}"
             ),
         )
+    low_stock_notification = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -210,9 +211,6 @@ def enforce_category_inventory_match(
     to the same Inventory. This runs automatically on .set() or .add().
     """
     if action == "pre_add" and pk_set:
-        # pk_set contains the UUIDs of the categories being added.
-        # We query to see if ANY of these categories have a different
-        # inventory_id than the item (instance) they are being attached to.
         invalid_count = (
             ItemCategory.objects.filter(id__in=pk_set)
             .exclude(inventory_id=instance.inventory_id)

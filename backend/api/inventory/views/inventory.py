@@ -59,6 +59,9 @@ class InventoryView(APIView):
             low_stock_threshold = serializer.validated_data.get(
                 "low_stock_threshold"
             )
+            low_stock_notification = serializer.validated_data.get(
+                "low_stock_notification", False
+            )
 
             custom_fields = serializer.validated_data.get("custom_fields", {})
 
@@ -71,6 +74,7 @@ class InventoryView(APIView):
                 user=membership.user,
                 low_stock_threshold=low_stock_threshold,
                 custom_fields=custom_fields,
+                low_stock_notification=low_stock_notification,
             )
             return Response(created, status=status.HTTP_201_CREATED)
 
