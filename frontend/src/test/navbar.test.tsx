@@ -10,7 +10,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import Navbar from "../components/navbar/topbar";
-import { checkSession } from "../services/authService";
+import { checkSession, getCurrentUser } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
 import { LightTheme } from "../theme";
 
@@ -134,4 +134,23 @@ describe("Navbar Component", () => {
     const switchInput = screen.getByRole("checkbox", { name: /toggle theme/i });
     expect(switchInput).toBeChecked();
   });
+
+  test("shows user avatar in navbar when logged in user has picture", async () => {
+  (checkSession as jest.Mock).mockResolvedValue(true);
+  (getCurrentUser as jest.Mock).mockResolvedValue({
+    username: "Social User",
+    email: "social@test.com",
+    picture: "https://example.com/avatar.png",
+  });
+  (getActiveInventory as jest.Mock).mockResolvedValue({
+    name: "Warehouse A",
+  });
+
+  renderNavbar();
+
+  const avatar = await screen.findByAltText("Social User");
+  expect(avatar).toBeInTheDocument();
+  expect(avatar).toHaveAttribute("src", "https://example.com/avatar.png");
+});
+  
 });

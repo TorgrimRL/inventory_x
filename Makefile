@@ -9,7 +9,7 @@ FIRST = $(word 1,$(ARGS))
 REST = $(wordlist 2,$(words $(ARGS)),$(ARGS))
 NEED_API_PREFIX = $(and $(REST),$(filter-out -% %::% api/%,$(firstword $(REST))))
 BACKEND_PATH = $(if $(NEED_API_PREFIX),api/$(REST),$(REST))
-JEST_ARGS ?= --ci
+JEST_ARGS ?= --ci --maxWorkers=2
 
 
 ifneq ($(filter test,$(MAKECMDGOALS)),)

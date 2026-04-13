@@ -1,5 +1,11 @@
 import axios from "./apiClient";
 
+export type CurrentUser = {
+  username: string;
+  email: string;
+  picture?: string | null;
+};
+
 export const checkSession = async () => {
   try {
     await axios.get("/api/user/verify/");
@@ -9,6 +15,9 @@ export const checkSession = async () => {
   }
 };
 
+export const getCurrentUser = async (): Promise<CurrentUser> => {
+  throw new Error("getCurrentUser not implemented");
+};
 export const startSocialLogin = (provider: "google") => {
   if (provider !== "google") {
     throw new Error(`Unsupported social login provider: ${provider}`);
