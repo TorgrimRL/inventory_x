@@ -3,14 +3,14 @@
 ## A. Session Information
 
 * Product: InventoryX
-* Version / release:
-* Date:
-* Test facilitator:
-* Participant name or ID:
-* Participant role: Owner / Employee / Both
-* Business context: Bookstore / Cookie shop
-* Test environment:
-* Device / browser / platform:
+* Version / release: 1f4bb25
+* Date: 09.04.2026
+* Test facilitator: Daniels
+* Participant name or ID: Jama
+* Participant role: Both
+* Business context: Cookie shop
+* Test environment: 
+* Device / browser / platform: Windows 11, plain google chrome
 
 ## B. Instructions
 
@@ -27,24 +27,24 @@
 
 * Task description: Log in and access the correct business inventory.
 * Expected outcome: The owner successfully accesses InventoryX and understands which business inventory is active.
-* Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Actual outcome: Registered and logged into
+* Completed: Yes
+* Comments: 
 
 ### Task O2 — Add, edit, and find inventory items
 
 * Task description: Add a new item, edit one item, and search for an item by name.
 * Expected outcome: The owner can add, update, and find inventory items without confusion.
-* Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Actual outcome: completed task
+* Completed: Yes
+* Comments: Tried making a new buissness... Got confused with dashboard low item stock and tried adjusting it thinking it was item edit. After finding the item page, editing item went fine. Adding item also went fine.
 
 ### Task O3 — Manage stock correctly
 
 * Task description: Increase stock, decrease stock, and try an invalid update that would make stock negative.
 * Expected outcome: Valid stock changes work correctly, and negative stock is blocked.
-* Actual outcome:
-* Completed: Yes / Partly / No
+* Actual outcome: completed task
+* Completed: Yes
 * Comments:
 
 ### Task O4 — Review low-stock warnings
@@ -52,25 +52,25 @@
 * Task description: Set a low-stock threshold for an item and check whether the item appears in the low-stock warning
   view when stock becomes low. Then adjust stock so the item is no longer at or below the threshold.
 * Expected outcome: The owner can identify items that need action before they run out.
-* Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Actual outcome: Didint end up using dashboard and just looked trough the list of items
+* Completed: Parially
+* Comments: 
 
 ### Task O5 — Manage item categories
 
 * Task description: Try creating a new category, adding that to some item
 * Expected outcome: The owner can manage categories and categorise items
-* Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Actual outcome: completed task
+* Completed: Yes
+* Comments: Tried filtering for categories, eventually find manage categories added the category eventually after being a little confused.
 
 ### Task O6 — Manage employees and permissions
 
 * Task description: Invite an employee and verify that sensitive actions remain owner-only.
 * Expected outcome: The owner can invite employees, and restricted actions are protected.
-* Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Actual outcome: Managed to find the manage members page and removed employees
+* Completed: Yes
+* Comments: 
 
 ## D. Employee Tasks
 
@@ -79,15 +79,15 @@
 * Task description: Log in and access the assigned business inventory.
 * Expected outcome: The employee can access the correct inventory for the business.
 * Actual outcome:
-* Completed: Yes / Partly / No
-* Comments:
+* Completed: Yes
+* Comments: Found it easly (was owner before)
 
 ### Task E2 — Search for an item and update stock
 
 * Task description: Search for an item by name and update stock after a sale or other stock change.
 * Expected outcome: The employee can find items quickly and update stock correctly.
-* Actual outcome:
-* Completed: Yes / Partly / No
+* Actual outcome: Completed
+* Completed: Yes
 * Comments:
 
 ### Task E3 — Attempt restricted item actions
@@ -95,16 +95,16 @@
 * Task description: Try to perform actions that should be restricted to the owner, such as adding an item or changing
   the price.
 * Expected outcome: The employee is prevented from performing actions restricted to the owner role.
-* Actual outcome:
-* Completed: Yes / Partly / No
+* Actual outcome: Wasnt able Edit
+* Completed: Yes
 * Comments:
 
 ### Task E4 — Verify restricted access to admin functions
 
 * Task description: Attempt to access owner-only functions such as employee management or other sensitive settings.
 * Expected outcome: The employee is prevented from accessing restricted areas and sensitive functions.
-* Actual outcome:
-* Completed: Yes / Partly / No
+* Actual outcome: Didint fint it
+* Completed: Yes
 * Comments:
 
 ## E. Feedback
@@ -112,46 +112,99 @@
 ### Features
 
 * Did InventoryX provide the functions you needed to complete your tasks?
+    - Yeah, i think so
 * Which feature was most useful?
+    - Dark mode toggle
 * Which feature was missing or unclear?
-* Comments:
+    - Inventories page
+* Comments: 
 
 ### Usability
 
 * Was the system easy to understand and use?
+    - Yeah, yeah it was
 * Was it easy to find items and update stock?
+    - Yeah
 * Were warnings and messages clear?
-* Comments:
+    - Yeah, Yeah
+* Comments: 
 
 ### Business Fit
 
 * Would InventoryX be useful in your business or daily work?
+    - Uuuuh yeah yeah yeah
 * Would it reduce manual work such as stock counting or spreadsheet tracking?
+    - Maybe
 * Would you trust the system in real operation?
+    - Honeslty, no
 * Comments:
 
 ## F. Main Issues Found
 
 ### Issue 1
 
-* Description:
-* Severity: Low / Medium / High
+* Description: Thinking the search fields shouldve been below the metrics, in genral item page very messy.
+* Severity: Medium
 * Related task:
-* Suggested improvement:
+* Suggested improvement: Suggests that should be able to see much more items to begin with and not the search and metric ontop
+
 
 ### Issue 2
 
-* Description:
-* Severity: Low / Medium / High
+* Description: The order of navigation buttons were confusing
+* Severity: High
 * Related task:
-* Suggested improvement:
+* Suggested improvement: More seperation between nav bar buttons and inventory-related buttons. Confusing what is inventory realted with site navigation and inventory navigation.
 
 ### Issue 3
 
-* Description:
-* Severity: Low / Medium / High
+* Description: Logout button is easly accessible and accidentally logout
+* Severity: Medium
+* Related task:
+* Suggested improvement: Maybe seperate them out of nav
+
+### Issue 4
+
+* Description: Make active inventory more clear and visable
+* Severity: Medium
 * Related task:
 * Suggested improvement:
+
+### Issue 5
+
+* Description: The colors of the text in darkmode blen in too much with the background
+* Severity: High
+* Related task:
+* Suggested improvement: Add more contrast
+
+### Issue 6
+
+* Description: Decrease the number items you see at once in items page
+* Severity: High
+* Related task:
+* Suggested improvement: Maybe do it customizable for a person
+
+### Issue 7
+
+* Description: Why forget password is accessible by default in nav
+* Severity: High
+* Related task:
+* Suggested improvement: Should be in login screen
+
+### Issue 8
+
+* Description: Login is small letters, Sign up is all caps
+* Severity: High
+* Related task:
+* Suggested improvement:
+
+### Issue 8
+
+* Description: Login and signup UI is messy
+* Severity: Medium
+* Related task:
+* Suggested improvement:
+
 
 ## G. SUS Questionnaire
 
@@ -183,68 +236,52 @@ SUS source link: [https://measuringu.com/sus/](https://measuringu.com/sus/)
 
 ### SUS responses
 
-* Q1:
-* Q2:
-* Q3:
-* Q4:
-* Q5:
-* Q6:
-* Q7:
-* Q8:
-* Q9:
-* Q10:
+* Q1: 2
+* Q2: 2
+* Q3: 4
+* Q4: 1
+* Q5: 4
+* Q6: 4
+* Q7: 4
+* Q8: 2
+* Q9: 4 
+* Q10: 2
 
 ### Example of SUS score calculation
 
-Example responses from one participant:
+Odd-numbered items (Score - 1):
 
-* Q1 = 4
-* Q2 = 2
-* Q3 = 5
-* Q4 = 2
-* Q5 = 4
-* Q6 = 2
-* Q7 = 4
-* Q8 = 1
-* Q9 = 5
-* Q10 = 2
-
-#### Step 1: Adjust the scores
-
-Odd-numbered items:
-
-* Q1: 4 - 1 = 3
-* Q3: 5 - 1 = 4
+* Q1: 2 - 1 = 1
+* Q3: 4 - 1 = 3
 * Q5: 4 - 1 = 3
 * Q7: 4 - 1 = 3
-* Q9: 5 - 1 = 4
+* Q9: 4 - 1 = 3
 
-Even-numbered items:
+Even-numbered items (5 - Score):
 
 * Q2: 5 - 2 = 3
-* Q4: 5 - 2 = 3
-* Q6: 5 - 2 = 3
-* Q8: 5 - 1 = 4
+* Q4: 5 - 1 = 4
+* Q6: 5 - 4 = 1
+* Q8: 5 - 2 = 3
 * Q10: 5 - 2 = 3
 
 #### Step 2: Add the adjusted values
 
-3 + 3 + 4 + 3 + 3 + 3 + 3 + 4 + 4 + 3 = 33
+1 + 3 + 3 + 4 + 3 + 1 + 3 + 3 + 3 + 3 = 27
 
 #### Step 3: Multiply by 2.5
 
-33 × 2.5 = 82.5
+27 × 2.5 = 67.5
 
 ### SUS score
 
-* Participant SUS score:
+* Participant SUS score: C
 * Notes:
 
 ## H. Final Summary
 
-* Overall result:
-* Main strengths:
-* Main weaknesses:
-* Recommended improvements before next release:
-* Would the participant use InventoryX in practice? Yes / No / Maybe
-
+* Overall result: It okay, has potetntial
+* Main strengths: Color scheme
+* Main weaknesses: UI
+* Recommended improvements before next release: The named issues above
+* Would the participant use InventoryX in practice? Maybe

@@ -101,7 +101,12 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
       }}
     >
       <Container maxWidth="xl">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Toolbar
+          sx={{
+            minHeight: { xs: 64, sm: 64 },
+            justifyContent: "space-between",
+          }}
+        >
           {/* LOGO */}
           <Typography
             component={RouterLink}
@@ -110,11 +115,13 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
             sx={{
               textDecoration: "none",
               fontWeight: 700,
-              letterSpacing: 1.5,
+              letterSpacing: { xs: 0, sm: 1.5 },
               background: theme.gradients.text,
               backgroundSize: "200% auto",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
+              whiteSpace: "nowrap",
+              mr: 2,
             }}
           >
             INVENTORY X
@@ -171,6 +178,9 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     borderColor: "divider",
                     pl: 2,
                     whiteSpace: "nowrap",
+                    maxWidth: 180,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
                   {activeInventory
@@ -290,6 +300,8 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
               display: { xs: "flex", md: "none" },
               alignItems: "center",
               gap: 1,
+              marginLeft: "auto",
+              minWidth: 0,
             }}
           >
             {/* Active inventory (visible on mobile) */}
@@ -297,7 +309,10 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
               <Typography
                 variant="body2"
                 sx={{
-                  maxWidth: 130,
+                  ml: 1,
+                  flex: 1,
+                  minWidth: 0,
+                  maxWidth: 165,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -312,7 +327,7 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
 
             <IconButton
               onClick={openMobileMenu}
-              sx={{ color: "text.primary", ml: 1 }}
+              sx={{ color: "text.primary", ml: 1, mr: -2 }}
             >
               <MenuIcon />
             </IconButton>

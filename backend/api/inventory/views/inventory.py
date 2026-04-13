@@ -57,6 +57,9 @@ class InventoryView(APIView):
             low_stock_threshold = serializer.validated_data.get(
                 "low_stock_threshold"
             )
+            low_stock_notification = serializer.validated_data.get(
+                "low_stock_notification", False
+            )
 
             # Attempt to create the item
             created = create_item(
@@ -66,6 +69,7 @@ class InventoryView(APIView):
                 stock=stock,
                 user=membership.user,
                 low_stock_threshold=low_stock_threshold,
+                low_stock_notification=low_stock_notification,
             )
             return Response(created, status=status.HTTP_201_CREATED)
 

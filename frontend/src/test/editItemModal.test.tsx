@@ -54,6 +54,7 @@ describe("EditItemModal - user story tests", () => {
       initialPrice: 25,
       currentStock: 2,
       initialLowStockThreshold: null,
+      low_stock_notification: false,
       canEditDetails: true,
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
@@ -108,6 +109,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Skim Milk",
         price: 30,
         low_stock_threshold: 4,
+        low_stock_notification: false,
         category_ids: [],
       });
     });
@@ -121,6 +123,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
+      low_stock_notification: false,
       category_ids: [],
     });
 
@@ -346,6 +349,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        low_stock_notification: false,
         category_ids: [],
       });
     });
@@ -355,6 +359,7 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      low_stock_notification: false,
       category_ids: [],
     });
 

@@ -43,6 +43,9 @@ class ItemDetailView(views.APIView):
                 low_stock_threshold=serializer.validated_data.get(
                     "low_stock_threshold"
                 ),
+                low_stock_notification=serializer.validated_data.get(
+                    "low_stock_notification"
+                ),
                 category_ids=serializer.validated_data.get("category_ids"),
             )
         except ValueError as exc:
