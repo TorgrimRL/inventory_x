@@ -9,6 +9,10 @@ export const checkSession = async () => {
   }
 };
 
-export const startSocialLogin = async (provider: "google") => {
-  throw new Error(`startSocialLogin not implemented for provider: ${provider}`);
+export const startSocialLogin = (provider: "google") => {
+  if (provider !== "google") {
+    throw new Error(`Unsupported social login provider: ${provider}`);
+  }
+
+  window.location.assign("/api/user/auth0/start/");
 };

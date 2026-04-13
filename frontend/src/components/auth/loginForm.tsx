@@ -94,7 +94,6 @@ const Login: React.FC = () => {
 
     try {
       await startSocialLogin("google");
-      navigate(PATHS.INVENTORIES);
     } catch (err: any) {
       setError(err.message || "Social Login failed");
     }

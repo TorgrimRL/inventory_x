@@ -193,20 +193,4 @@ describe("Login Component", () => {
 
     expect(await screen.findByText(/social login failed/i)).toBeInTheDocument();
   });
-  test("redirects to dashboard when Google login succeeds", async () => {
-    (checkSession as jest.Mock).mockResolvedValue(false);
-    (startSocialLogin as jest.Mock).mockResolvedValue(undefined);
-
-    render(<Login />);
-
-    const googleButton = await screen.findByRole("button", {
-      name: /continue with google/i,
-    });
-
-    fireEvent.click(googleButton);
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(PATHS.INVENTORIES);
-    });
-  });
 });
