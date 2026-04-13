@@ -202,7 +202,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     </Button>
                   );
                 })}
-
                 {/* Active inventory */}
                 <Typography
                   variant="body2"
@@ -234,7 +233,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     {currentUser?.username?.[0] ?? "U"}
                   </Avatar>
                 </IconButton>
-
                 <Menu
                   anchorEl={anchorElUser}
                   open={Boolean(anchorElUser)}
@@ -244,12 +242,31 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                 >
                   <MenuItem
                     onClick={() => {
+                      toggleTheme();
+                      closeUserMenu();
+                    }}
+                  >
+                    {mode === "dark" ? (
+                      <>
+                        <LightModeIcon sx={{ mr: 1 }} />
+                        Light mode
+                      </>
+                    ) : (
+                      <>
+                        <DarkModeIcon sx={{ mr: 1 }} />
+                        Dark mode
+                      </>
+                    )}
+                  </MenuItem>
+
+                  <MenuItem
+                    onClick={() => {
                       closeUserMenu();
                     }}
                   >
                     <LogoutButton />
                   </MenuItem>
-                </Menu>
+                </Menu>{" "}
               </>
             ) : (
               <>
@@ -304,55 +321,56 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                 )}
               </>
             )}
-
             {/* Theme switch */}
-            <Box
-              sx={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <ThemeSwitch
-                checked={mode === "dark"}
-                onChange={toggleTheme}
-                slotProps={{ input: { "aria-label": "Toggle theme" } }}
-                icon={
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: theme.palette.primary.main,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <LightModeIcon
-                      sx={{ fontSize: 16, color: "common.white" }}
-                    />
-                  </Box>
-                }
-                checkedIcon={
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: theme.palette.secondary.main,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <DarkModeIcon
-                      sx={{ fontSize: 16, color: "common.white" }}
-                    />
-                  </Box>
-                }
-              />
-            </Box>
+            {!isValidSession && (
+              <Box
+                sx={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <ThemeSwitch
+                  checked={mode === "dark"}
+                  onChange={toggleTheme}
+                  slotProps={{ input: { "aria-label": "Toggle theme" } }}
+                  icon={
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.primary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <LightModeIcon
+                        sx={{ fontSize: 16, color: "common.white" }}
+                      />
+                    </Box>
+                  }
+                  checkedIcon={
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.secondary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <DarkModeIcon
+                        sx={{ fontSize: 16, color: "common.white" }}
+                      />
+                    </Box>
+                  }
+                />
+              </Box>
+            )}{" "}
           </Box>
 
           {/* MOBILE MENU */}
