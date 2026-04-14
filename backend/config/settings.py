@@ -101,9 +101,8 @@ SPECTACULAR_SETTINGS = {
         "persistAuthorization": True,
     },
 }
-IS_TESTING = (
-    any("pytest" in arg for arg in sys.argv)
-    or env.bool("TESTING", default=False)
+IS_TESTING = any("pytest" in arg for arg in sys.argv) or env.bool(
+    "TESTING", default=False
 )
 # ==============================================================================
 # CORS, CSRF, & PROXY
