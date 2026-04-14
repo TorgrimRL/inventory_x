@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.conf import settings
 from django.core.validators import RegexValidator
@@ -14,6 +14,13 @@ org_number_validator = RegexValidator(
     regex=r"^\d{9}$",
     message="Organization number must be 9 digits",
 )
+
+
+def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
+    extension = os.path.splitext(filename)[1].lower() or ".png"
+    inventory_id = instance.inventory_id or "unassigned"
+    item_id = instance.id or uuid.uuid4()
+    return f"item-images/{inventory_id}/{item_id}{extension}"
 
 
 class InventoryAlreadyExistsError(Exception):
@@ -87,11 +94,6 @@ class Inventory(models.Model):
         return f"{self.name} ({self.org_number})"
 
 
-def item_image_upload_path(instance, filename):
-    ext = os.path.splitext(filename)[1].lower() or ".png"
-    return f"item-images/{instance.inventory_id}/{instance.id}{ext}"
-
-
 class ItemCategory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     inventory: models.ForeignKey[Inventory] = models.ForeignKey(
@@ -135,7 +137,18 @@ class InventoryItem(models.Model):
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
-    image = models.ImageField(upload_to=item_image_upload_path, null=True, blank=True)
+    low_stock_notification = models.BooleanField(default=False)
+    image = models.ImageField(
+        upload_to=inventory_item_image_upload_to,
+        null=True,
+        blank=True,
+    )
+
+    @property
+    def image_url(self) -> str | None:
+        if not self.image:
+            return None
+        return self.image.url
 
     def __str__(self):
         return self.name

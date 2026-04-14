@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   IconButton,
   ListItemText,
   MenuItem,
@@ -42,6 +43,7 @@ import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDial
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
+  createItem,
   getActiveInventory,
   listActiveCategories,
   updateItem,
@@ -53,6 +55,7 @@ type InventoryItem = {
   stock: number;
   price: number;
   low_stock_threshold: number | null;
+  low_stock_notification: boolean;
   category_ids?: string[];
   image_url?: string | null;
   order_id?: string;
@@ -125,12 +128,9 @@ export default function ItemPage() {
 
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
+  const [newItemImage, setNewItemImage] = useState<File | null>(null);
 
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [previewImage, setPreviewImage] = useState<{
-    src: string;
-    alt: string;
-  } | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -159,6 +159,7 @@ export default function ItemPage() {
   const handleCloseStockLog = () => {
     setSelectedLogItemId(null);
   };
+  const [enableNotification, setEnableNotification] = useState(false);
 
   async function loadItems() {
     setLoading(true);
@@ -203,6 +204,7 @@ export default function ItemPage() {
     setError(null);
     setNewItemCategoryIds([]);
     setNewItemLowStockThreshold("");
+    setNewItemImage(null);
     setOpen(true);
   }
 
@@ -239,18 +241,20 @@ export default function ItemPage() {
 
     const categoryIdsToSave = [...newItemCategoryIds];
 
-    try {
-      const payload = {
-        name: name.trim(),
-        price: Number(price),
-        stock: s,
-        low_stock_threshold: newItemLowStockThresholdNumber,
-        category_ids: categoryIdsToSave,
-      };
+    const payload = {
+      name: name.trim(),
+      price: Number(price),
+      stock: s,
+      low_stock_threshold: newItemLowStockThresholdNumber,
+      low_stock_notification: enableNotification,
+      category_ids: categoryIdsToSave,
+      image: newItemImage,
+    };
 
-      const res = await ApiClient.post("/api/inventory/", payload);
+    try {
+      const createdData = await createItem(payload);
       const created = {
-        ...(res.data as InventoryItem),
+        ...createdData,
         category_ids: categoryIdsToSave,
       } as InventoryItem;
 
@@ -271,6 +275,8 @@ export default function ItemPage() {
       setPrice("0");
       setStock("0");
       setNewItemLowStockThreshold("");
+      setEnableNotification(false);
+      setNewItemImage(null);
     } catch (err) {
       console.error(err);
       setError(extractBackendMessage(err));
@@ -409,6 +415,7 @@ export default function ItemPage() {
         name: item.name,
         price: Number(item.price),
         low_stock_threshold: item.low_stock_threshold ?? null,
+        low_stock_notification: item.low_stock_notification,
         category_ids: nextCategoryIds,
       });
       setItems((prev) =>
@@ -699,13 +706,10 @@ export default function ItemPage() {
             ) : (
               <>
                 <TableContainer component={Box} sx={{ overflowX: "auto" }}>
-                  <Table size="medium" sx={{ minWidth: 980 }}>
+                  <Table size="medium" sx={{ minWidth: 900 }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600, width: 72 }}>
-                          Image
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 600, width: "34%" }}>
+                        <TableCell sx={{ fontWeight: 600, width: "46%" }}>
                           <TableSortLabel
                             active={sortField === "name"}
                             hideSortIcon={false}
@@ -718,7 +722,7 @@ export default function ItemPage() {
                             Product name
                           </TableSortLabel>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, width: "18%" }}>
+                        <TableCell sx={{ fontWeight: 600, width: "12%" }}>
                           Category
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
@@ -784,32 +788,6 @@ export default function ItemPage() {
                     <TableBody>
                       {pagedItems.map((item) => (
                         <TableRow key={item.id} hover>
-                          <TableCell>
-                            {item.image_url ? (
-                              <Box
-                                component="img"
-                                src={item.image_url}
-                                alt={`${item.name} image thumbnail`}
-                                onClick={() =>
-                                  setPreviewImage({
-                                    src: item.image_url as string,
-                                    alt: `${item.name} image preview`,
-                                  })
-                                }
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  objectFit: "cover",
-                                  borderRadius: 0,
-                                  cursor: "pointer",
-                                  border: 1,
-                                  borderColor: "divider",
-                                }}
-                              />
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
                           <TableCell
                             onClick={() => handleOpenStockLog(item.id)}
                             sx={{
@@ -818,9 +796,27 @@ export default function ItemPage() {
                               color: "primary.main",
                             }}
                           >
-                            {item.name}
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              {item.image_url ? (
+                                <Box
+                                  component="img"
+                                  src={item.image_url}
+                                  alt={item.name}
+                                  sx={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 1,
+                                    objectFit: "cover",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              ) : null}
+                              <Box component="span">{item.name}</Box>
+                            </Stack>
                           </TableCell>
                           <TableCell>
+                            {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
+                            {/* eslint-disable-next-line no-constant-condition */}
                             {false ? (
                               <Stack
                                 spacing={1}
@@ -954,6 +950,21 @@ export default function ItemPage() {
                 ))}
               </TextField>
 
+              <Button variant="outlined" component="label" disabled={saving}>
+                {newItemImage ? "Change image" : "Upload image"}
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setNewItemImage(e.target.files?.[0] ?? null)
+                  }
+                />
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                {newItemImage ? newItemImage.name : "No image selected"}
+              </Typography>
+
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   label="Price"
@@ -981,6 +992,17 @@ export default function ItemPage() {
                   helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
                 />
               </Stack>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableNotification}
+                    onChange={(e) => setEnableNotification(e.target.checked)}
+                    disabled={saving}
+                    color="primary"
+                  />
+                }
+                label="Enable low stock notifications for this item"
+              />
 
               <TextField
                 label="Low stock threshold"
@@ -1021,24 +1043,6 @@ export default function ItemPage() {
         </Box>
       </Dialog>
 
-      <Dialog open={Boolean(previewImage)} onClose={() => setPreviewImage(null)}>
-        <DialogContent sx={{ p: 1 }}>
-          {previewImage && (
-            <Box
-              component="img"
-              src={previewImage.src}
-              alt={previewImage.alt}
-              sx={{
-                maxWidth: "80vw",
-                maxHeight: "80vh",
-                display: "block",
-                objectFit: "contain",
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
       {selectedItem && (
         <EditItemModal
           open={editOpen}
@@ -1049,9 +1053,18 @@ export default function ItemPage() {
           initialCategoryIds={(selectedItem.category_ids || []).map(String)}
           initialLowStockThreshold={selectedItem.low_stock_threshold ?? null}
           initialImageUrl={selectedItem.image_url ?? null}
+          low_stock_notification={selectedItem.low_stock_notification}
           canEditDetails={canEditDetails}
           onClose={closeEditDetails}
-          onItemUpdated={(updated) => {
+          onItemUpdated={(updated: {
+            id: number | string;
+            name: string;
+            price: number;
+            lowStockThreshold: number | null;
+            low_stock_notification: boolean;
+            category_ids?: string[];
+            image_url?: string | null;
+          }) => {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === updated.id
@@ -1060,13 +1073,14 @@ export default function ItemPage() {
                       name: updated.name,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
-                      category_ids: updated.category_ids ?? it.category_ids,
-                      image_url: updated.imageUrl ?? it.image_url,
+                      low_stock_notification: updated.low_stock_notification,
+                      category_ids: updated.category_ids,
+                      image_url: updated.image_url,
                     }
                   : it,
               ),
             );
-            setSnackMessage(updated.imageUrl ? "Image uploaded" : "Item updated");
+            setSnackMessage("Item updated");
             setSnackOpen(true);
           }}
           onStockUpdated={(newStock) => {

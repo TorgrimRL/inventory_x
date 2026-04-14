@@ -115,6 +115,8 @@ describe("EditItemModal - user story tests", () => {
         price: 30,
         low_stock_threshold: 4,
         category_ids: [],
+        image: null,
+        remove_image: false,
       });
     });
 
@@ -348,6 +350,8 @@ describe("EditItemModal - user story tests", () => {
         price: 25,
         low_stock_threshold: null,
         category_ids: [],
+        image: null,
+        remove_image: false,
       });
     });
 

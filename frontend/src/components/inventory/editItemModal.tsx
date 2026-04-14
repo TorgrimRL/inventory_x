@@ -8,9 +8,11 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   ListItemText,
   MenuItem,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -22,7 +24,6 @@ import {
   deleteItem,
   listActiveCategories,
   updateItem,
-  uploadItemImage,
 } from "../../services/inventoryService";
 
 type Props = {
@@ -35,6 +36,8 @@ type Props = {
   initialCategoryIds?: string[];
   initialLowStockThreshold?: number | null;
   initialImageUrl?: string | null;
+  low_stock_notification: boolean;
+  // owner => true, employee => false
   canEditDetails: boolean;
 
   onClose: () => void;
@@ -44,8 +47,9 @@ type Props = {
     name: string;
     price: number;
     lowStockThreshold: null | number;
+    low_stock_notification: boolean;
     category_ids?: string[];
-    imageUrl?: string | null;
+    image_url?: string | null;
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -76,6 +80,7 @@ export default function EditItemModal({
   initialPrice,
   initialLowStockThreshold,
   initialImageUrl,
+  low_stock_notification,
   currentStock,
   initialCategoryIds,
   canEditDetails,
@@ -88,6 +93,9 @@ export default function EditItemModal({
   const [price, setPrice] = useState(String(initialPrice));
   const [lowStockThreshold, setLowStockThreshold] = useState(
     String(initialLowStockThreshold == null ? "" : initialLowStockThreshold),
+  );
+  const [notification, setNotifications] = useState(
+    Boolean(low_stock_notification),
   );
 
   const [amount, setAmount] = useState<string>("0");
@@ -104,9 +112,7 @@ export default function EditItemModal({
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
-    initialImageUrl ?? null,
-  );
+  const [removeImage, setRemoveImage] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -115,23 +121,23 @@ export default function EditItemModal({
     setLowStockThreshold(
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
     );
+    setNotifications(Boolean(low_stock_notification));
     setAmount("0");
     setDirection(null);
     setSelectedCategoryIds(initialCategoryIds || []);
     setSelectedImage(null);
-    setImagePreviewUrl(initialImageUrl ?? null);
+    setRemoveImage(false);
     setError(null);
-
     listActiveCategories()
       .then((list) => setCategories(list))
       .catch(() => setCategories([]));
   }, [
     open,
     initialCategoryIds,
-    initialImageUrl,
     initialName,
     initialPrice,
     initialLowStockThreshold,
+    low_stock_notification,
   ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
@@ -173,12 +179,15 @@ export default function EditItemModal({
     canEditDetails &&
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
+      lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
       initialCategoryKey !== selectedCategoryKey ||
-      lowStockThresholdNumber !== (initialLowStockThreshold ?? null));
+      notification !== Boolean(low_stock_notification) ||
+      selectedImage !== null ||
+      removeImage);
 
-  const imageChanged = selectedImage !== null;
   const stockChanged = wantsStockChange && direction !== null;
-  const hasChanges = detailsChanged || imageChanged || stockChanged;
+
+  const hasChanges = detailsChanged || stockChanged;
 
   function handleClose() {
     if (!saving) {
@@ -223,49 +232,49 @@ export default function EditItemModal({
 
     setSaving(true);
     try {
+      // 1) Update name/price/threshold/notifications (only if owner AND changed)
       if (canEditDetails) {
         const trimmed = name.trim();
+
         const categoryIdsToSave = [...selectedCategoryIds];
+
         const initialIds = (initialCategoryIds || []).map(String).sort();
         const currentIds = [...categoryIdsToSave].map(String).sort();
 
         const changed =
           trimmed !== initialName ||
           Number(priceNumber) !== Number(initialPrice) ||
+          lowStockThresholdNumber !== initialThresholdValue ||
           initialIds.join(",") !== currentIds.join(",") ||
-          lowStockThresholdNumber !== initialThresholdValue;
+          notification !== Boolean(low_stock_notification);
 
         if (changed) {
           const payload = {
             name: trimmed,
             price: priceNumber,
             low_stock_threshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
             category_ids: categoryIdsToSave,
+            image: selectedImage,
+            remove_image: removeImage,
           };
 
-          await updateItem(itemId, payload);
+          const updatedResponse = await updateItem(itemId, payload);
           onItemUpdated({
             id: itemId,
             name: trimmed,
             price: priceNumber,
             lowStockThreshold: lowStockThresholdNumber,
+            low_stock_notification: notification,
             category_ids: payload.category_ids,
+            image_url:
+              updatedResponse?.image_url ??
+              (removeImage ? null : initialImageUrl),
           });
         }
       }
 
-      if (selectedImage) {
-        const res = await uploadItemImage(itemId, selectedImage);
-        onItemUpdated({
-          id: itemId,
-          name: name.trim(),
-          price: priceNumber,
-          lowStockThreshold: lowStockThresholdNumber,
-          category_ids: selectedCategoryIds,
-          imageUrl: res.image_url,
-        });
-      }
-
+      // 2) Adjust stock (only if amount > 0)
       if (wantsStockChange && direction) {
         const res = await adjustStock(itemId, direction, amountNumber);
         onStockUpdated(res.stock);
@@ -347,7 +356,6 @@ export default function EditItemModal({
                   : " "
               }
             />
-
             <TextField
               label="Low stock threshold"
               value={lowStockThreshold}
@@ -363,7 +371,64 @@ export default function EditItemModal({
                   : "Leave empty if no threshold should be set"
               }
             />
-
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={notification}
+                  onChange={(e) => setNotifications(e.target.checked)}
+                  disabled={!canEditDetails || saving}
+                  color="primary"
+                />
+              }
+              label="Enable low stock mail notifications for this item"
+            />
+            <Stack spacing={1}>
+              {initialImageUrl && !removeImage && !selectedImage ? (
+                <Box
+                  component="img"
+                  src={initialImageUrl}
+                  alt={initialName}
+                  sx={{ width: 96, height: 96, borderRadius: 1, objectFit: "cover" }}
+                />
+              ) : null}
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={saving || !canEditDetails}
+              >
+                {selectedImage ? "Change image" : "Upload image"}
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    setSelectedImage(e.target.files?.[0] ?? null);
+                    setRemoveImage(false);
+                  }}
+                />
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                {selectedImage
+                  ? selectedImage.name
+                  : initialImageUrl && !removeImage
+                    ? "Current image"
+                    : "No image selected"}
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={removeImage}
+                    onChange={(e) => {
+                      setRemoveImage(e.target.checked);
+                      if (e.target.checked) setSelectedImage(null);
+                    }}
+                    disabled={saving || !canEditDetails || (!initialImageUrl && !selectedImage)}
+                  />
+                }
+                label="Remove image"
+              />
+            </Stack>
+            <Divider sx={{ my: 1 }} />
             {canEditDetails ? (
               <TextField
                 select
@@ -424,59 +489,8 @@ export default function EditItemModal({
               />
             )}
 
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">Item image</Typography>
-              {imagePreviewUrl ? (
-                <Box
-                  component="img"
-                  src={imagePreviewUrl}
-                  alt={`${initialName} image preview`}
-                  sx={{
-                    width: 96,
-                    height: 96,
-                    objectFit: "cover",
-                    borderRadius: 0,
-                    border: 1,
-                    borderColor: "divider",
-                  }}
-                />
-              ) : null}
-              <input
-                id={`item-image-upload-${itemId}`}
-                hidden
-                aria-label="Upload image"
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  setSelectedImage(file);
-                  if (file) {
-                    setImagePreviewUrl(URL.createObjectURL(file));
-                  }
-                }}
-              />
-              <Button
-                variant="outlined"
-                disabled={saving}
-                onClick={() => {
-                  const input = document.getElementById(
-                    `item-image-upload-${itemId}`,
-                  ) as HTMLInputElement | null;
-                  input?.click();
-                }}
-              >
-                {imagePreviewUrl ? "Change image" : "Upload image"}
-              </Button>
-              {selectedImage ? (
-                <Typography variant="body2" color="text.secondary">
-                  {selectedImage.name}
-                </Typography>
-              ) : null}
-            </Stack>
-
             <Divider />
-
-            <Typography variant="subtitle1">Stock</Typography>
+            <Typography variant="subtitle1">Stock Adjustment</Typography>
 
             <Typography variant="body2" color="text.secondary">
               Current stock: {currentStock}

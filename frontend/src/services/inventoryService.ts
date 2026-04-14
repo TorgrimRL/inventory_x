@@ -1,13 +1,5 @@
 import apiClient from "./apiClient";
 
-function toAbsoluteMediaUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  if (/^https?:\/\//i.test(url)) return url;
-
-  const baseUrl = apiClient.defaults.baseURL ?? window.location.origin;
-  return new URL(url, baseUrl).toString();
-}
-
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
@@ -129,40 +121,97 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
     .filter((category) => category.id && category.name);
 }
 
+export type InventoryItem = {
+  id: number | string;
+  name: string;
+  stock: number;
+  price: number;
+  low_stock_threshold: number | null;
+  low_stock_notification?: boolean;
+  category_ids?: string[];
+  category_names?: string[];
+  image_url?: string | null;
+};
+
+export async function listInventoryItems(): Promise<InventoryItem[]> {
+  const res = await apiClient.get("/api/inventory/");
+  const data = res.data;
+  return (data.data || data) as InventoryItem[];
+}
+
+type ItemMutationPayload = {
+  name: string;
+  price: number;
+  low_stock_threshold: null | number;
+  low_stock_notification: boolean;
+  category_ids?: string[];
+  image?: File | null;
+  remove_image?: boolean;
+};
+
+function buildItemFormData(payload: ItemMutationPayload): FormData {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  formData.append("price", String(payload.price));
+  formData.append(
+    "low_stock_threshold",
+    payload.low_stock_threshold === null ? "" : String(payload.low_stock_threshold),
+  );
+  formData.append(
+    "low_stock_notification",
+    String(payload.low_stock_notification),
+  );
+
+  for (const categoryId of payload.category_ids ?? []) {
+    formData.append("category_ids", categoryId);
+  }
+
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  if (payload.remove_image) {
+    formData.append("remove_image", "true");
+  }
+
+  return formData;
+}
+
 export async function updateItem(
   itemId: number | string,
-  payload: {
-    name: string;
-    price: number;
-    low_stock_threshold?: null | number;
-    category_ids?: string[];
-  },
+  payload: ItemMutationPayload,
 ) {
-  const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
+  const res = await apiClient.patch(
+    `/api/inventory/${itemId}/`,
+    buildItemFormData(payload),
+  );
   return res.data;
 }
 
-export async function uploadItemImage(
-  itemId: number | string,
-  image: File,
-): Promise<{ image_url: string; message: string }> {
-  const formData = new FormData();
-  formData.append("image", image);
-  const res = await apiClient.post(`/api/inventory/${itemId}/image/`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export type InventoryHistoryPoint = {
+  month: string;
+  value: number;
+};
 
-  return {
-    ...(res.data as { image_url: string; message: string }),
-    image_url: toAbsoluteMediaUrl(res.data?.image_url) ?? "",
-  };
+export async function getInventoryHistory(
+  year: number,
+): Promise<InventoryHistoryPoint[]> {
+  const res = await apiClient.get("/api/inventory/active/history/", {
+    params: { year },
+  });
+  return res.data as InventoryHistoryPoint[];
 }
 
-export async function removeItemImage(
-  itemId: number | string,
-): Promise<{ message: string }> {
-  const res = await apiClient.delete(`/api/inventory/${itemId}/image/`);
-  return res.data as { message: string };
+export async function createItem(
+  payload: ItemMutationPayload & {
+    stock: number;
+  },
+) {
+  const formData = buildItemFormData(payload);
+  formData.append("stock", String(payload.stock));
+
+  const res = await apiClient.post("/api/inventory/", formData);
+  return res.data;
 }
 
 export async function createActiveCategory(

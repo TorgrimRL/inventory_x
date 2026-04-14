@@ -1,7 +1,7 @@
 import logging
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from rest_framework import parsers, status
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 class InventoryView(APIView):
     serializer_class = InventoryItemCreateSerializer
     permission_classes = (IsAuthenticated, IsActiveInventoryMember)
+    parser_classes = (
+        parsers.JSONParser,
+        parsers.MultiPartParser,
+        parsers.FormParser,
+    )
 
     @extend_schema(responses=LIST_ITEMS_RESPONSES)
     def get(self, request: Request) -> Response:
@@ -57,8 +62,10 @@ class InventoryView(APIView):
             low_stock_threshold = serializer.validated_data.get(
                 "low_stock_threshold"
             )
+            low_stock_notification = serializer.validated_data.get(
+                "low_stock_notification", False
+            )
 
-            # Attempt to create the item
             created = create_item(
                 inventory_id=membership.inventory.id,
                 name=name,
@@ -66,18 +73,19 @@ class InventoryView(APIView):
                 stock=stock,
                 user=membership.user,
                 low_stock_threshold=low_stock_threshold,
+                low_stock_notification=low_stock_notification,
+                category_ids=serializer.validated_data.get("category_ids"),
+                image=serializer.validated_data.get("image"),
             )
             return Response(created, status=status.HTTP_201_CREATED)
 
         except ValueError as e:
-            # Specific business validation error (e.g., duplicate item name)
             logger.warning(f"Business validation failed: {e!s}")
             return Response(
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as e:
-            # General error handling for any unexpected issues
             logger.exception(f"Failed to create inventory item: {e!s}")
             return Response(
                 {"detail": "Internal processing error."},

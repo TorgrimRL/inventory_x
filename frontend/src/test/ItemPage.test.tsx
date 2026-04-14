@@ -10,6 +10,18 @@ import axios from "axios";
 
 import ItemPage from "../pages/ItemPage";
 
+function expectFormDataEntries(
+  actual: unknown,
+  expected: Record<string, string[]>,
+) {
+  expect(actual).toBeInstanceOf(FormData);
+  const formData = actual as FormData;
+
+  for (const [key, values] of Object.entries(expected)) {
+    expect(formData.getAll(key)).toEqual(values);
+  }
+}
+
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -133,6 +145,7 @@ describe("ItemPage", () => {
         stock: 5,
         category_ids: [],
         low_stock_threshold: null,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -166,14 +179,19 @@ describe("ItemPage", () => {
     );
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
-        name: "Keyboard",
-        price: 100,
-        stock: 5,
-        low_stock_threshold: null,
-        category_ids: [],
-      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Keyboard"],
+      price: ["100"],
+      stock: ["5"],
+      low_stock_threshold: [""],
+      low_stock_notification: ["false"],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
@@ -187,6 +205,7 @@ describe("ItemPage", () => {
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -222,14 +241,19 @@ describe("ItemPage", () => {
     );
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
-        name: "Keyboard",
-        price: 100,
-        stock: 5,
-        low_stock_threshold: 4,
-        category_ids: [],
-      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Keyboard"],
+      price: ["100"],
+      stock: ["5"],
+      low_stock_threshold: ["4"],
+      low_stock_notification: ["false"],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
@@ -335,6 +359,7 @@ describe("ItemPage", () => {
         price: 20,
         category_ids: ["c1", "c3"],
         low_stock_threshold: 8,
+        low_stock_notification: false,
       },
     } as any);
 
@@ -358,12 +383,17 @@ describe("ItemPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/inventory/1/", {
-        name: "Milk",
-        price: 20,
-        low_stock_threshold: 8,
-        category_ids: ["c1", "c3"],
-      });
+      expect(mockedAxios.patch).toHaveBeenCalledTimes(1);
+    });
+
+    const [url, payload] = mockedAxios.patch.mock.calls[0];
+    expect(url).toBe("/api/inventory/1/");
+    expectFormDataEntries(payload, {
+      name: ["Milk"],
+      price: ["20"],
+      low_stock_threshold: ["8"],
+      low_stock_notification: ["false"],
+      category_ids: ["c1", "c3"],
     });
   });
 
