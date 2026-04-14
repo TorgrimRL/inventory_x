@@ -101,7 +101,10 @@ SPECTACULAR_SETTINGS = {
         "persistAuthorization": True,
     },
 }
-
+IS_TESTING = (
+    any("pytest" in arg for arg in sys.argv)
+    or env.bool("TESTING", default=False)
+)
 # ==============================================================================
 # CORS, CSRF, & PROXY
 # ==============================================================================
@@ -131,7 +134,7 @@ SESSION_COOKIE_AGE = 60 * 60
 # ==============================================================================
 # EMAIL CONFIGURATION
 # ==============================================================================
-if "test" in sys.argv or env.bool("TESTING", default=False):
+if IS_TESTING:
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -241,7 +244,6 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
 # REDIS / CACHE / SESSION SETUP
 # ==============================================================================
 
-IS_TESTING = "test" in sys.argv or env.bool("TESTING", default=False)
 
 CACHES: dict[str, dict[str, Any]]
 
