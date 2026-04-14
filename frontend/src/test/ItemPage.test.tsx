@@ -38,15 +38,16 @@ function getVisibleRows(): RowItem[] {
 
   return bodyRows.map((row) => {
     const cells = within(row).getAllByRole("cell");
-    const thresholdText = cells[3].textContent?.trim() ?? "";
+    const thresholdText = cells[5].textContent?.trim() ?? "";
 
     return {
-      name: cells[0].textContent?.trim() || "",
-      stock: Number(cells[2].textContent?.trim() || "0"),
+      name: cells[1].textContent?.trim() || "",
+      stock: Number(cells[3].textContent?.trim() || "0"),
       price: Number(
-        (cells[3].textContent || "0").replace(/[^\d.-]/g, "") || "0",
+        (cells[4].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
-      lowStockThreshold: thresholdText === "" ? null : Number(thresholdText),
+      lowStockThreshold:
+        thresholdText === "—" || thresholdText === "" ? null : Number(thresholdText),
     };
   });
 }
@@ -152,6 +153,14 @@ describe("ItemPage", () => {
     expect(
       within(dialogs[dialogs.length - 1]).getByRole("img", { name: /milk/i }),
     ).toBeInTheDocument();
+  });
+
+  test("shows a dedicated image column with dash for items without image", async () => {
+    render(<ItemPage />);
+
+    expect(await screen.findByText("Image")).toBeInTheDocument();
+    const dashCells = await screen.findAllByText("-");
+    expect(dashCells.length).toBeGreaterThan(0);
   });
 
   test("add item and see 'Item added'", async () => {

@@ -713,6 +713,12 @@ export default function ItemPage() {
                   <Table size="medium" sx={{ minWidth: 900 }}>
                     <TableHead>
                       <TableRow>
+                        <TableCell
+                          align="center"
+                          sx={{ fontWeight: 600, width: 72 }}
+                        >
+                          Image
+                        </TableCell>
                         <TableCell sx={{ fontWeight: 600, width: "46%" }}>
                           <TableSortLabel
                             active={sortField === "name"}
@@ -792,6 +798,34 @@ export default function ItemPage() {
                     <TableBody>
                       {pagedItems.map((item) => (
                         <TableRow key={item.id} hover>
+                          <TableCell align="center" sx={{ width: 72 }}>
+                            {item.image_url ? (
+                              <Box
+                                component="img"
+                                src={item.image_url}
+                                alt={item.name}
+                                onClick={() => {
+                                  setPreviewImage({
+                                    src: item.image_url as string,
+                                    alt: item.name,
+                                  });
+                                }}
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 1,
+                                  objectFit: "cover",
+                                  cursor: "zoom-in",
+                                  display: "block",
+                                  mx: "auto",
+                                }}
+                              />
+                            ) : (
+                              <Box component="span" sx={{ color: "text.secondary" }}>
+                                -
+                              </Box>
+                            )}
+                          </TableCell>
                           <TableCell
                             onClick={() => handleOpenStockLog(item.id)}
                             sx={{
@@ -800,31 +834,7 @@ export default function ItemPage() {
                               color: "primary.main",
                             }}
                           >
-                            <Stack direction="row" spacing={1.5} alignItems="center">
-                              {item.image_url ? (
-                                <Box
-                                  component="img"
-                                  src={item.image_url}
-                                  alt={item.name}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setPreviewImage({
-                                      src: item.image_url as string,
-                                      alt: item.name,
-                                    });
-                                  }}
-                                  sx={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 1,
-                                    objectFit: "cover",
-                                    flexShrink: 0,
-                                    cursor: "zoom-in",
-                                  }}
-                                />
-                              ) : null}
-                              <Box component="span">{item.name}</Box>
-                            </Stack>
+                            <Box component="span">{item.name}</Box>
                           </TableCell>
                           <TableCell>
                             {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
