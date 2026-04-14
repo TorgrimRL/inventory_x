@@ -4,6 +4,7 @@ Django settings for backend project.
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import environ
 
@@ -235,20 +236,18 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
     "AUTH0_LOGIN_FAILURE_RETURN_TO",
     default=f"{HOST_ENDPOINT}/login",
 )
-# ==============================================================================
-# REDIS SETUP
-# ==============================================================================
+
 # ==============================================================================
 # REDIS / CACHE / SESSION SETUP
 # ==============================================================================
 
-IS_TESTING = (
-    "pytest" in sys.argv
-    or "test" in sys.argv
-    or env.bool("TESTING", default=False)
+IS_TESTING = "pytest" in sys.argv or "test" in sys.argv or env.bool(
+    "TESTING", default=False
 )
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
+
+CACHES: dict[str, dict[str, Any]]
 
 if IS_TESTING:
     CACHES = {
