@@ -4,6 +4,7 @@ from api.inventory.views.active_inventory import ActiveInventoryView
 from api.inventory.views.adjust_stock import AdjustStockView
 from api.inventory.views.categories import CategoryDetailView, CategoryView
 from api.inventory.views.inventory import InventoryView
+from api.inventory.views.inventory_history import InventoryHistoryView
 from api.inventory.views.invite_user import InviteUserView
 from api.inventory.views.item_detail import ItemDetailView
 from api.inventory.views.item_image import ItemImageUploadView
@@ -42,6 +43,11 @@ urlpatterns = [
         name="inventory-invite",
     ),
     path("active/", ActiveInventoryView.as_view(), name="inventory-active"),
+    path(
+        "active/history/",
+        InventoryHistoryView.as_view(),
+        name="inventory-history",
+    ),
     path(
         "active/<uuid:item_id>/stock-log/",
         StockLogView.as_view(),

@@ -56,6 +56,7 @@ describe("EditItemModal - user story tests", () => {
       initialPrice: 25,
       currentStock: 2,
       initialLowStockThreshold: null,
+      low_stock_notification: false,
       canEditDetails: true,
       low_stock_notification: false,
       onClose: jest.fn(),

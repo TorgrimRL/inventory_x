@@ -1,16 +1,40 @@
-import { Box, Button, Container, Stack, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PATHS } from "../App";
+import DashboardChartsCard, {
+  DashboardSummaryCard,
+} from "../components/inventory/DashboardChartsCard.tsx";
 import LowStockWarningsCard from "../components/inventory/LowStockWarningsCard.tsx";
 import {
   type ActiveInventory,
   getActiveInventory,
+  type InventoryItem,
+  listActiveCategories,
+  listInventoryItems,
 } from "../services/inventoryService";
+
+function isLowStock(item: InventoryItem) {
+  return (
+    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
+  );
+}
 
 const Dashboard = () => {
   const [active, setActive] = useState<ActiveInventory | null>(null);
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [categoryNameById, setCategoryNameById] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const [chartsReady, setChartsReady] = useState(true);
 
   useEffect(() => {
     const run = async () => {
@@ -24,6 +48,50 @@ const Dashboard = () => {
 
     run();
   }, []);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const [loadedItems, categories] = await Promise.all([
+          listInventoryItems(),
+          listActiveCategories(),
+        ]);
+        setItems(loadedItems);
+        setCategoryNameById(
+          new Map(categories.map((category) => [category.id, category.name])),
+        );
+        setChartsReady(true);
+      } catch {
+        setItems([]);
+        setCategoryNameById(new Map());
+        setChartsReady(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  const lowStockCount = useMemo(() => items.filter(isLowStock).length, [items]);
+  const totalValue = useMemo(
+    () => items.reduce((sum, item) => sum + Number(item.price) * item.stock, 0),
+    [items],
+  );
+  const totalItemCount = items.length;
+  const totalUnits = useMemo(
+    () => items.reduce((sum, item) => sum + item.stock, 0),
+    [items],
+  );
+  const itemsWithoutCategory = useMemo(
+    () =>
+      items.filter(
+        (item) => !item.category_names?.length && !item.category_ids?.length,
+      ).length,
+    [items],
+  );
+  const itemsWithoutThreshold = useMemo(
+    () => items.filter((item) => item.low_stock_threshold == null).length,
+    [items],
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -61,8 +129,37 @@ const Dashboard = () => {
               </Stack>
             )}
           </Stack>
-          <Box sx={{ mb: 3, maxWidth: 720, ml: { md: 2 } }}>
-            <LowStockWarningsCard />
+
+          <Stack
+            direction={{ xs: "column", xl: "row" }}
+            spacing={2.5}
+            alignItems="stretch"
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <LowStockWarningsCard />
+            </Box>
+
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <DashboardSummaryCard
+                lowStockCount={lowStockCount}
+                totalValue={totalValue}
+                totalItemCount={totalItemCount}
+                totalUnits={totalUnits}
+                itemsWithoutCategory={itemsWithoutCategory}
+                itemsWithoutThreshold={itemsWithoutThreshold}
+              />
+            </Box>
+          </Stack>
+
+          <Box sx={{ mb: 3 }}>
+            {chartsReady ? (
+              <DashboardChartsCard
+                items={items}
+                categoryNameById={categoryNameById}
+              />
+            ) : (
+              <Alert severity="info">Not enough data to show charts.</Alert>
+            )}
           </Box>
         </Stack>
       </Container>
