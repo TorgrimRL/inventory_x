@@ -4,6 +4,7 @@ Django settings for backend project.
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import environ
 
@@ -241,6 +242,8 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
 # ==============================================================================
 
 IS_TESTING = "test" in sys.argv or env.bool("TESTING", default=False)
+
+CACHES: dict[str, dict[str, Any]]
 
 if IS_TESTING:
     CACHES = {
