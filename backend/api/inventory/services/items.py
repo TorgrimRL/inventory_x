@@ -22,7 +22,8 @@ def _get_validated_categories(
 
     if len(categories) != len(set(category_ids)):
         raise ValueError(
-            "One or more categories are invalid or do not belong to this inventory."
+            "One or more categories are invalid or do not belong "
+            "to this inventory."
         )
 
     return categories

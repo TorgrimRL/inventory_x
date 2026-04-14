@@ -8,7 +8,6 @@ import {
   deleteItem,
   listActiveCategories,
   updateItem,
-  uploadItemImage,
 } from "../services/inventoryService";
 
 jest.mock("../services/inventoryService", () => ({
@@ -17,7 +16,6 @@ jest.mock("../services/inventoryService", () => ({
   deleteItem: jest.fn(),
   listActiveCategories: jest.fn(),
   createActiveCategory: jest.fn(),
-  uploadItemImage: jest.fn(),
 }));
 
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
@@ -31,8 +29,6 @@ const mockedListActiveCategories = listActiveCategories as jest.MockedFunction<
 const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
   typeof createActiveCategory
 >;
-const mockedUploadItemImage =
-  uploadItemImage as jest.MockedFunction<typeof uploadItemImage>;
 
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
@@ -61,6 +57,7 @@ describe("EditItemModal - user story tests", () => {
       currentStock: 2,
       initialLowStockThreshold: null,
       canEditDetails: true,
+      low_stock_notification: false,
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
       onStockUpdated: jest.fn(),
@@ -114,6 +111,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Skim Milk",
         price: 30,
         low_stock_threshold: 4,
+        low_stock_notification: false,
         category_ids: [],
         image: null,
         remove_image: false,
@@ -129,7 +127,9 @@ describe("EditItemModal - user story tests", () => {
       name: "Skim Milk",
       price: 30,
       lowStockThreshold: 4,
+      low_stock_notification: false,
       category_ids: [],
+      image_url: undefined,
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -349,6 +349,7 @@ describe("EditItemModal - user story tests", () => {
         name: "Milk",
         price: 25,
         low_stock_threshold: null,
+        low_stock_notification: false,
         category_ids: [],
         image: null,
         remove_image: false,
@@ -360,17 +361,18 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      low_stock_notification: false,
       category_ids: [],
+      image_url: undefined,
     });
 
     expect(props.onClose).toHaveBeenCalled();
   });
 
   test("image upload counts as a change and enables save", async () => {
-    mockedUploadItemImage.mockResolvedValueOnce({
+    mockedUpdateItem.mockResolvedValueOnce({
       image_url: "/media/items/milk.png",
-      message: "Image uploaded",
-    });
+    } as any);
 
     const user = userEvent.setup();
     const props = renderModal({ canEditDetails: true });
@@ -380,7 +382,9 @@ describe("EditItemModal - user story tests", () => {
 
     expect(saveButton).toBeDisabled();
 
-    const fileInput = within(dialog).getByLabelText(/upload image/i);
+    const fileInput = within(dialog)
+      .getByRole("button", { name: /upload image/i })
+      .querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["image-data"], "milk.png", { type: "image/png" });
     await act(async () => {
       await user.upload(fileInput, file);
@@ -390,7 +394,15 @@ describe("EditItemModal - user story tests", () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(mockedUploadItemImage).toHaveBeenCalledWith(1, file);
+      expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
+        name: "Milk",
+        price: 25,
+        low_stock_threshold: null,
+        low_stock_notification: false,
+        category_ids: [],
+        image: file,
+        remove_image: false,
+      });
     });
 
     expect(props.onItemUpdated).toHaveBeenCalledWith({
@@ -398,8 +410,9 @@ describe("EditItemModal - user story tests", () => {
       name: "Milk",
       price: 25,
       lowStockThreshold: null,
+      low_stock_notification: false,
       category_ids: [],
-      imageUrl: "/media/items/milk.png",
+      image_url: "/media/items/milk.png",
     });
     expect(props.onClose).toHaveBeenCalled();
   });
@@ -413,7 +426,7 @@ describe("EditItemModal - user story tests", () => {
     const dialog = await screen.findByRole("dialog");
 
     expect(
-      within(dialog).getByRole("button", { name: /change image/i }),
+      within(dialog).getByRole("button", { name: /upload image/i }),
     ).toBeInTheDocument();
   });
 

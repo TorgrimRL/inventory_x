@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from django.core.files.uploadedfile import UploadedFile
 from rest_framework import status, views
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -39,6 +40,17 @@ class ItemImageUploadView(views.APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not isinstance(image, UploadedFile):
+            return Response(
+                {"detail": "Invalid image upload"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+            return Response(
+                {"detail": "Image file is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if image.content_type not in ALLOWED_TYPES:
             return Response(
                 {"detail": "File type not supported"},
@@ -51,7 +63,7 @@ class ItemImageUploadView(views.APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        item.image = image
+        item.image.save(image.name, image, save=False)
         item.save(update_fields=["image"])
 
         return Response(

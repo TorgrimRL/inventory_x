@@ -23,6 +23,10 @@ def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
     return f"item-images/{inventory_id}/{item_id}{extension}"
 
 
+def item_image_upload_path(instance: Any, filename: str) -> str:
+    return inventory_item_image_upload_to(instance, filename)
+
+
 class InventoryAlreadyExistsError(Exception):
     default_message = "Organization number is already registered"
 

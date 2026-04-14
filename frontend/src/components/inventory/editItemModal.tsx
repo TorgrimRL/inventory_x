@@ -246,7 +246,9 @@ export default function EditItemModal({
           Number(priceNumber) !== Number(initialPrice) ||
           lowStockThresholdNumber !== initialThresholdValue ||
           initialIds.join(",") !== currentIds.join(",") ||
-          notification !== Boolean(low_stock_notification);
+          notification !== Boolean(low_stock_notification) ||
+          selectedImage !== null ||
+          removeImage;
 
         if (changed) {
           const payload = {
