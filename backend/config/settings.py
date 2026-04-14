@@ -241,8 +241,10 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
 # REDIS / CACHE / SESSION SETUP
 # ==============================================================================
 
-IS_TESTING = "pytest" in sys.argv or "test" in sys.argv or env.bool(
-    "TESTING", default=False
+IS_TESTING = (
+    "pytest" in sys.argv
+    or "test" in sys.argv
+    or env.bool("TESTING", default=False)
 )
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
