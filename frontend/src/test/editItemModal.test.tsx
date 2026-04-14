@@ -417,7 +417,7 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
-  test("shows change image button when item already has an image", async () => {
+  test("shows change image and remove image actions when item already has an image", async () => {
     renderModal({
       canEditDetails: true,
       initialImageUrl: "/media/items/existing.png",
@@ -426,7 +426,10 @@ describe("EditItemModal - user story tests", () => {
     const dialog = await screen.findByRole("dialog");
 
     expect(
-      within(dialog).getByRole("button", { name: /upload image/i }),
+      within(dialog).getByRole("button", { name: /change image/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: /remove image/i }),
     ).toBeInTheDocument();
   });
 

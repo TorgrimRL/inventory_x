@@ -85,6 +85,8 @@ describe("ItemPage", () => {
                 price: 20,
                 category_ids: ["c1"],
                 low_stock_threshold: 8,
+                low_stock_notification: false,
+                image_url: "/media/items/milk.png",
               },
               {
                 id: 2,
@@ -93,6 +95,7 @@ describe("ItemPage", () => {
                 price: 5,
                 category_ids: [],
                 low_stock_threshold: 3,
+                low_stock_notification: false,
               },
               {
                 id: 3,
@@ -101,6 +104,7 @@ describe("ItemPage", () => {
                 price: 12,
                 category_ids: ["c1", "c3"],
                 low_stock_threshold: 4,
+                low_stock_notification: false,
               },
               {
                 id: 4,
@@ -109,6 +113,7 @@ describe("ItemPage", () => {
                 price: 15,
                 category_ids: ["c3"],
                 low_stock_threshold: null,
+                low_stock_notification: false,
               },
             ],
           },
@@ -133,6 +138,20 @@ describe("ItemPage", () => {
 
       return Promise.resolve({ data: {} } as any);
     });
+  });
+
+  test("clicking an item image opens a larger preview", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    const image = await screen.findByRole("img", { name: /milk/i });
+    await user.click(image);
+
+    const dialogs = await screen.findAllByRole("dialog");
+    expect(dialogs.length).toBeGreaterThan(0);
+    expect(
+      within(dialogs[dialogs.length - 1]).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
   });
 
   test("add item and see 'Item added'", async () => {

@@ -393,42 +393,49 @@ export default function EditItemModal({
                   sx={{ width: 96, height: 96, borderRadius: 1, objectFit: "cover" }}
                 />
               ) : null}
-              <Button
-                variant="outlined"
-                component="label"
-                disabled={saving || !canEditDetails}
-              >
-                {selectedImage ? "Change image" : "Upload image"}
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    setSelectedImage(e.target.files?.[0] ?? null);
-                    setRemoveImage(false);
-                  }}
-                />
-              </Button>
+
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Button
+                  variant="outlined"
+                  component="label"
+                  disabled={saving || !canEditDetails}
+                >
+                  {initialImageUrl && !removeImage ? "Change image" : "Upload image"}
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      setSelectedImage(e.target.files?.[0] ?? null);
+                      setRemoveImage(false);
+                    }}
+                  />
+                </Button>
+
+                {(initialImageUrl || selectedImage) && (
+                  <Button
+                    variant="text"
+                    color="error"
+                    disabled={saving || !canEditDetails}
+                    onClick={() => {
+                      setRemoveImage(true);
+                      setSelectedImage(null);
+                    }}
+                  >
+                    Remove image
+                  </Button>
+                )}
+              </Stack>
+
               <Typography variant="body2" color="text.secondary">
                 {selectedImage
                   ? selectedImage.name
                   : initialImageUrl && !removeImage
                     ? "Current image"
-                    : "No image selected"}
+                    : removeImage
+                      ? "Image will be removed"
+                      : "No image selected"}
               </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={removeImage}
-                    onChange={(e) => {
-                      setRemoveImage(e.target.checked);
-                      if (e.target.checked) setSelectedImage(null);
-                    }}
-                    disabled={saving || !canEditDetails || (!initialImageUrl && !selectedImage)}
-                  />
-                }
-                label="Remove image"
-              />
             </Stack>
             <Divider sx={{ my: 1 }} />
             {canEditDetails ? (

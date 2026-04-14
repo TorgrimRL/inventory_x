@@ -138,6 +138,10 @@ export default function ItemPage() {
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
   const [page, setPage] = useState(0);
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
@@ -802,12 +806,20 @@ export default function ItemPage() {
                                   component="img"
                                   src={item.image_url}
                                   alt={item.name}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setPreviewImage({
+                                      src: item.image_url as string,
+                                      alt: item.name,
+                                    });
+                                  }}
                                   sx={{
                                     width: 40,
                                     height: 40,
                                     borderRadius: 1,
                                     objectFit: "cover",
                                     flexShrink: 0,
+                                    cursor: "zoom-in",
                                   }}
                                 />
                               ) : null}
@@ -895,6 +907,30 @@ export default function ItemPage() {
         setSnackMessage={setSnackMessage}
         setSnackOpen={setSnackOpen}
       />
+
+      <Dialog
+        open={previewImage !== null}
+        onClose={() => setPreviewImage(null)}
+        maxWidth="md"
+      >
+        <DialogContent sx={{ p: 1 }}>
+          {previewImage ? (
+            <Box
+              component="img"
+              src={previewImage.src}
+              alt={previewImage.alt}
+              sx={{
+                display: "block",
+                maxWidth: "min(90vw, 900px)",
+                maxHeight: "80vh",
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
