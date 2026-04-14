@@ -14,6 +14,8 @@ dependencies = [
     "adrf>=0.1.0",
     "gunicorn",
     "requests>=2.33.1",
+    "redis",
+    "django-redis",
 ]
 
 [tool.mypy]

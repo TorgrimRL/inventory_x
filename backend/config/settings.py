@@ -235,3 +235,22 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
     "AUTH0_LOGIN_FAILURE_RETURN_TO",
     default=f"{HOST_ENDPOINT}/login",
 )
+# ==============================================================================
+# REDIS SETUP
+# ==============================================================================
+
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "inventory_x",
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_CACHE_ALIAS = "default"
