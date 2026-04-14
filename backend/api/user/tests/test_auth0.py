@@ -20,6 +20,7 @@ class Auth0Tests(BaseAPITestCase):
 
     def _auth0_http_error(self, status_code: int) -> requests.HTTPError:
         response = requests.Response()
+
         response.status_code = status_code
         return requests.HTTPError(response=response)
 
@@ -373,3 +374,19 @@ class Auth0Tests(BaseAPITestCase):
 
         self.assertEqual(data["detail"], "Internal server error")
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_auth0_callback_redirects_to_login_when_provider_returns_error(
+        self,
+    ):
+        self._start_auth0_flow()
+
+        response = self.client.get(
+            self.callback_url,
+            {"error": "access_denied"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(
+            response["Location"],
+            f"{settings.AUTH0_LOGIN_FAILURE_RETURN_TO}?social_login_error=1",
+        )

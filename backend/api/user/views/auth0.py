@@ -18,6 +18,13 @@ from api.user.serializers.auth0 import Auth0CallbackSerializer
 logger = logging.getLogger(__name__)
 
 
+def build_auth0_failure_redirect_url() -> str:
+    return (
+        f"{settings.AUTH0_LOGIN_FAILURE_RETURN_TO}?"
+        f"{urlencode({'social_login_error': '1'})}"
+    )
+
+
 class Auth0CallbackView(APIView):
     permission_classes = (AllowAny,)
 
@@ -26,6 +33,11 @@ class Auth0CallbackView(APIView):
         responses=AUTH0_RESPONSES,
     )
     def get(self, request):
+        auth0_error = request.query_params.get("error")
+        if auth0_error:
+            logger.warning("Auth0 login failed: %s", auth0_error)
+            return redirect(build_auth0_failure_redirect_url())
+
         serializer = Auth0CallbackSerializer(data=request.query_params)
 
         if not serializer.is_valid():

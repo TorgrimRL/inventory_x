@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
@@ -21,9 +21,12 @@ const Login: React.FC = () => {
   // init app state.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+  const socialLoginFailed = searchParams.get("social_login_error") === "1";
+  const [error, setError] = useState(() =>
+    socialLoginFailed ? "Social login failed." : "",
+  );
   const [checkingAuth, setCheckingAuth] = useState(true);
-
   const navigate = useNavigate();
 
   // Validate session, skip the login.
@@ -40,6 +43,12 @@ const Login: React.FC = () => {
 
     verifyUser();
   }, [navigate]);
+
+  useEffect(() => {
+    if (socialLoginFailed) {
+      navigate(PATHS.LOGIN, { replace: true });
+    }
+  }, [socialLoginFailed, navigate]);
 
   // show loading while waiting for checkSession to complete.
   if (checkingAuth) {

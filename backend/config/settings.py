@@ -231,3 +231,7 @@ AUTH0_FEDERATED_LOGOUT = env.bool(
     "AUTH0_FEDERATED_LOGOUT",
     default=False,
 )
+AUTH0_LOGIN_FAILURE_RETURN_TO = env(
+    "AUTH0_LOGIN_FAILURE_RETURN_TO",
+    default=f"{HOST_ENDPOINT}/login",
+)

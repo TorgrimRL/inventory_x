@@ -1,28 +1,38 @@
 import "@testing-library/jest-dom";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import Login from "../components/auth/loginForm";
+import apiClient from "../services/apiClient";
 import { checkSession, startSocialLogin } from "../services/authService";
 
-//  MOCK DEPENDENCIES
-jest.mock("axios");
-jest.mock("react-router-dom", () => ({
-  useNavigate: jest.fn(),
+jest.mock("../services/apiClient", () => ({
+  __esModule: true,
+  default: {
+    post: jest.fn(),
+  },
 }));
 
-jest.mock("../services/authService.ts");
+jest.mock("../services/authService", () => ({
+  __esModule: true,
+  checkSession: jest.fn(),
+  startSocialLogin: jest.fn(),
+}));
+
+const mockNavigate = jest.fn();
+let mockSearchParams = new URLSearchParams();
+
+jest.mock("react-router-dom", () => ({
+  __esModule: true,
+  useNavigate: () => mockNavigate,
+  useSearchParams: () => [mockSearchParams, jest.fn()],
+}));
 
 describe("Login Component", () => {
-  const mockNavigate = jest.fn();
-
   beforeEach(() => {
-    // Reset mocks before every test to ensure a clean slate
     jest.clearAllMocks();
-    (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+    mockSearchParams = new URLSearchParams();
   });
 
   // TEST : AUTO-REDIRECT IF ALREADY LOGGED IN
@@ -61,7 +71,7 @@ describe("Login Component", () => {
   // TEST : SUCCESSFUL LOGIN FLOW
   test("calls login API and redirects on success", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
-    (axios.post as jest.Mock).mockResolvedValue({
+    (apiClient.post as jest.Mock).mockResolvedValue({
       data: { token: "fake-token-123" },
       headers: { creds: "love is the key" }, //
       status: 200,
@@ -104,7 +114,7 @@ describe("Login Component", () => {
   test("Server nested email error is rendered as string", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
-    (axios.post as jest.Mock).mockRejectedValueOnce({
+    (apiClient.post as jest.Mock).mockRejectedValueOnce({
       response: {
         status: 400,
         data: {
@@ -132,7 +142,7 @@ describe("Login Component", () => {
       await screen.findByText(/enter a valid email address/i),
     ).toBeInTheDocument();
 
-    expect(axios.post).toHaveBeenCalled();
+    expect(apiClient.post).toHaveBeenCalled();
   });
 
   // TEST: Empty password.
@@ -190,6 +200,14 @@ describe("Login Component", () => {
     });
 
     fireEvent.click(googleButton);
+
+    expect(await screen.findByText(/social login failed/i)).toBeInTheDocument();
+  });
+  test("shows error message when redirected back after failed social login", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(false);
+    mockSearchParams = new URLSearchParams("social_login_error=1");
+
+    render(<Login />);
 
     expect(await screen.findByText(/social login failed/i)).toBeInTheDocument();
   });
