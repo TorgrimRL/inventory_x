@@ -15,7 +15,8 @@ class VerifyView(views.APIView):
 
     @extend_schema(
         summary="Verify User Session",
-        description="Checks validity of the token and returns the username and optional picture .",
+        description="Checks validity of the token and returns the username"
+                    " and optional picture .",
         request=None,
         responses=VERIFY_RESPONSES,
     )

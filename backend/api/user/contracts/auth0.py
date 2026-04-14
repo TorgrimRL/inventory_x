@@ -6,7 +6,9 @@ from api.user.serializers.auth0 import (
 )
 
 AUTH0_RESPONSES = {
-    302: OpenApiResponse(description="Redirect to frontend after successful login"),
+    302: OpenApiResponse(
+        description="Redirect to frontend after successful login"
+    ),
     400: OpenApiResponse(
         response=Auth0ValidationErrorSerializer,
         description="Validation failed",

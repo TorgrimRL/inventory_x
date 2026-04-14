@@ -2,9 +2,10 @@
 Django settings for backend project.
 """
 
-import environ
 import sys
 from pathlib import Path
+
+import environ
 
 # ==============================================================================
 # ENVIRONMENT SETUP

@@ -65,7 +65,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_redirects_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         state = self._start_auth0_flow()
 
@@ -89,7 +89,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_user_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         User = get_user_model()
         state = self._start_auth0_flow()
@@ -120,7 +120,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_reuses_existing_user_when_email_matches(
-            self, mock_exchange
+        self, mock_exchange
     ):
         User = get_user_model()
         state = self._start_auth0_flow()
@@ -159,7 +159,7 @@ class Auth0Tests(BaseAPITestCase):
 
     @patch("api.user.views.auth0.exchange_auth0_code")
     def test_auth0_callback_creates_session_when_code_exchange_succeeds(
-            self, mock_exchange
+        self, mock_exchange
     ):
         state = self._start_auth0_flow()
 

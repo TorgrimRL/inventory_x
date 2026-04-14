@@ -217,56 +217,57 @@ describe("Navbar Component", () => {
     const switchInput = screen.getByRole("checkbox", { name: /toggle theme/i });
     expect(switchInput).toBeChecked();
   });
-test("shows dark mode option in user menu when logged in", async () => {
-  (checkSession as jest.Mock).mockResolvedValue(true);
-  (getCurrentUser as jest.Mock).mockResolvedValue({
-    username: "Social User",
-    email: "social@test.com",
-    picture: "https://example.com/avatar.png",
-  });
-  (getActiveInventory as jest.Mock).mockResolvedValue({
-    name: "Warehouse A",
-  });
+  test("shows dark mode option in user menu when logged in", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(true);
+    (getCurrentUser as jest.Mock).mockResolvedValue({
+      username: "Social User",
+      email: "social@test.com",
+      picture: "https://example.com/avatar.png",
+    });
+    (getActiveInventory as jest.Mock).mockResolvedValue({
+      name: "Warehouse A",
+    });
 
-  renderNavbar("light");
+    renderNavbar("light");
 
-  const avatarButton = await screen.findByRole("button", {
-    name: /open user menu/i,
-  });
+    const avatarButton = await screen.findByRole("button", {
+      name: /open user menu/i,
+    });
 
-  fireEvent.click(avatarButton);
+    fireEvent.click(avatarButton);
 
-  expect(await screen.findByText("Dark mode")).toBeInTheDocument();
-  expect(screen.getByRole("checkbox", { name: /toggle theme/i })).toBeInTheDocument();
-});
-
-test("toggles theme from switch in user menu", async () => {
-  (checkSession as jest.Mock).mockResolvedValue(true);
-  (getCurrentUser as jest.Mock).mockResolvedValue({
-    username: "Social User",
-    email: "social@test.com",
-    picture: "https://example.com/avatar.png",
-  });
-  (getActiveInventory as jest.Mock).mockResolvedValue({
-    name: "Warehouse A",
+    expect(await screen.findByText("Dark mode")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: /toggle theme/i }),
+    ).toBeInTheDocument();
   });
 
-  const setMode = jest.fn();
-  renderNavbar("light", setMode);
+  test("toggles theme from switch in user menu", async () => {
+    (checkSession as jest.Mock).mockResolvedValue(true);
+    (getCurrentUser as jest.Mock).mockResolvedValue({
+      username: "Social User",
+      email: "social@test.com",
+      picture: "https://example.com/avatar.png",
+    });
+    (getActiveInventory as jest.Mock).mockResolvedValue({
+      name: "Warehouse A",
+    });
 
-  const avatarButton = await screen.findByRole("button", {
-    name: /open user menu/i,
+    const setMode = jest.fn();
+    renderNavbar("light", setMode);
+
+    const avatarButton = await screen.findByRole("button", {
+      name: /open user menu/i,
+    });
+
+    fireEvent.click(avatarButton);
+
+    const switchInput = await screen.findByRole("checkbox", {
+      name: /toggle theme/i,
+    });
+
+    fireEvent.click(switchInput);
+
+    expect(setMode).toHaveBeenCalledTimes(1);
   });
-
-  fireEvent.click(avatarButton);
-
-  const switchInput = await screen.findByRole("checkbox", {
-    name: /toggle theme/i,
-  });
-
-  fireEvent.click(switchInput);
-
-  expect(setMode).toHaveBeenCalledTimes(1);
-});
-
 });
