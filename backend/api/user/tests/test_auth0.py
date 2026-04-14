@@ -1,5 +1,6 @@
+from typing import Any, cast
 from unittest.mock import patch
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from django.conf import settings
 from django.urls import reverse
@@ -230,7 +231,12 @@ class Auth0Tests(BaseAPITestCase):
         self.assertEqual(verify_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_logout_returns_auth0_logout_url_for_auth0_session(self):
-        self.client.force_login(self.user)
+        user = User.objects.create_user(
+            email="logout-social@test.com",
+            password="secret123",
+            display_name="Logout User",
+        )
+        self.client.force_login(user)
 
         session = self.client.session
         session["auth_provider"] = "auth0"
@@ -239,5 +245,47 @@ class Auth0Tests(BaseAPITestCase):
         response = self.client.post(reverse("logout"))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("logout_url", response.data)
-        self.assertIn("/v2/logout", response.data["logout_url"])
+
+        expected_params = {
+            "client_id": settings.AUTH0_CLIENT_ID,
+            "returnTo": settings.AUTH0_LOGOUT_RETURN_TO,
+        }
+        expected_url = (
+            f"https://{settings.AUTH0_DOMAIN}/v2/logout?"
+            f"{urlencode(expected_params)}"
+        )
+
+        if settings.AUTH0_FEDERATED_LOGOUT:
+            expected_url = f"{expected_url}&federated"
+
+        data = cast(dict[str, Any], response.data)
+        self.assertEqual(data["logout_url"], expected_url)
+
+    @patch("api.user.views.logout.settings.AUTH0_FEDERATED_LOGOUT", True)
+    def test_logout_url_includes_federated_when_enabled(self):
+        user = User.objects.create_user(
+            email="logout-federated@test.com",
+            password="secret123",
+            display_name="Federated Logout User",
+        )
+        self.client.force_login(user)
+
+        session = self.client.session
+        session["auth_provider"] = "auth0"
+        session.save()
+
+        response = self.client.post(reverse("logout"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        expected_params = {
+            "client_id": settings.AUTH0_CLIENT_ID,
+            "returnTo": settings.AUTH0_LOGOUT_RETURN_TO,
+        }
+        expected_url = (
+            f"https://{settings.AUTH0_DOMAIN}/v2/logout?"
+            f"{urlencode(expected_params)}&federated"
+        )
+
+        data = cast(dict[str, Any], response.data)
+        self.assertEqual(data["logout_url"], expected_url)

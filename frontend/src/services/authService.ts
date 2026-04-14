@@ -8,9 +8,9 @@ export type CurrentUser = {
 export const checkSession = async () => {
   try {
     await axios.get("/api/user/verify/");
-    return true; // Session is valid
+    return true;
   } catch {
-    return false; // Session is invalid
+    return false;
   }
 };
 
@@ -18,10 +18,15 @@ export const getCurrentUser = async (): Promise<CurrentUser> => {
   const response = await axios.get("/api/user/verify/");
   return response.data;
 };
+
 export const startSocialLogin = (provider: "google") => {
   if (provider !== "google") {
     throw new Error(`Unsupported social login provider: ${provider}`);
   }
 
   window.location.assign("/api/user/auth0/start/");
+};
+
+export const redirectToUrl = (url: string) => {
+  window.location.assign(url);
 };

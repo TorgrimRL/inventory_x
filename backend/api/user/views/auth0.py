@@ -54,6 +54,7 @@ class Auth0CallbackView(APIView):
             user.save()
 
         login(request._request, user)
+        request.session["auth_provider"] = "auth0"
         request.session["auth0_picture"] = auth0_user.get("picture")
 
         return redirect(settings.AUTH0_LOGIN_SUCCESS_RETURN_TO)

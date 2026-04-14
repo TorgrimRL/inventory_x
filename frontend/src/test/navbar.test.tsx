@@ -7,7 +7,6 @@ global.TextEncoder = TextEncoder;
 // @ts-expect-error: jsdom polyfill
 global.TextDecoder = TextDecoder;
 
-
 import { ThemeProvider } from "@mui/material/styles";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
