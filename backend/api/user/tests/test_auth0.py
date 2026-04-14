@@ -13,16 +13,15 @@ from api.user.contracts.verify import VERIFY_RESPONSES
 from api.user.models import User
 
 
-def _auth0_http_error(self, status_code: int) -> requests.HTTPError:
-    response = requests.Response()
-    response.status_code = status_code
-    return requests.HTTPError(response=response)
-
-
 class Auth0Tests(BaseAPITestCase):
     def setUp(self):
         self.callback_url = reverse("auth0-callback")
         self.start_url = reverse("auth0-start")
+
+    def _auth0_http_error(self, status_code: int) -> requests.HTTPError:
+        response = requests.Response()
+        response.status_code = status_code
+        return requests.HTTPError(response=response)
 
     def _start_auth0_flow(self) -> str:
         response = self.client.get(self.start_url)
@@ -361,9 +360,7 @@ class Auth0Tests(BaseAPITestCase):
         self, mock_exchange
     ):
         state = self._start_auth0_flow()
-        mock_exchange.side_effect = ValueError(
-            "Auth0 did not return an email"
-        )
+        mock_exchange.side_effect = ValueError("Auth0 did not return an email")
 
         response = self.client.get(
             self.callback_url,

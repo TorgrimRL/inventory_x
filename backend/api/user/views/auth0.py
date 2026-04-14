@@ -49,7 +49,9 @@ class Auth0CallbackView(APIView):
             auth0_status = getattr(exc.response, "status_code", None)
 
             if auth0_status is not None and 400 <= auth0_status < 500:
-                logger.warning("Auth0 rejected authorization code", exc_info=exc)
+                logger.warning(
+                    "Auth0 rejected authorization code", exc_info=exc
+                )
                 return Response(
                     {"detail": "Invalid credentials"},
                     status=status.HTTP_401_UNAUTHORIZED,
