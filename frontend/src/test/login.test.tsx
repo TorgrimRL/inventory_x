@@ -161,16 +161,16 @@ describe("Login Component", () => {
 
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /continue with google/i }),
+      screen.getByRole("button", { name: /sign in with google/i }),
     ).toBeInTheDocument();
   });
-  test("calls social login handler when clicking Continue with Google", async () => {
+  test("calls social login handler when clicking sign in with google", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
 
     render(<Login />);
 
     const googleButton = await screen.findByRole("button", {
-      name: /continue with google/i,
+      name: /sign in with google/i,
     });
 
     fireEvent.click(googleButton);
@@ -179,14 +179,14 @@ describe("Login Component", () => {
   });
   test("shows error message when Google login fails", async () => {
     (checkSession as jest.Mock).mockResolvedValue(false);
-    (startSocialLogin as jest.Mock).mockRejectedValue(
-      new Error("Social login failed."),
-    );
+    (startSocialLogin as jest.Mock).mockImplementation(() => {
+      throw new Error("Social login failed.");
+    });
 
     render(<Login />);
 
     const googleButton = await screen.findByRole("button", {
-      name: /continue with google/i,
+      name: /sign in with google/i,
     });
 
     fireEvent.click(googleButton);

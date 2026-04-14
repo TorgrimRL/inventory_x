@@ -41,7 +41,7 @@ describe("Registration Component", () => {
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByLabelText("Confirm Password")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /sign up/i }),
+      screen.getByRole("button", { name: /^sign up$/i }),
     ).toBeInTheDocument();
   });
 
@@ -52,7 +52,7 @@ describe("Registration Component", () => {
       target: { value: "invalid-email" }, // missing @ and .
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Invalid email address."),
@@ -68,7 +68,7 @@ describe("Registration Component", () => {
     });
 
     // Leave password empty and submit
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Password: Cannot be empty"),
@@ -89,7 +89,7 @@ describe("Registration Component", () => {
       target: { value: "different123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Password: Passwords do not match."),
@@ -114,7 +114,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalledWith("/api/user/signup/", {
@@ -158,7 +158,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Email: User with this email already exists."),
@@ -188,7 +188,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Name: Name is too long."),

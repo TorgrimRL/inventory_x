@@ -15,6 +15,10 @@ import apiClient from "../services/apiClient.ts";
 import { checkSession } from "../services/authService";
 import { getActiveInventory } from "../services/inventoryService";
 import { LightTheme } from "../theme";
+// @ts-expect-error: None
+global.TextEncoder = TextEncoder;
+// @ts-expect-error: None
+global.TextDecoder = TextDecoder;
 
 // MOCK DEPENDENCIES
 const mockNavigate = jest.fn();
@@ -67,6 +71,11 @@ describe("Logout Test", () => {
     expect(document.cookie).toContain("inventoryToken");
 
     renderNavbar();
+    const userMenuButton = await screen.findByRole("button", {
+      name: /open user menu/i,
+    });
+    fireEvent.click(userMenuButton);
+
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
     fireEvent.click(logoutBtn);
 
@@ -84,6 +93,12 @@ describe("Logout Test", () => {
     });
 
     renderNavbar();
+
+    const userMenuButton = await screen.findByRole("button", {
+      name: /open user menu/i,
+    });
+    fireEvent.click(userMenuButton);
+
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
     expect(logoutBtn).toBeInTheDocument();
   });
@@ -97,6 +112,11 @@ describe("Logout Test", () => {
     (apiClient.post as jest.Mock).mockResolvedValue({ status: 200 });
 
     renderNavbar();
+    const userMenuButton = await screen.findByRole("button", {
+      name: /open user menu/i,
+    });
+    fireEvent.click(userMenuButton);
+
     const logoutBtn = await screen.findByRole("button", { name: /log out/i });
     fireEvent.click(logoutBtn);
 
