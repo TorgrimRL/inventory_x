@@ -14,8 +14,8 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
-import GoogleAuthButton from "./googleAuthButton.tsx";
 import { startSocialLogin } from "../../services/authService.ts";
+import GoogleAuthButton from "./googleAuthButton.tsx";
 
 const Registration: React.FC = () => {
   const [name, setName] = useState("");

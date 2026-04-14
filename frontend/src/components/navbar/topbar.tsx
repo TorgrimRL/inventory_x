@@ -72,8 +72,15 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
       try {
         const session = await checkSession();
         setIsValidSession(session);
+
+        if (!session) {
+          setCurrentUser(null);
+          setActiveInventory(null);
+        }
       } catch {
         setIsValidSession(false);
+        setCurrentUser(null);
+        setActiveInventory(null);
       }
     }
 
@@ -81,10 +88,7 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!isValidSession) {
-      setCurrentUser(null);
-      return;
-    }
+    if (!isValidSession) return;
 
     async function loadCurrentUser() {
       try {
@@ -98,7 +102,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
     loadCurrentUser();
   }, [location.pathname, isValidSession]);
 
-  /* Load active inventory. Runs when: session changes or route changes */
   useEffect(() => {
     if (!isValidSession) return;
 
