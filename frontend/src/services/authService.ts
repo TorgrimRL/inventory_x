@@ -2,7 +2,6 @@ import axios from "./apiClient";
 
 export type CurrentUser = {
   username: string;
-  email: string;
   picture?: string | null;
 };
 

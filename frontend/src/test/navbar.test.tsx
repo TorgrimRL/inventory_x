@@ -7,6 +7,7 @@ global.TextEncoder = TextEncoder;
 // @ts-expect-error: jsdom polyfill
 global.TextDecoder = TextDecoder;
 
+
 import { ThemeProvider } from "@mui/material/styles";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -64,7 +65,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: null,
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -84,7 +84,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: null,
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -102,7 +101,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: null,
     });
     (getActiveInventory as jest.Mock).mockResolvedValue(null);
@@ -118,7 +116,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: "https://example.com/avatar.png",
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -136,7 +133,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: "https://example.com/avatar.png",
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -158,7 +154,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: "https://example.com/avatar.png",
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -221,7 +216,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: "https://example.com/avatar.png",
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({
@@ -246,7 +240,6 @@ describe("Navbar Component", () => {
     (checkSession as jest.Mock).mockResolvedValue(true);
     (getCurrentUser as jest.Mock).mockResolvedValue({
       username: "Social User",
-      email: "social@test.com",
       picture: "https://example.com/avatar.png",
     });
     (getActiveInventory as jest.Mock).mockResolvedValue({

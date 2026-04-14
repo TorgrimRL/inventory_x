@@ -2,13 +2,13 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
 from api.tests.base import BaseAPITestCase
 from api.user.contracts.auth0 import AUTH0_RESPONSES
 from api.user.contracts.verify import VERIFY_RESPONSES
+from api.user.models import User
 
 
 class Auth0Tests(BaseAPITestCase):
@@ -91,7 +91,6 @@ class Auth0Tests(BaseAPITestCase):
     def test_auth0_callback_creates_user_when_code_exchange_succeeds(
         self, mock_exchange
     ):
-        User = get_user_model()
         state = self._start_auth0_flow()
 
         self.assertFalse(User.objects.filter(email="social@test.com").exists())
@@ -122,7 +121,6 @@ class Auth0Tests(BaseAPITestCase):
     def test_auth0_callback_reuses_existing_user_when_email_matches(
         self, mock_exchange
     ):
-        User = get_user_model()
         state = self._start_auth0_flow()
 
         existing_user = User(
