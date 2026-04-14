@@ -1,3 +1,4 @@
+import logging
 import secrets
 from urllib.parse import urlencode
 
@@ -13,6 +14,8 @@ from rest_framework.views import APIView
 
 from api.user.contracts.auth0 import AUTH0_RESPONSES
 from api.user.serializers.auth0 import Auth0CallbackSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class Auth0CallbackView(APIView):
@@ -40,7 +43,29 @@ class Auth0CallbackView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        auth0_user = exchange_auth0_code(serializer.validated_data["code"])
+        try:
+            auth0_user = exchange_auth0_code(serializer.validated_data["code"])
+        except requests.HTTPError as exc:
+            auth0_status = getattr(exc.response, "status_code", None)
+
+            if auth0_status is not None and 400 <= auth0_status < 500:
+                logger.warning("Auth0 rejected authorization code", exc_info=exc)
+                return Response(
+                    {"detail": "Invalid credentials"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            logger.exception("Auth0 HTTP error during callback")
+            return Response(
+                {"detail": "Internal server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except (requests.RequestException, ValueError):
+            logger.exception("Auth0 callback failed")
+            return Response(
+                {"detail": "Internal server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         User = get_user_model()
         user = User.objects.filter(email=auth0_user["email"]).first()

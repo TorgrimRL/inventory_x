@@ -2,6 +2,7 @@ from typing import Any, cast
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlencode, urlparse
 
+import requests
 from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
@@ -10,6 +11,12 @@ from api.tests.base import BaseAPITestCase
 from api.user.contracts.auth0 import AUTH0_RESPONSES
 from api.user.contracts.verify import VERIFY_RESPONSES
 from api.user.models import User
+
+
+def _auth0_http_error(self, status_code: int) -> requests.HTTPError:
+    response = requests.Response()
+    response.status_code = status_code
+    return requests.HTTPError(response=response)
 
 
 class Auth0Tests(BaseAPITestCase):
@@ -289,3 +296,83 @@ class Auth0Tests(BaseAPITestCase):
 
         data = cast(dict[str, Any], response.data)
         self.assertEqual(data["logout_url"], expected_url)
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_401_when_auth0_rejects_code(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+        mock_exchange.side_effect = self._auth0_http_error(400)
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "expired-or-invalid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_401_UNAUTHORIZED
+        )
+
+        self.assertEqual(data["detail"], "Invalid credentials")
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_500_when_auth0_times_out(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+        mock_exchange.side_effect = requests.Timeout()
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+        self.assertEqual(data["detail"], "Internal server error")
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_500_when_access_token_is_missing(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+        mock_exchange.side_effect = ValueError(
+            "Auth0 did not return an access token"
+        )
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+        self.assertEqual(data["detail"], "Internal server error")
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    @patch("api.user.views.auth0.exchange_auth0_code")
+    def test_auth0_callback_returns_500_when_email_is_missing(
+        self, mock_exchange
+    ):
+        state = self._start_auth0_flow()
+        mock_exchange.side_effect = ValueError(
+            "Auth0 did not return an email"
+        )
+
+        response = self.client.get(
+            self.callback_url,
+            {"code": "valid-code", "state": state},
+        )
+
+        data = self.assert_contract(
+            response, AUTH0_RESPONSES, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+        self.assertEqual(data["detail"], "Internal server error")
+        self.assertNotIn("_auth_user_id", self.client.session)
