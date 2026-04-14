@@ -228,3 +228,16 @@ class Auth0Tests(BaseAPITestCase):
 
         verify_response = self.client.get(reverse("verify"))
         self.assertEqual(verify_response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_logout_returns_auth0_logout_url_for_auth0_session(self):
+        self.client.force_login(self.user)
+
+        session = self.client.session
+        session["auth_provider"] = "auth0"
+        session.save()
+
+        response = self.client.post(reverse("logout"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("logout_url", response.data)
+        self.assertIn("/v2/logout", response.data["logout_url"])
