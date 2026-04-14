@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("inventory", "0002_inventoryitem_image"),
-        ("inventory", "0002_stocklog"),
+        ("inventory", "0003_stocklog"),
     ]
 
     operations = []
