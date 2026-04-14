@@ -238,19 +238,36 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
 # ==============================================================================
 # REDIS SETUP
 # ==============================================================================
+# ==============================================================================
+# REDIS / CACHE / SESSION SETUP
+# ==============================================================================
+
+IS_TESTING = (
+    "pytest" in sys.argv
+    or "test" in sys.argv
+    or env.bool("TESTING", default=False)
+)
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-        "KEY_PREFIX": "inventory_x",
+if IS_TESTING:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "inventory-x-test-cache",
+        }
     }
-}
-
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-SESSION_CACHE_ALIAS = "default"
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "inventory_x",
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+    SESSION_CACHE_ALIAS = "default"
