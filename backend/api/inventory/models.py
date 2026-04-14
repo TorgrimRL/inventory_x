@@ -16,15 +16,15 @@ org_number_validator = RegexValidator(
 )
 
 
-def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
+def item_image_upload_path(instance: Any, filename: str) -> str:
     extension = os.path.splitext(filename)[1].lower() or ".png"
     inventory_id = instance.inventory_id or "unassigned"
     item_id = instance.id or uuid.uuid4()
     return f"item-images/{inventory_id}/{item_id}{extension}"
 
 
-def item_image_upload_path(instance: Any, filename: str) -> str:
-    return inventory_item_image_upload_to(instance, filename)
+def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
+    return item_image_upload_path(instance, filename)
 
 
 class InventoryAlreadyExistsError(Exception):
@@ -143,7 +143,7 @@ class InventoryItem(models.Model):
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)
     low_stock_notification = models.BooleanField(default=False)
     image = models.ImageField(
-        upload_to=inventory_item_image_upload_to,
+        upload_to=item_image_upload_path,
         null=True,
         blank=True,
     )
