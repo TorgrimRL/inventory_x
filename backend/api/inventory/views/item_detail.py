@@ -38,6 +38,7 @@ class ItemDetailView(views.APIView):
                 inventory_id=membership.inventory.id,
                 item_id=item_id,
                 name=serializer.validated_data["name"],
+                description=serializer.validated_data.get("description", ""),
                 price=serializer.validated_data["price"],
                 user=membership.user,
                 low_stock_threshold=serializer.validated_data.get(
@@ -64,6 +65,7 @@ class ItemDetailView(views.APIView):
                 "id": item.id,
                 "name": item.name,
                 "price": item.price,
+                "description": item.description,
                 "stock": item.stock,
                 "category_ids": [
                     category.id for category in item.categories.all()

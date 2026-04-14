@@ -6,6 +6,7 @@ from rest_framework import status
 
 from api.inventory.context import SESSION_ACTIVE_INVENTORY_KEY
 from api.inventory.contracts.adjust_stock import ADJUST_STOCK_RESPONSES
+from api.inventory.contracts.create_item import CREATE_ITEM_RESPONSES
 from api.inventory.contracts.update_item import UPDATE_ITEM_RESPONSES
 from api.inventory.models import (
     Inventory,
@@ -551,3 +552,65 @@ class UpdateItemViewTests(BaseAPITestCase):
         self.assert_contract(
             response, UPDATE_ITEM_RESPONSES, status.HTTP_400_BAD_REQUEST
         )
+
+
+class CreateItemViewTests(BaseAPITestCase):
+    def setUp(self):
+        self.user = self.create_user(
+            email="user@test.com",
+            password="password123",
+        )
+        self.client.force_authenticate(self.user)
+
+        self.inventory = Inventory.objects.create(
+            name="Ola AS", org_number="123456789"
+        )
+
+        InventoryMembership.objects.create(
+            user=self.user,
+            inventory=self.inventory,
+            role=InventoryMembership.Role.OWNER,
+        )
+
+        session = self.client.session
+        session[SESSION_ACTIVE_INVENTORY_KEY] = str(self.inventory.id)
+        session.save()
+
+        self.url = reverse("inventory")
+
+    def test_create_item_with_description(self):
+        response = self.client.post(
+            self.url,
+            {
+                "name": "Milk",
+                "price": 10,
+                "description": "Fresh milk",
+            },
+            format="json",
+        )
+
+        data = self.assert_contract(
+            response,
+            CREATE_ITEM_RESPONSES,
+            status.HTTP_201_CREATED,
+        )
+
+        self.assertEqual(data["description"], "Fresh milk")
+
+    def test_create_item_without_description(self):
+        response = self.client.post(
+            self.url,
+            {
+                "name": "Water",
+                "price": 5,
+            },
+            format="json",
+        )
+
+        data = self.assert_contract(
+            response,
+            CREATE_ITEM_RESPONSES,
+            status.HTTP_201_CREATED,
+        )
+
+        self.assertFalse(data["description"])

@@ -40,6 +40,7 @@ def get_all_items(inventory_id: UUID):
         {
             "id": item.id,
             "name": item.name,
+            "description": item.description,
             "price": item.price,
             "stock": item.stock,
             "low_stock_threshold": item.low_stock_threshold,
@@ -57,6 +58,7 @@ def create_item(
     name: str,
     price: int,
     stock: int,
+    description: str = "",
     low_stock_threshold=None,
     low_stock_notification=False,
     category_ids: list[UUID] | None = None,
@@ -71,6 +73,7 @@ def create_item(
             item = InventoryItem.objects.create(
                 inventory_id=inventory_id,
                 name=name,
+                description=description,
                 price=price,
                 stock=stock,
                 low_stock_threshold=low_stock_threshold,
@@ -84,6 +87,7 @@ def create_item(
                 "id": item.id,
                 "name": item.name,
                 "price": item.price,
+                "description": item.description,
                 "stock": item.stock,
                 "low_stock_threshold": item.low_stock_threshold,
                 "low_stock_notification": item.low_stock_notification,
@@ -141,6 +145,7 @@ def update_item(
     name: str,
     price: int,
     low_stock_threshold: int | None,
+    description: str | None = None,
     low_stock_notification=None,
     category_ids: list[UUID] | None = None,
     user=None,
@@ -166,6 +171,10 @@ def update_item(
 
             # build the update fields dynamically
             update_fields = ["name", "price", "low_stock_threshold"]
+
+            if description is not None:
+                item.description = description
+                update_fields.append("description")
 
             if low_stock_notification is not None:
                 item.low_stock_notification = low_stock_notification

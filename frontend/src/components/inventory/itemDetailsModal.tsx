@@ -1,13 +1,25 @@
-import { Button, Dialog, DialogTitle, Stack, Typography } from "@mui/material";
-
-type Item = {
-  name: string;
-  description?: string;
-};
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Stack,
+  Typography,
+} from "@mui/material";
 
 type Props = {
   open: boolean;
-  item: Item;
+  item?: {
+    name: string;
+    category?: string;
+    stock?: number;
+    price?: number;
+    lowStockThreshold?: number | null;
+    status?: string;
+    description?: string;
+  };
   onClose: () => void;
 };
 
@@ -18,21 +30,81 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Item details</DialogTitle>
 
-      <Stack spacing={2}>
-        <Typography>
-          <strong>Name:</strong> {item.name}
-        </Typography>
+      <DialogContent dividers>
+        {!item ? (
+          <Typography>
+            Could not open item details. Please try again.
+          </Typography>
+        ) : (
+          <Stack spacing={2}>
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Product name
+              </Typography>
+              <Typography variant="h6">{item.name}</Typography>
+            </div>
 
-        {item.description && (
-          <>
-            <Typography>
-              <strong>Description</strong>
-            </Typography>
-            <Typography>{item.description}</Typography>
-          </>
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Description
+              </Typography>
+              <Typography>
+                {item.description?.trim() || "No description added"}
+              </Typography>
+            </div>
+
+            <Divider />
+
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Category
+              </Typography>
+              <Typography>{item.category || "—"}</Typography>
+            </div>
+
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Stock
+              </Typography>
+              <Typography>{item.stock ?? "—"}</Typography>
+            </div>
+
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Price
+              </Typography>
+              <Typography>
+                {typeof item.price === "number"
+                  ? new Intl.NumberFormat("nb-NO", {
+                      style: "currency",
+                      currency: "NOK",
+                    }).format(item.price)
+                  : "—"}
+              </Typography>
+            </div>
+
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Status
+              </Typography>
+              <Typography>{item.status || "—"}</Typography>
+            </div>
+
+            <div>
+              <Typography variant="body2" color="text.secondary">
+                Low stock threshold
+              </Typography>
+              <Typography>{item.lowStockThreshold ?? "—"}</Typography>
+            </div>
+          </Stack>
         )}
-        <Button onClick={onClose}>Close</Button>
-      </Stack>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose} variant="outlined">
+          Close
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
