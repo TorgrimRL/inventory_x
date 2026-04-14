@@ -4,7 +4,6 @@ Django settings for backend project.
 
 import sys
 from pathlib import Path
-from typing import Any
 
 import environ
 
@@ -241,25 +240,19 @@ AUTH0_LOGIN_FAILURE_RETURN_TO = env(
 # REDIS / CACHE / SESSION SETUP
 # ==============================================================================
 
-IS_TESTING = (
-    "pytest" in sys.argv
-    or "test" in sys.argv
-    or env.bool("TESTING", default=False)
-)
-
-REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
-
-CACHES: dict[str, dict[str, Any]]
+IS_TESTING = "test" in sys.argv or env.bool("TESTING", default=False)
 
 if IS_TESTING:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "inventory-x-test-cache",
+            "LOCATION": "test-cache",
         }
     }
     SESSION_ENGINE = "django.contrib.sessions.backends.db"
 else:
+    REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
+
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -271,4 +264,5 @@ else:
         }
     }
     SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-    SESSION_CACHE_ALIAS = "default"
+
+SESSION_CACHE_ALIAS = "default"
