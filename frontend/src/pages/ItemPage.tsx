@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
   CircularProgress,
   Container,
   Dialog,
@@ -22,23 +21,15 @@ import {
   Snackbar,
   Stack,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
   TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import EditItemModal from "../components/inventory/editItemModal";
-import InlineCategorySelect from "../components/inventory/InlineCategorySelect";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ItemTable from "../components/inventory/ItemTable";
 import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
@@ -48,53 +39,12 @@ import {
   listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
-
-type InventoryItem = {
-  id: number | string;
-  name: string;
-  stock: number;
-  price: number;
-  low_stock_threshold: number | null;
-  low_stock_notification: boolean;
-  category_ids?: string[];
-  order_id?: string;
-};
-
-type Category = {
-  id: string;
-  name: string;
-};
-
-function extractBackendMessage(err: any): string {
-  const data = err?.response?.data;
-
-  if (!data) return "Failed to add item.";
-  if (typeof data === "string") return data;
-  if (typeof data?.detail === "string") return data.detail;
-  if (typeof data?.message === "string") return data.message;
-
-  if (typeof data === "object") {
-    const parts: string[] = [];
-
-    for (const [key, value] of Object.entries(data)) {
-      if (Array.isArray(value)) parts.push(`${key}: ${value.join(" ")}`);
-      else if (typeof value === "string") parts.push(`${key}: ${value}`);
-      else if (value && typeof value === "object") {
-        parts.push(`${key}: ${JSON.stringify(value)}`);
-      }
-    }
-
-    if (parts.length > 0) return parts.join(" | ");
-  }
-
-  return "Failed to add item.";
-}
-
-function isLowStock(item: InventoryItem) {
-  return (
-    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
-  );
-}
+import {
+  type Category,
+  extractBackendMessage,
+  type InventoryItem,
+  isLowStock,
+} from "../types/inventory";
 
 export default function ItemPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -704,167 +654,22 @@ export default function ItemPage() {
                 </Typography>
               </Stack>
             ) : (
-              <>
-                <TableContainer component={Box} sx={{ overflowX: "auto" }}>
-                  <Table size="medium" sx={{ minWidth: 900 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, width: "46%" }}>
-                          <TableSortLabel
-                            active={sortField === "name"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "name" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("name")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Product name
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 600, width: "12%" }}>
-                          Category
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "stock"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "stock" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("stock")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Stock
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "price"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "price" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("price")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Price
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "status"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "status" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("status")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Status
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "low_stock_threshold"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "low_stock_threshold"
-                                ? sortDirection
-                                : "asc"
-                            }
-                            onClick={() => handleSort("low_stock_threshold")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Low Stock Threshold
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          Actions
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {pagedItems.map((item) => (
-                        <TableRow key={item.id} hover>
-                          <TableCell
-                            onClick={() => handleOpenStockLog(item.id)}
-                            sx={{
-                              whiteSpace: "normal",
-                              cursor: "pointer",
-                              color: "primary.main",
-                            }}
-                          >
-                            {item.name}
-                          </TableCell>
-                          <TableCell>
-                            {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
-                            {/* eslint-disable-next-line no-constant-condition */}
-                            {false ? (
-                              <Stack
-                                spacing={1}
-                                sx={{ minWidth: 160, maxWidth: 190 }}
-                              >
-                                <InlineCategorySelect
-                                  item={item}
-                                  categories={categories}
-                                  updating={updatingItemId === item.id}
-                                  onSave={handleInlineCategoryChange}
-                                  renderCategoryNames={renderCategoryNames}
-                                />
-                              </Stack>
-                            ) : (
-                              renderCategoryNames(
-                                (item.category_ids || []).map(String),
-                              )
-                            )}
-                          </TableCell>
-                          <TableCell align="right">{item.stock}</TableCell>
-                          <TableCell align="right">
-                            {new Intl.NumberFormat("nb-NO", {
-                              style: "currency",
-                              currency: "NOK",
-                            }).format(Number(item.price))}
-                          </TableCell>
-                          <TableCell align="right">
-                            {isLowStock(item) ? (
-                              <Chip
-                                label="Low stock"
-                                color="warning"
-                                size="small"
-                              />
-                            ) : (
-                              "—"
-                            )}
-                          </TableCell>
-                          <TableCell align="right">
-                            {item.low_stock_threshold ?? "—"}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => openEditDetails(item)}
-                            >
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <TablePagination
-                  component="div"
-                  count={displayedItems.length}
-                  page={page}
-                  onPageChange={(_, nextPage) => setPage(nextPage)}
-                  rowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[30]}
-                />
-              </>
+              <ItemTable
+                pagedItems={pagedItems}
+                totalItemsCount={displayedItems.length}
+                page={page}
+                setPage={setPage}
+                rowsPerPage={rowsPerPage}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                handleSort={handleSort}
+                handleOpenStockLog={handleOpenStockLog}
+                categories={categories}
+                updatingItemId={updatingItemId}
+                handleInlineCategoryChange={handleInlineCategoryChange}
+                renderCategoryNames={renderCategoryNames}
+                openEditDetails={openEditDetails}
+              />
             )}
           </Paper>
         </Stack>
