@@ -1,6 +1,4 @@
-Her er en ryddig `deploy/README.md` du kan lime inn som full erstatning:
 
-````md
 # Deployment (production)
 
 Production deployment for Inventory X uses Docker images built in GitHub Actions and deployed to a VM with Docker Compose.
