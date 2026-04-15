@@ -1,3 +1,12 @@
+export type DataTypeEnum = "text" | "number";
+
+export type InventoryCustomField = {
+  id: string;
+  name: string;
+  data_type: DataTypeEnum;
+  created_at: string;
+};
+
 export type InventoryItem = {
   id: number | string;
   name: string;
@@ -7,6 +16,7 @@ export type InventoryItem = {
   low_stock_notification: boolean;
   category_ids?: string[];
   order_id?: string;
+  custom_fields?: string | Record<string, any>;
 };
 
 export type Category = {

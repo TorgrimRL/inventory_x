@@ -42,6 +42,7 @@ import {
 import {
   type Category,
   extractBackendMessage,
+  type InventoryCustomField,
   type InventoryItem,
   isLowStock,
 } from "../types/inventory";
@@ -83,6 +84,7 @@ export default function ItemPage() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [customFields, setCustomFields] = useState<InventoryCustomField[]>([]);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -90,10 +92,8 @@ export default function ItemPage() {
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
   );
-  const [sortField, setSortField] = useState<
-    "name" | "stock" | "price" | "low_stock_threshold" | "status"
-  >("stock");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
   const [selectedLogItemId, setSelectedLogItemId] = useState<
@@ -133,6 +133,16 @@ export default function ItemPage() {
     }
   }
 
+  async function loadCustomFields() {
+    try {
+      const res = await ApiClient.get("/api/inventory/active/fields/");
+      const data = res.data;
+      setCustomFields((data.data || data || []) as InventoryCustomField[]);
+    } catch {
+      setCustomFields([]);
+    }
+  }
+
   async function loadCategories() {
     try {
       const allCategories = await listActiveCategories();
@@ -146,6 +156,7 @@ export default function ItemPage() {
     loadItems();
     loadRole();
     loadCategories();
+    loadCustomFields();
   }, []);
 
   function openDialog() {
@@ -283,18 +294,42 @@ export default function ItemPage() {
     );
 
     return [...filtered].sort((a, b) => {
+      const getVal = (item: InventoryItem) => {
+        if (sortField === "status") return isLowStock(item) ? 0 : 1;
+        if (sortField in item) return (item as any)[sortField];
+
+        let cFields = item.custom_fields;
+        if (typeof cFields === "string") {
+          try {
+            cFields = JSON.parse(cFields);
+          } catch {
+            cFields = {};
+          }
+        }
+        return (cFields as Record<string, any>)?.[sortField];
+      };
+
+      let valA = getVal(a);
+      let valB = getVal(b);
+
+      if (valA === null || valA === undefined) valA = "";
+      if (valB === null || valB === undefined) valB = "";
+
       let compare = 0;
 
-      if (sortField === "name") compare = a.name.localeCompare(b.name);
-      else if (sortField === "stock") compare = a.stock - b.stock;
-      else if (sortField === "price")
-        compare = Number(a.price) - Number(b.price);
-      else if (sortField === "low_stock_threshold") {
-        compare =
-          (a.low_stock_threshold ?? Number.MAX_SAFE_INTEGER) -
-          (b.low_stock_threshold ?? Number.MAX_SAFE_INTEGER);
-      } else if (sortField === "status") {
-        compare = Number(isLowStock(a)) - Number(isLowStock(b));
+      if (valA === "" && valB !== "") {
+        compare = 1; // push empty to bottom
+      } else if (valA !== "" && valB === "") {
+        compare = -1; // push empty to bottom
+      } else {
+        const numA = Number(valA);
+        const numB = Number(valB);
+
+        if (!isNaN(numA) && !isNaN(numB)) {
+          compare = numA - numB;
+        } else {
+          compare = String(valA).localeCompare(String(valB));
+        }
       }
 
       return sortDirection === "asc" ? compare : -compare;
@@ -334,15 +369,13 @@ export default function ItemPage() {
     sortDirection,
   ]);
 
-  function handleSort(
-    field: "name" | "stock" | "price" | "low_stock_threshold" | "status",
-  ) {
+  function handleSort(field: string) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
     }
     setSortField(field);
-    setSortDirection("asc");
+    setSortDirection("desc");
   }
 
   function handleClearSearch() {
@@ -669,6 +702,7 @@ export default function ItemPage() {
                 handleInlineCategoryChange={handleInlineCategoryChange}
                 renderCategoryNames={renderCategoryNames}
                 openEditDetails={openEditDetails}
+                customFields={customFields}
               />
             )}
           </Paper>

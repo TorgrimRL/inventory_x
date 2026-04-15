@@ -15,6 +15,7 @@ import {
 
 import {
   type Category,
+  type InventoryCustomField,
   type InventoryItem,
   isLowStock,
 } from "../../types/inventory";
@@ -26,11 +27,9 @@ interface ItemTableProps {
   page: number;
   setPage: (page: number) => void;
   rowsPerPage: number;
-  sortField: "name" | "stock" | "price" | "low_stock_threshold" | "status";
+  sortField: string;
   sortDirection: "asc" | "desc";
-  handleSort: (
-    field: "name" | "stock" | "price" | "low_stock_threshold" | "status",
-  ) => void;
+  handleSort: (field: string) => void;
   handleOpenStockLog: (id: number | string) => void;
   categories: Category[];
   updatingItemId: string | number | null;
@@ -40,7 +39,30 @@ interface ItemTableProps {
   ) => void;
   renderCategoryNames: (ids?: string[]) => string;
   openEditDetails: (item: InventoryItem) => void;
+  customFields: InventoryCustomField[];
 }
+
+function getCustomFieldValue(item: InventoryItem, fieldId: string) {
+  if (!item.custom_fields) return "—";
+  try {
+    const fields =
+      typeof item.custom_fields === "string"
+        ? JSON.parse(item.custom_fields)
+        : item.custom_fields;
+    return fields[fieldId] ?? "—";
+  } catch {
+    return "—";
+  }
+}
+
+type ColumnDef = {
+  id: string;
+  label: string;
+  align?: "left" | "right" | "center";
+  width?: string;
+  sortField?: string;
+  render: (item: InventoryItem) => React.ReactNode;
+};
 
 export default function ItemTable({
   pagedItems,
@@ -57,134 +79,150 @@ export default function ItemTable({
   handleInlineCategoryChange,
   renderCategoryNames,
   openEditDetails,
+  customFields = [],
 }: ItemTableProps) {
+  const columns: ColumnDef[] = [
+    {
+      id: "name",
+      label: "Product name",
+      width: "46%",
+      sortField: "name",
+      render: (item) => (
+        <Box
+          component="span"
+          onClick={() => handleOpenStockLog(item.id)}
+          sx={{ cursor: "pointer", color: "primary.main" }}
+        >
+          {item.name}
+        </Box>
+      ),
+    },
+    {
+      id: "category",
+      label: "Category",
+      width: "12%",
+      render: (item) =>
+        // eslint-disable-next-line no-constant-condition
+        false ? (
+          <Stack spacing={1} sx={{ minWidth: 160, maxWidth: 190 }}>
+            <InlineCategorySelect
+              item={item}
+              categories={categories}
+              updating={updatingItemId === item.id}
+              onSave={handleInlineCategoryChange}
+              renderCategoryNames={renderCategoryNames}
+            />
+          </Stack>
+        ) : (
+          renderCategoryNames((item.category_ids || []).map(String))
+        ),
+    },
+    {
+      id: "stock",
+      label: "Stock",
+      align: "right",
+      sortField: "stock",
+      render: (item) => item.stock,
+    },
+    {
+      id: "price",
+      label: "Price",
+      align: "right",
+      sortField: "price",
+      render: (item) =>
+        new Intl.NumberFormat("nb-NO", {
+          style: "currency",
+          currency: "NOK",
+        }).format(Number(item.price)),
+    },
+    {
+      id: "status",
+      label: "Status",
+      align: "right",
+      sortField: "status",
+      render: (item) =>
+        isLowStock(item) ? (
+          <Chip label="Low stock" color="warning" size="small" />
+        ) : (
+          "—"
+        ),
+    },
+    {
+      id: "low_stock_threshold",
+      label: "Low Stock Threshold",
+      align: "center",
+      sortField: "low_stock_threshold",
+      render: (item) => item.low_stock_threshold ?? "—",
+    },
+    ...customFields.map((field) => ({
+      id: field.id,
+      label: field.name,
+      align: "center" as const,
+      sortField: field.id,
+      render: (item: InventoryItem) => getCustomFieldValue(item, field.id),
+    })),
+    {
+      id: "actions",
+      label: "Actions",
+      align: "right",
+      render: (item) => (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => openEditDetails(item)}
+        >
+          Edit
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <>
       <TableContainer component={Box} sx={{ overflowX: "auto" }}>
         <Table size="medium" sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, width: "46%" }}>
-                <TableSortLabel
-                  active={sortField === "name"}
-                  hideSortIcon={false}
-                  direction={sortField === "name" ? sortDirection : "asc"}
-                  onClick={() => handleSort("name")}
-                  sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+              {columns.map((col) => (
+                <TableCell
+                  key={col.id}
+                  align={col.align || "left"}
+                  sx={{ fontWeight: 600, width: col.width }}
                 >
-                  Product name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600, width: "12%" }}>
-                Category
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                <TableSortLabel
-                  active={sortField === "stock"}
-                  hideSortIcon={false}
-                  direction={sortField === "stock" ? sortDirection : "asc"}
-                  onClick={() => handleSort("stock")}
-                  sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                >
-                  Stock
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                <TableSortLabel
-                  active={sortField === "price"}
-                  hideSortIcon={false}
-                  direction={sortField === "price" ? sortDirection : "asc"}
-                  onClick={() => handleSort("price")}
-                  sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                >
-                  Price
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                <TableSortLabel
-                  active={sortField === "status"}
-                  hideSortIcon={false}
-                  direction={sortField === "status" ? sortDirection : "asc"}
-                  onClick={() => handleSort("status")}
-                  sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                <TableSortLabel
-                  active={sortField === "low_stock_threshold"}
-                  hideSortIcon={false}
-                  direction={
-                    sortField === "low_stock_threshold" ? sortDirection : "asc"
-                  }
-                  onClick={() => handleSort("low_stock_threshold")}
-                  sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                >
-                  Low Stock Threshold
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                Actions
-              </TableCell>
+                  {col.sortField ? (
+                    <TableSortLabel
+                      active={sortField === col.sortField}
+                      hideSortIcon={false}
+                      direction={
+                        sortField === col.sortField ? sortDirection : "asc"
+                      }
+                      onClick={() => handleSort(col.sortField!)}
+                      sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
+                    >
+                      {col.label}
+                    </TableSortLabel>
+                  ) : (
+                    col.label
+                  )}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {pagedItems.map((item) => (
               <TableRow key={item.id} hover>
-                <TableCell
-                  onClick={() => handleOpenStockLog(item.id)}
-                  sx={{
-                    whiteSpace: "normal",
-                    cursor: "pointer",
-                    color: "primary.main",
-                  }}
-                >
-                  {item.name}
-                </TableCell>
-                <TableCell>
-                  {/* eslint-disable-next-line no-constant-condition */}
-                  {false ? (
-                    <Stack spacing={1} sx={{ minWidth: 160, maxWidth: 190 }}>
-                      <InlineCategorySelect
-                        item={item}
-                        categories={categories}
-                        updating={updatingItemId === item.id}
-                        onSave={handleInlineCategoryChange}
-                        renderCategoryNames={renderCategoryNames}
-                      />
-                    </Stack>
-                  ) : (
-                    renderCategoryNames((item.category_ids || []).map(String))
-                  )}
-                </TableCell>
-                <TableCell align="right">{item.stock}</TableCell>
-                <TableCell align="right">
-                  {new Intl.NumberFormat("nb-NO", {
-                    style: "currency",
-                    currency: "NOK",
-                  }).format(Number(item.price))}
-                </TableCell>
-                <TableCell align="right">
-                  {isLowStock(item) ? (
-                    <Chip label="Low stock" color="warning" size="small" />
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  {item.low_stock_threshold ?? "—"}
-                </TableCell>
-                <TableCell align="right">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => openEditDetails(item)}
+                {columns.map((col) => (
+                  <TableCell
+                    key={col.id}
+                    align={col.align || "left"}
+                    sx={
+                      col.id === "name" ? { whiteSpace: "normal" } : undefined
+                    }
                   >
-                    Edit
-                  </Button>
-                </TableCell>
+                    {col.render(item)}
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>

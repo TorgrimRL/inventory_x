@@ -62,6 +62,17 @@ describe("ItemPage", () => {
         console.info(...args);
       });
     mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/active/fields/") {
+        return Promise.resolve({
+          data: {
+            data: [
+              { id: "cf1", name: "Location", data_type: "text" },
+              { id: "cf2", name: "Warranty", data_type: "number" },
+            ],
+          },
+        } as any);
+      }
+
       if (url === "/api/inventory/") {
         return Promise.resolve({
           data: {
@@ -73,6 +84,7 @@ describe("ItemPage", () => {
                 price: 20,
                 category_ids: ["c1"],
                 low_stock_threshold: 8,
+                custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
               },
               {
                 id: 2,
@@ -81,6 +93,7 @@ describe("ItemPage", () => {
                 price: 5,
                 category_ids: [],
                 low_stock_threshold: 3,
+                custom_fields: JSON.stringify({ cf1: "Aisle 2" }),
               },
               {
                 id: 3,
@@ -89,6 +102,7 @@ describe("ItemPage", () => {
                 price: 12,
                 category_ids: ["c1", "c3"],
                 low_stock_threshold: 4,
+                custom_fields: "{}",
               },
               {
                 id: 4,
@@ -244,12 +258,21 @@ describe("ItemPage", () => {
 
     await screen.findByText("Milk");
 
-    // Default sort is stock asc
+    // Default sort: Name desc
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Butter",
+      "Bread",
+    ]);
+
+    // Name asc
+    await user.click(screen.getByRole("button", { name: /product name/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
+      "Butter",
       "Eggs",
       "Milk",
-      "Butter",
     ]);
 
     // Stock desc
@@ -261,30 +284,16 @@ describe("ItemPage", () => {
       "Bread",
     ]);
 
-    // Name asc, then desc
-    await user.click(screen.getByRole("button", { name: /product name/i }));
+    // Stock asc
+    await user.click(screen.getByRole("button", { name: /^stock$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
-      "Butter",
       "Eggs",
       "Milk",
-    ]);
-    await user.click(screen.getByRole("button", { name: /product name/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Milk",
-      "Eggs",
       "Butter",
-      "Bread",
     ]);
 
-    // Price asc, then desc
-    await user.click(screen.getByRole("button", { name: /price/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Bread",
-      "Eggs",
-      "Butter",
-      "Milk",
-    ]);
+    // Price desc
     await user.click(screen.getByRole("button", { name: /price/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
@@ -292,27 +301,39 @@ describe("ItemPage", () => {
       "Eggs",
       "Bread",
     ]);
-    // Low Stock Threshold asc, then desc
-    await user.click(
-      screen.getByRole("button", { name: /^low stock threshold$/i }),
-    );
+
+    // Price asc
+    await user.click(screen.getByRole("button", { name: /price/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
       "Eggs",
-      "Milk",
       "Butter",
+      "Milk",
     ]);
+
+    // Low Stock Threshold desc
     await user.click(
       screen.getByRole("button", { name: /^low stock threshold$/i }),
     );
     expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Butter",
+      "Butter", // null -> push to top on desc
       "Milk",
       "Eggs",
       "Bread",
     ]);
 
-    // Status asc, then desc
+    // Low Stock Threshold asc
+    await user.click(
+      screen.getByRole("button", { name: /^low stock threshold$/i }),
+    );
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+      "Butter", // null -> bottom
+    ]);
+
+    // Status desc
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
@@ -321,6 +342,7 @@ describe("ItemPage", () => {
       "Bread",
     ]);
 
+    // Status asc
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",

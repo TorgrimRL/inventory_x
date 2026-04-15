@@ -122,14 +122,21 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
 }
 
 export type InventoryItem = {
-  id: number | string;
+  id: number;
   name: string;
   stock: number;
   price: number;
   low_stock_threshold: number | null;
-  category_ids?: string[];
-  category_names?: string[];
+  category_ids: number[] | null;
+  category_names: string[] | null;
+  custom_fields: Record<string, any> | null;
 };
+
+export interface CustomFieldSchema {
+  id: number;
+  name: string;
+  data_type: string;
+}
 
 export async function listInventoryItems(): Promise<InventoryItem[]> {
   const res = await apiClient.get("/api/inventory/");
