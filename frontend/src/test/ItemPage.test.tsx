@@ -659,4 +659,115 @@ describe("ItemPage", () => {
     expect(await screen.findByText("Category deleted")).toBeInTheDocument();
     expect(within(dialog).queryByText("Cookies")).not.toBeInTheDocument();
   });
+
+  test("renders custom field columns and supports sorting", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    // Check if custom field headers are rendered
+    expect(
+      screen.getByRole("button", { name: /location/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /warranty/i }),
+    ).toBeInTheDocument();
+
+    // Check if custom field data is rendered in the table for Milk
+    expect(screen.getByText("Aisle 1")).toBeInTheDocument();
+
+    // Test sorting by a custom field (Location)
+    await user.click(screen.getByRole("button", { name: /location/i }));
+
+    // Check order
+    let rows = getVisibleRows().map((r) => r.name);
+    // Since Bread is Aisle 2 and Milk is Aisle 1:
+    expect(rows.indexOf("Bread")).toBeLessThan(rows.indexOf("Milk"));
+
+    // Click again for Descending
+    await user.click(screen.getByRole("button", { name: /location/i }));
+    rows = getVisibleRows().map((r) => r.name);
+    expect(rows.indexOf("Milk")).toBeLessThan(rows.indexOf("Bread"));
+  });
+
+  test("Manage custom fields dialog - add, delete, and type selection", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+    await screen.findByText("Milk");
+
+    // Open manage fields dialog
+    await user.click(screen.getByRole("button", { name: /manage fields/i }));
+    const dialog = await screen.findByRole("dialog", {
+      name: /manage custom fields/i,
+    });
+
+    // Verify existing fields are loaded
+    expect(within(dialog).getByText(/Location/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Warranty/i)).toBeInTheDocument();
+
+    // Mock the create field response
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 201,
+      data: { id: "cf3", name: "Color", data_type: "text" },
+    } as any);
+
+    // Add a new field
+    const nameInput = within(dialog).getByRole("textbox", {
+      name: /new field name/i,
+    });
+    await user.type(nameInput, "Color");
+
+    // Select type
+    const typeSelect = within(dialog).getByRole("combobox", { name: /type/i });
+    fireEvent.mouseDown(typeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: /text/i }));
+
+    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+
+    expect(await screen.findByText("Custom field created")).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Color/i)).toBeInTheDocument();
+
+    // Delete a field
+    mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
+
+    // Find the row containing 'Warranty' and click its Delete button
+    const warrantyText = within(dialog).getByText(/Warranty/i);
+    const warrantyRow = warrantyText.closest(".MuiStack-root") as HTMLElement;
+    await user.click(
+      within(warrantyRow).getByRole("button", { name: /delete/i }),
+    );
+
+    expect(await screen.findByText("Custom field deleted")).toBeInTheDocument();
+    expect(within(dialog).queryByText(/Warranty/i)).not.toBeInTheDocument();
+  });
+
+  test("employees cannot see the 'Manage fields' button", async () => {
+    // Mock the active inventory check to return role: 'employee'
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/active/") {
+        return Promise.resolve({
+          data: {
+            id: "inv1",
+            name: "Test",
+            orgNumber: "123",
+            role: "employee",
+          },
+        } as any);
+      }
+      return Promise.resolve({ data: { data: [] } } as any);
+    });
+
+    render(<ItemPage />);
+
+    // Wait for the page to load
+    await waitFor(() => {
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+
+    // Manage fields button should be hidden for employees
+    expect(
+      screen.queryByRole("button", { name: /manage fields/i }),
+    ).not.toBeInTheDocument();
+  });
 });

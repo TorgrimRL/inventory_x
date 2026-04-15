@@ -410,4 +410,107 @@ describe("EditItemModal - user story tests", () => {
     expect(mockedUpdateItem).not.toHaveBeenCalled();
     expect(mockedAdjustStock).not.toHaveBeenCalled();
   });
+
+  test("owner: custom fields render in edit modal and can be edited", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [
+          { id: "cf1", name: "Location", data_type: "text" },
+          { id: "cf2", name: "Warranty", data_type: "number" },
+        ],
+      },
+    } as any);
+    mockedUpdateItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    const props = renderModal({
+      canEditDetails: true,
+      initialCustomFields: { cf1: "Aisle 1", cf2: "12" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Check if custom fields rendered with initial values
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    expect(locationInput).toHaveValue("Aisle 1");
+    expect(warrantyInput).toHaveValue(12);
+
+    // Edit the values
+    await user.clear(locationInput);
+    await user.type(locationInput, "Warehouse B");
+
+    await user.clear(warrantyInput);
+    await user.type(warrantyInput, "24");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedUpdateItem).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          custom_fields: { cf1: "Warehouse B", cf2: "24" },
+        }),
+      );
+    });
+
+    expect(props.onItemUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        custom_fields: { cf1: "Warehouse B", cf2: "24" },
+      }),
+    );
+  });
+
+  test("employee: custom field inputs are disabled", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [{ id: "cf1", name: "Location", data_type: "text" }],
+      },
+    } as any);
+
+    renderModal({
+      canEditDetails: false, // Employee
+      initialCustomFields: { cf1: "Aisle 1" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+
+    // Ensure it's rendered but disabled
+    expect(locationInput).toHaveValue("Aisle 1");
+    expect(locationInput).toBeDisabled();
+  });
+
+  test("owner: number custom fields strictly enforce numeric input", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [{ id: "cf2", name: "Warranty", data_type: "number" }],
+      },
+    } as any);
+
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    // Attempt to type text into a number field
+    await user.type(warrantyInput, "abc");
+
+    // The input should remain empty
+    expect(warrantyInput).toHaveValue(null);
+
+    // Typing a valid number should work
+    await user.type(warrantyInput, "12");
+    expect(warrantyInput).toHaveValue(12);
+  });
 });
