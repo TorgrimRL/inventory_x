@@ -31,6 +31,7 @@ import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ItemTable from "../components/inventory/ItemTable";
 import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
+import ManageCustomFieldsDialog from "../components/inventory/ManageCustomFieldsDialog";
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
@@ -108,6 +109,8 @@ export default function ItemPage() {
     setSelectedLogItemId(null);
   };
   const [enableNotification, setEnableNotification] = useState(false);
+
+  const [customFieldsDialogOpen, setCustomFieldsDialogOpen] = useState(false);
 
   async function loadItems() {
     setLoading(true);
@@ -435,6 +438,16 @@ export default function ItemPage() {
             spacing={1.5}
             justifyContent="flex-end"
           >
+            {canEditDetails && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<SettingsIcon />}
+                onClick={() => setCustomFieldsDialogOpen(true)}
+              >
+                Manage fields
+              </Button>
+            )}
             {canEditDetails && (
               <Button
                 variant="outlined"
@@ -927,6 +940,15 @@ export default function ItemPage() {
         open={Boolean(selectedLogItemId)}
         itemId={selectedLogItemId}
         onClose={handleCloseStockLog}
+      />
+
+      <ManageCustomFieldsDialog
+        open={customFieldsDialogOpen}
+        onClose={() => setCustomFieldsDialogOpen(false)}
+        customFields={customFields}
+        setCustomFields={setCustomFields}
+        setSnackMessage={setSnackMessage}
+        setSnackOpen={setSnackOpen}
       />
     </Box>
   );

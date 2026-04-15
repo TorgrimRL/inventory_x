@@ -1,5 +1,5 @@
+import type { DataTypeEnum, InventoryCustomField } from "../types/inventory";
 import apiClient from "./apiClient";
-
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
@@ -271,4 +271,19 @@ export async function removeInventoryMember(
 ): Promise<{ message: string }> {
   const res = await apiClient.delete(`/api/inventory/members/${membershipId}/`);
   return res.data;
+}
+
+export async function createCustomField(
+  name: string,
+  data_type: DataTypeEnum,
+): Promise<InventoryCustomField> {
+  const res = await apiClient.post("/api/inventory/active/fields/", {
+    name,
+    data_type,
+  });
+  return res.data;
+}
+
+export async function deleteCustomField(id: string): Promise<void> {
+  await apiClient.delete(`/api/inventory/active/fields/${id}/`);
 }
