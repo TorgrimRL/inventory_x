@@ -859,6 +859,7 @@ export default function ItemPage() {
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
           initialCategoryIds={(selectedItem.category_ids || []).map(String)}
+          initialCustomFields={selectedItem.custom_fields}
           initialLowStockThreshold={selectedItem.low_stock_threshold ?? null}
           low_stock_notification={selectedItem.low_stock_notification}
           canEditDetails={canEditDetails}
@@ -870,6 +871,7 @@ export default function ItemPage() {
             lowStockThreshold: number | null;
             low_stock_notification: boolean;
             category_ids?: string[];
+            custom_fields?: Record<string, any>;
           }) => {
             setItems((prev) =>
               prev.map((it) =>
@@ -881,6 +883,7 @@ export default function ItemPage() {
                       low_stock_threshold: updated.lowStockThreshold,
                       low_stock_notification: updated.low_stock_notification,
                       category_ids: updated.category_ids,
+                      custom_fields: updated.custom_fields,
                     }
                   : it,
               ),

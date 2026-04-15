@@ -18,6 +18,16 @@ jest.mock("../services/inventoryService", () => ({
   createActiveCategory: jest.fn(),
 }));
 
+import ApiClient from "../services/apiClient";
+
+jest.mock("../services/apiClient", () => ({
+  get: jest.fn(),
+}));
+
+const mockedApiClientGet = ApiClient.get as jest.MockedFunction<
+  typeof ApiClient.get
+>;
+
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
   typeof adjustStock
 >;
@@ -41,6 +51,11 @@ describe("EditItemModal - user story tests", () => {
     mockedCreateActiveCategory.mockResolvedValue({
       id: "c4",
       name: "New",
+    } as any);
+    mockedApiClientGet.mockResolvedValue({
+      data: {
+        data: [],
+      },
     } as any);
   });
   jest.setTimeout(15000);
@@ -111,6 +126,7 @@ describe("EditItemModal - user story tests", () => {
         low_stock_threshold: 4,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
       });
     });
 
@@ -125,6 +141,7 @@ describe("EditItemModal - user story tests", () => {
       lowStockThreshold: 4,
       low_stock_notification: false,
       category_ids: [],
+      custom_fields: {},
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -351,6 +368,7 @@ describe("EditItemModal - user story tests", () => {
         low_stock_threshold: null,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
       });
     });
 
@@ -361,6 +379,7 @@ describe("EditItemModal - user story tests", () => {
       lowStockThreshold: null,
       low_stock_notification: false,
       category_ids: [],
+      custom_fields: {},
     });
 
     expect(props.onClose).toHaveBeenCalled();

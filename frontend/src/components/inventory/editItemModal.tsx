@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
+import ApiClient from "../../services/apiClient";
 import type { ItemCategory } from "../../services/inventoryService";
 import {
   adjustStock,
@@ -25,6 +26,7 @@ import {
   listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
+import type { InventoryCustomField } from "../../types/inventory";
 
 type Props = {
   open: boolean;
@@ -36,6 +38,7 @@ type Props = {
   initialCategoryIds?: string[];
   initialLowStockThreshold?: number | null;
   low_stock_notification: boolean;
+  initialCustomFields?: string | Record<string, any>;
   // owner => true, employee => false
   canEditDetails: boolean;
 
@@ -48,6 +51,7 @@ type Props = {
     lowStockThreshold: null | number;
     low_stock_notification: boolean;
     category_ids?: string[];
+    custom_fields?: Record<string, any>;
   }) => void;
   onStockUpdated: (newStock: number) => void;
 
@@ -80,6 +84,7 @@ export default function EditItemModal({
   low_stock_notification,
   currentStock,
   initialCategoryIds,
+  initialCustomFields,
   canEditDetails,
   onClose,
   onItemUpdated,
@@ -105,6 +110,13 @@ export default function EditItemModal({
     initialCategoryIds || [],
   );
 
+  const [customFieldsDef, setCustomFieldsDef] = useState<
+    InventoryCustomField[]
+  >([]);
+  const [customFieldValues, setCustomFieldValues] = useState<
+    Record<string, any>
+  >({});
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -121,9 +133,28 @@ export default function EditItemModal({
     setDirection(null);
     setSelectedCategoryIds(initialCategoryIds || []);
     setError(null);
+
+    // Parse custom fields
+    let parsed = {};
+    if (typeof initialCustomFields === "string") {
+      try {
+        parsed = JSON.parse(initialCustomFields);
+      } catch (err) {
+        console.warn("Parse error", err);
+      }
+    } else if (initialCustomFields) {
+      parsed = { ...initialCustomFields };
+    }
+    setCustomFieldValues(parsed);
+
     listActiveCategories()
       .then((list) => setCategories(list))
       .catch(() => setCategories([]));
+
+    // Fetch custom fields
+    ApiClient.get("/api/inventory/active/fields/")
+      .then((res) => setCustomFieldsDef(res.data?.data || res.data || []))
+      .catch(() => setCustomFieldsDef([]));
   }, [
     open,
     initialCategoryIds,
@@ -131,6 +162,7 @@ export default function EditItemModal({
     initialPrice,
     initialLowStockThreshold,
     low_stock_notification,
+    initialCustomFields,
   ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
@@ -168,13 +200,27 @@ export default function EditItemModal({
     .sort()
     .join(",");
 
+  const initialCustomFieldsKey = JSON.stringify(
+    typeof initialCustomFields === "string"
+      ? (() => {
+          try {
+            return JSON.parse(initialCustomFields);
+          } catch {
+            return {};
+          }
+        })()
+      : initialCustomFields || {},
+  );
+  const currentCustomFieldsKey = JSON.stringify(customFieldValues);
+
   const detailsChanged =
     canEditDetails &&
     (name.trim() !== initialName ||
       Number(priceNumber) !== Number(initialPrice) ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
       initialCategoryKey !== selectedCategoryKey ||
-      notification !== Boolean(low_stock_notification));
+      notification !== Boolean(low_stock_notification) ||
+      initialCustomFieldsKey !== currentCustomFieldsKey);
 
   const stockChanged = wantsStockChange && direction !== null;
 
@@ -237,7 +283,8 @@ export default function EditItemModal({
           Number(priceNumber) !== Number(initialPrice) ||
           lowStockThresholdNumber !== initialThresholdValue ||
           initialIds.join(",") !== currentIds.join(",") ||
-          notification !== Boolean(low_stock_notification);
+          notification !== Boolean(low_stock_notification) ||
+          initialCustomFieldsKey !== currentCustomFieldsKey;
 
         if (changed) {
           const payload = {
@@ -246,6 +293,7 @@ export default function EditItemModal({
             low_stock_threshold: lowStockThresholdNumber,
             low_stock_notification: notification,
             category_ids: categoryIdsToSave,
+            custom_fields: customFieldValues,
           };
 
           await updateItem(itemId, payload);
@@ -256,6 +304,7 @@ export default function EditItemModal({
             lowStockThreshold: lowStockThresholdNumber,
             low_stock_notification: notification,
             category_ids: payload.category_ids,
+            custom_fields: payload.custom_fields,
           });
         }
       }
@@ -368,7 +417,6 @@ export default function EditItemModal({
               }
               label="Enable low stock mail notifications for this item"
             />
-            <Divider sx={{ my: 1 }} />
             {canEditDetails ? (
               <TextField
                 select
@@ -428,6 +476,22 @@ export default function EditItemModal({
                 fullWidth
               />
             )}
+            {customFieldsDef.map((field) => (
+              <TextField
+                key={field.id}
+                label={field.name}
+                value={customFieldValues[field.id] ?? ""}
+                onChange={(e) =>
+                  setCustomFieldValues((prev) => ({
+                    ...prev,
+                    [field.id]: e.target.value,
+                  }))
+                }
+                type={field.data_type === "number" ? "number" : "text"}
+                disabled={saving || !canEditDetails}
+                fullWidth
+              />
+            ))}
 
             <Divider />
             <Typography variant="subtitle1">Stock Adjustment</Typography>

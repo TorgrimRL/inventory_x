@@ -391,6 +391,7 @@ describe("ItemPage", () => {
         low_stock_threshold: 8,
         category_ids: ["c1", "c3"],
         low_stock_notification: false,
+        custom_fields: { cf1: "Aisle 1", cf2: "0" },
       });
     });
   });
