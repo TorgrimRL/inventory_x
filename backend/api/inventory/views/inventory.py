@@ -41,7 +41,9 @@ class InventoryView(APIView):
         responses=CREATE_ITEM_RESPONSES,
     )
     def post(self, request: Request) -> Response:
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
         if not serializer.is_valid():
             logger.warning(f"Invalid data provided: {serializer.errors}")
             return Response(
@@ -61,6 +63,8 @@ class InventoryView(APIView):
                 "low_stock_notification", False
             )
 
+            custom_fields = serializer.validated_data.get("custom_fields", {})
+
             # Attempt to create the item
             created = create_item(
                 inventory_id=membership.inventory.id,
@@ -69,6 +73,7 @@ class InventoryView(APIView):
                 stock=stock,
                 user=membership.user,
                 low_stock_threshold=low_stock_threshold,
+                custom_fields=custom_fields,
                 low_stock_notification=low_stock_notification,
             )
             return Response(created, status=status.HTTP_201_CREATED)
