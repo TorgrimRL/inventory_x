@@ -48,7 +48,14 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
               <Typography variant="body2" color="text.secondary">
                 Description
               </Typography>
-              <Typography>
+              <Typography
+                sx={{
+                  maxHeight: 95,
+                  overflowY: "auto",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
                 {item.description?.trim() || "No description added"}
               </Typography>
             </div>

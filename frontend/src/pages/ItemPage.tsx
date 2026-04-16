@@ -209,13 +209,28 @@ export default function ItemPage() {
 
   function openDialog() {
     setError(null);
+    setName("");
+    setDescription("");
     setNewItemCategoryIds([]);
+    setPrice("0");
+    setStock("0");
     setNewItemLowStockThreshold("");
+    setEnableNotification(false);
     setOpen(true);
   }
 
   function closeDialog() {
-    if (!saving) setOpen(false);
+    if (saving) return;
+
+    setOpen(false);
+    setError(null);
+    setName("");
+    setDescription("");
+    setNewItemCategoryIds([]);
+    setPrice("0");
+    setStock("0");
+    setNewItemLowStockThreshold("");
+    setEnableNotification(false);
   }
 
   function openEditDetails(item: InventoryItem) {
@@ -824,9 +839,10 @@ export default function ItemPage() {
                                 onClick={() => handleOpenItemDetails(item)}
                                 sx={{
                                   p: 0,
-                                  minWidth: "auto",
+                                  minWidth: 0,
                                   textTransform: "none",
                                   justifyContent: "flex-start",
+                                  textAlign: "left",
                                   color: "inherit",
                                   fontSize: "inherit",
                                   fontWeight: 400,
@@ -958,8 +974,14 @@ export default function ItemPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 fullWidth
                 multiline
-                minRows={3}
+                minRows={4}
+                maxRows={4}
                 disabled={saving}
+                sx={{
+                  "& .MuiInputBase-inputMultiline": {
+                    overflowY: "auto",
+                  },
+                }}
               />
 
               <TextField
@@ -1161,9 +1183,12 @@ export default function ItemPage() {
                 ),
                 stock: selectedDetailsItem.stock,
                 price: Number(selectedDetailsItem.price),
-                status: isLowStock(selectedDetailsItem)
-                  ? "Low stock"
-                  : "In stock",
+                status:
+                  selectedDetailsItem.stock === 0
+                    ? "Low stock"
+                    : isLowStock(selectedDetailsItem)
+                      ? "Low stock"
+                      : "In stock",
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
                 description: selectedDetailsItem.description,
               }

@@ -346,7 +346,8 @@ export default function EditItemModal({
               disabled={saving || !canEditDetails}
               fullWidth
               multiline
-              minRows={3}
+              minRows={4}
+              maxRows={4}
               helperText="Optional description for this item"
             />
 
