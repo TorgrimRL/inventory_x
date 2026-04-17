@@ -165,6 +165,7 @@ class InventoryItem(models.Model):
     )
     inventory_id: uuid.UUID
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default="")
     price = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
     low_stock_threshold = models.PositiveIntegerField(null=True, blank=True)

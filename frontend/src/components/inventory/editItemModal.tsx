@@ -31,6 +31,7 @@ type Props = {
   itemId: number | string;
 
   initialName: string;
+  initialDescription?: string;
   initialPrice: number;
   currentStock: number;
   initialCategoryIds?: string[];
@@ -46,6 +47,7 @@ type Props = {
     id: number | string;
     name: string;
     price: number;
+    description?: string;
     lowStockThreshold: null | number;
     low_stock_notification: boolean;
     category_ids?: string[];
@@ -78,6 +80,7 @@ export default function EditItemModal({
   itemId,
   initialName,
   initialPrice,
+  initialDescription,
   initialLowStockThreshold,
   initialImageUrl,
   low_stock_notification,
@@ -103,6 +106,8 @@ export default function EditItemModal({
     null,
   );
 
+  const [description, setDescription] = useState(initialDescription || "");
+
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     initialCategoryIds || [],
@@ -117,6 +122,7 @@ export default function EditItemModal({
   useEffect(() => {
     if (!open) return;
     setName(initialName);
+    setDescription(initialDescription || "");
     setPrice(String(initialPrice));
     setLowStockThreshold(
       initialLowStockThreshold == null ? "" : String(initialLowStockThreshold),
@@ -136,6 +142,7 @@ export default function EditItemModal({
     initialCategoryIds,
     initialName,
     initialPrice,
+    initialDescription,
     initialLowStockThreshold,
     low_stock_notification,
   ]);
@@ -178,6 +185,7 @@ export default function EditItemModal({
   const detailsChanged =
     canEditDetails &&
     (name.trim() !== initialName ||
+      description.trim() !== (initialDescription || "").trim() ||
       Number(priceNumber) !== Number(initialPrice) ||
       lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
       initialCategoryKey !== selectedCategoryKey ||
@@ -243,6 +251,7 @@ export default function EditItemModal({
 
         const changed =
           trimmed !== initialName ||
+          description.trim() !== (initialDescription || "").trim() ||
           Number(priceNumber) !== Number(initialPrice) ||
           lowStockThresholdNumber !== initialThresholdValue ||
           initialIds.join(",") !== currentIds.join(",") ||
@@ -251,12 +260,15 @@ export default function EditItemModal({
           removeImage;
 
         if (changed) {
+          const trimmedDescription = description.trim();
+
           const payload = {
             name: trimmed,
             price: priceNumber,
             low_stock_threshold: lowStockThresholdNumber,
             low_stock_notification: notification,
             category_ids: categoryIdsToSave,
+            ...(trimmedDescription ? { description: trimmedDescription } : {}),
             image: selectedImage,
             remove_image: removeImage,
           };
@@ -266,6 +278,7 @@ export default function EditItemModal({
             id: itemId,
             name: trimmed,
             price: priceNumber,
+            ...(trimmedDescription ? { description: trimmedDescription } : {}),
             lowStockThreshold: lowStockThresholdNumber,
             low_stock_notification: notification,
             category_ids: payload.category_ids,
@@ -343,6 +356,18 @@ export default function EditItemModal({
             />
 
             <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={saving || !canEditDetails}
+              fullWidth
+              multiline
+              minRows={4}
+              maxRows={4}
+              helperText="Optional description for this item"
+            />
+
+            <TextField
               label="Price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
@@ -358,6 +383,7 @@ export default function EditItemModal({
                   : " "
               }
             />
+
             <TextField
               label="Low stock threshold"
               value={lowStockThreshold}

@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import HistoryIcon from "@mui/icons-material/History";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -31,6 +32,7 @@ import {
   TableRow,
   TableSortLabel,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +40,7 @@ import { useEffect, useMemo, useState } from "react";
 import EditItemModal from "../components/inventory/editItemModal";
 import InlineCategorySelect from "../components/inventory/InlineCategorySelect";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
+import ItemDetailsModal from "../components/inventory/itemDetailsModal.tsx";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
 import StockLog from "../components/inventory/StockLog";
@@ -59,6 +62,7 @@ type InventoryItem = {
   category_ids?: string[];
   image_url?: string | null;
   order_id?: string;
+  description?: string;
 };
 
 type Category = {
@@ -109,10 +113,15 @@ export default function ItemPage() {
   const [price, setPrice] = useState<string>("0");
   const priceNumber = Number(price);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
+  const [description, setDescription] = useState("");
 
   const [stock, setStock] = useState<string>("0");
   const stockNumber = Number(stock);
   const stockIsInvalid = !Number.isFinite(stockNumber) || stockNumber < 0;
+
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] =
+    useState<InventoryItem | null>(null);
 
   const [newItemLowStockThreshold, setNewItemLowStockThreshold] =
     useState<string>("");
@@ -206,14 +215,29 @@ export default function ItemPage() {
 
   function openDialog() {
     setError(null);
+    setName("");
+    setDescription("");
     setNewItemCategoryIds([]);
+    setPrice("0");
+    setStock("0");
     setNewItemLowStockThreshold("");
+    setEnableNotification(false);
     setNewItemImage(null);
     setOpen(true);
   }
 
   function closeDialog() {
-    if (!saving) setOpen(false);
+    if (saving) return;
+
+    setOpen(false);
+    setError(null);
+    setName("");
+    setDescription("");
+    setNewItemCategoryIds([]);
+    setPrice("0");
+    setStock("0");
+    setNewItemLowStockThreshold("");
+    setEnableNotification(false);
   }
 
   function openEditDetails(item: InventoryItem) {
@@ -224,6 +248,17 @@ export default function ItemPage() {
   function closeEditDetails() {
     setEditOpen(false);
     setSelectedItem(null);
+  }
+
+  function handleOpenItemDetails(item: InventoryItem) {
+    console.log("clicked item", item);
+    setSelectedDetailsItem(item);
+    setDetailsOpen(true);
+  }
+
+  function handleCloseItemDetails() {
+    setDetailsOpen(false);
+    setSelectedDetailsItem(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -245,6 +280,8 @@ export default function ItemPage() {
 
     const categoryIdsToSave = [...newItemCategoryIds];
 
+    const trimmedDescription = description.trim();
+
     const payload = {
       name: name.trim(),
       price: Number(price),
@@ -252,6 +289,7 @@ export default function ItemPage() {
       low_stock_threshold: newItemLowStockThresholdNumber,
       low_stock_notification: enableNotification,
       category_ids: categoryIdsToSave,
+      ...(trimmedDescription ? { description: trimmedDescription } : {}),
       image: newItemImage,
     };
 
@@ -259,6 +297,11 @@ export default function ItemPage() {
       const createdData = await createItem(payload);
       const created = {
         ...createdData,
+        ...(createdData.description
+          ? { description: createdData.description }
+          : trimmedDescription
+            ? { description: trimmedDescription }
+            : {}),
         category_ids: categoryIdsToSave,
       } as InventoryItem;
 
@@ -275,6 +318,7 @@ export default function ItemPage() {
 
       setOpen(false);
       setName("");
+      setDescription("");
       setNewItemCategoryIds([]);
       setPrice("0");
       setStock("0");
@@ -789,7 +833,7 @@ export default function ItemPage() {
                             Low Stock Threshold
                           </TableSortLabel>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        <TableCell align="center" sx={{ fontWeight: 600 }}>
                           Actions
                         </TableCell>
                       </TableRow>
@@ -829,15 +873,28 @@ export default function ItemPage() {
                               </Box>
                             )}
                           </TableCell>
-                          <TableCell
-                            onClick={() => handleOpenStockLog(item.id)}
-                            sx={{
-                              whiteSpace: "normal",
-                              cursor: "pointer",
-                              color: "primary.main",
-                            }}
-                          >
-                            <Box component="span">{item.name}</Box>
+                          <TableCell sx={{ whiteSpace: "normal" }}>
+                            <Tooltip title="View item details" arrow>
+                              <Button
+                                variant="text"
+                                onClick={() => handleOpenItemDetails(item)}
+                                sx={{
+                                  p: 0,
+                                  minWidth: 0,
+                                  textTransform: "none",
+                                  justifyContent: "flex-start",
+                                  textAlign: "left",
+                                  color: "inherit",
+                                  fontSize: "inherit",
+                                  fontWeight: 400,
+                                  "&:hover": {
+                                    textDecoration: "underline",
+                                  },
+                                }}
+                              >
+                                {item.name}
+                              </Button>
+                            </Tooltip>
                           </TableCell>
                           <TableCell>
                             {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
@@ -883,13 +940,29 @@ export default function ItemPage() {
                             {item.low_stock_threshold ?? "—"}
                           </TableCell>
                           <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => openEditDetails(item)}
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              justifyContent="flex-end"
+                              alignItems="center"
                             >
-                              Edit
-                            </Button>
+                              <Tooltip title="View history log" arrow>
+                                <IconButton
+                                  aria-label="View history log"
+                                  onClick={() => handleOpenStockLog(item.id)}
+                                >
+                                  <HistoryIcon />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => openEditDetails(item)}
+                              >
+                                Edit
+                              </Button>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -958,6 +1031,22 @@ export default function ItemPage() {
                 required
                 fullWidth
                 disabled={saving}
+              />
+
+              <TextField
+                label="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                fullWidth
+                multiline
+                minRows={4}
+                maxRows={4}
+                disabled={saving}
+                sx={{
+                  "& .MuiInputBase-inputMultiline": {
+                    overflowY: "auto",
+                  },
+                }}
               />
 
               <TextField
@@ -1095,6 +1184,7 @@ export default function ItemPage() {
           open={editOpen}
           itemId={selectedItem.id}
           initialName={selectedItem.name}
+          initialDescription={selectedItem.description || ""}
           initialPrice={Number(selectedItem.price)}
           currentStock={selectedItem.stock}
           initialCategoryIds={(selectedItem.category_ids || []).map(String)}
@@ -1106,6 +1196,7 @@ export default function ItemPage() {
           onItemUpdated={(updated: {
             id: number | string;
             name: string;
+            description?: string;
             price: number;
             lowStockThreshold: number | null;
             low_stock_notification: boolean;
@@ -1118,6 +1209,7 @@ export default function ItemPage() {
                   ? {
                       ...it,
                       name: updated.name,
+                      description: updated.description,
                       price: updated.price,
                       low_stock_threshold: updated.lowStockThreshold,
                       low_stock_notification: updated.low_stock_notification,
@@ -1161,7 +1253,30 @@ export default function ItemPage() {
           {snackMessage}
         </Alert>
       </Snackbar>
-
+      <ItemDetailsModal
+        open={detailsOpen}
+        item={
+          selectedDetailsItem
+            ? {
+                name: selectedDetailsItem.name,
+                category: renderCategoryNames(
+                  (selectedDetailsItem.category_ids || []).map(String),
+                ),
+                stock: selectedDetailsItem.stock,
+                price: Number(selectedDetailsItem.price),
+                status:
+                  selectedDetailsItem.stock === 0
+                    ? "Low stock"
+                    : isLowStock(selectedDetailsItem)
+                      ? "Low stock"
+                      : "In stock",
+                lowStockThreshold: selectedDetailsItem.low_stock_threshold,
+                description: selectedDetailsItem.description,
+              }
+            : undefined
+        }
+        onClose={handleCloseItemDetails}
+      />
       <StockLog
         open={Boolean(selectedLogItemId)}
         itemId={selectedLogItemId}

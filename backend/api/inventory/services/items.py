@@ -12,6 +12,7 @@ def _serialize_item(item: InventoryItem) -> dict[str, Any]:
     return {
         "id": item.id,
         "name": item.name,
+        "description": item.description,
         "price": item.price,
         "stock": item.stock,
         "low_stock_threshold": item.low_stock_threshold,
@@ -63,6 +64,7 @@ def create_item(
     name: str,
     price: int,
     stock: int,
+    description: str = "",
     low_stock_threshold=None,
     low_stock_notification=False,
     category_ids: list[UUID] | None = None,
@@ -79,6 +81,7 @@ def create_item(
             item = InventoryItem.objects.create(
                 inventory_id=inventory_id,
                 name=name,
+                description=description,
                 price=price,
                 stock=stock,
                 low_stock_threshold=low_stock_threshold,
@@ -135,10 +138,11 @@ def adjust_stock(
 def update_item(
     inventory_id: UUID,
     item_id: UUID,
-    name: str | None = None,
-    price: int | None = None,
-    low_stock_threshold: int | None = None,
-    low_stock_notification: bool | None = None,
+    name: str,
+    price: int,
+    low_stock_threshold: int | None,
+    description: str | None = None,
+    low_stock_notification=None,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
     image: UploadedFile | None = None,
@@ -169,11 +173,15 @@ def update_item(
                     item.custom_fields = {}
                 item.custom_fields.update(custom_fields)
 
+            if description is not None:
+                item.description = description
+
             if low_stock_notification is not None:
                 item.low_stock_notification = low_stock_notification
 
             update_fields = [
                 "name",
+                "description",
                 "price",
                 "low_stock_threshold",
                 "custom_fields",
