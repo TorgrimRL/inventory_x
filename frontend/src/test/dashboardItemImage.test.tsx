@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 
@@ -10,28 +16,53 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 describe("Item image upload", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAxios.get.mockResolvedValue({
-      data: {
-        data: [
-          {
-            id: 1,
-            name: "Milk",
-            stock: 10,
-            price: 20,
-            low_stock_threshold: 8,
-            image_url: null,
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/active/") {
+        return Promise.resolve({
+          data: {
+            id: "inv-1",
+            name: "Main Inventory",
+            orgNumber: "123456789",
+            role: "owner",
           },
-        ],
-      },
-    } as any);
+          status: 200,
+        } as any);
+      }
+
+      if (url === "/api/inventory/active/categories/") {
+        return Promise.resolve({ data: [] } as any);
+      }
+
+      return Promise.resolve({
+        data: {
+          data: [
+            {
+              id: 1,
+              name: "Milk",
+              stock: 10,
+              price: 20,
+              low_stock_threshold: 8,
+              low_stock_notification: false,
+              image_url: null,
+            },
+          ],
+        },
+      } as any);
+    });
   });
 
   test("uploads image successfully, shows thumbnail in item list, and enlarges on click", async () => {
-    mockedAxios.post.mockResolvedValueOnce({
+    mockedAxios.patch.mockResolvedValueOnce({
       status: 200,
       data: {
+        id: 1,
+        name: "Milk",
+        price: 20,
+        stock: 10,
+        low_stock_threshold: 8,
+        low_stock_notification: false,
+        category_ids: [],
         image_url: "/media/items/milk.png",
-        message: "Image uploaded",
       },
     } as any);
 
@@ -43,20 +74,21 @@ describe("Item image upload", () => {
     await user.click(screen.getByRole("button", { name: /edit/i }));
     const dialog = await screen.findByRole("dialog");
 
-    const fileInput = within(dialog).getByLabelText(/upload image/i);
+    const fileInput = within(dialog).getByLabelText(/upload image/i, {
+      selector: 'input[type="file"]',
+    });
     const file = new File([new Uint8Array([137, 80, 78, 71])], "milk.png", {
       type: "image/png",
     });
 
-    await user.upload(fileInput, file);
+    fireEvent.change(fileInput, { target: { files: [file] } });
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalled();
+      expect(mockedAxios.patch).toHaveBeenCalled();
     });
 
     const thumbnail = await screen.findByAltText(/milk image thumbnail/i);
-    expect(await screen.findByText(/image uploaded/i)).toBeInTheDocument();
     expect(thumbnail).toBeInTheDocument();
     expect(thumbnail).toHaveAttribute(
       "src",
@@ -64,7 +96,9 @@ describe("Item image upload", () => {
     );
 
     await user.click(thumbnail);
-    expect(await screen.findByAltText(/milk image preview/i)).toBeInTheDocument();
+    expect(
+      await screen.findByAltText(/milk image preview/i),
+    ).toBeInTheDocument();
   });
 
   test("shows validation error for invalid file type", async () => {
@@ -75,11 +109,12 @@ describe("Item image upload", () => {
     await user.click(screen.getByRole("button", { name: /edit/i }));
     const dialog = await screen.findByRole("dialog");
 
-    const fileInput = within(dialog).getByLabelText(/upload image/i);
+    const fileInput = within(dialog).getByLabelText(/upload image/i, {
+      selector: 'input[type="file"]',
+    });
     const file = new File(["gifdata"], "milk.gif", { type: "image/gif" });
 
-    await user.upload(fileInput, file);
-    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+    fireEvent.change(fileInput, { target: { files: [file] } });
 
     expect(
       await within(dialog).findByText(/file type not supported/i),
@@ -94,13 +129,14 @@ describe("Item image upload", () => {
     await user.click(screen.getByRole("button", { name: /edit/i }));
     const dialog = await screen.findByRole("dialog");
 
-    const fileInput = within(dialog).getByLabelText(/upload image/i);
+    const fileInput = within(dialog).getByLabelText(/upload image/i, {
+      selector: 'input[type="file"]',
+    });
     const file = new File([new Uint8Array(5 * 1024 * 1024 + 10)], "milk.png", {
       type: "image/png",
     });
 
-    await user.upload(fileInput, file);
-    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+    fireEvent.change(fileInput, { target: { files: [file] } });
 
     expect(
       await within(dialog).findByText(/file is too large \(max 5 mb\)/i),

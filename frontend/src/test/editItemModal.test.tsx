@@ -33,7 +33,9 @@ const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
 describe("EditItemModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    URL.createObjectURL = jest.fn(() => "blob:preview") as typeof URL.createObjectURL;
+    URL.createObjectURL = jest.fn(
+      () => "blob:preview",
+    ) as typeof URL.createObjectURL;
     mockedListActiveCategories.mockResolvedValue([
       { id: "c1", name: "Cookies" },
       { id: "c2", name: "Cakes" },
@@ -58,7 +60,6 @@ describe("EditItemModal - user story tests", () => {
       initialLowStockThreshold: null,
       low_stock_notification: false,
       canEditDetails: true,
-      low_stock_notification: false,
       onClose: jest.fn(),
       onItemUpdated: jest.fn(),
       onStockUpdated: jest.fn(),
@@ -432,6 +433,27 @@ describe("EditItemModal - user story tests", () => {
     expect(
       within(dialog).getByRole("button", { name: /remove image/i }),
     ).toBeInTheDocument();
+  });
+
+  test("employee can see existing image but cannot upload, change, or remove it", async () => {
+    renderModal({
+      canEditDetails: false,
+      initialImageUrl: "/media/items/existing.png",
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(within(dialog).getByRole("img", { name: /milk/i })).toBeInTheDocument();
+
+    expect(
+      within(dialog).queryByRole("button", { name: /upload image/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: /change image/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: /remove image/i }),
+    ).not.toBeInTheDocument();
   });
 
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {

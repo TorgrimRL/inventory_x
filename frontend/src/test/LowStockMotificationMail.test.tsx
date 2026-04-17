@@ -3,6 +3,11 @@ import { createItem, updateItem } from "../services/inventoryService";
 
 jest.mock("../services/apiClient");
 
+function expectFormDataField(formData: FormData, key: string, value: string) {
+  expect(formData).toBeInstanceOf(FormData);
+  expect(formData.get(key)).toBe(value);
+}
+
 describe("Inventory Service API Wrappers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,10 +28,12 @@ describe("Inventory Service API Wrappers", () => {
 
     expect(apiClient.post).toHaveBeenCalledWith(
       "/api/inventory/",
-      expect.objectContaining({
-        low_stock_notification: true,
-      }),
+      expect.any(FormData),
     );
+
+    const formData = (apiClient.post as jest.Mock).mock.calls[0][1] as FormData;
+    expectFormDataField(formData, "low_stock_notification", "true");
+    expectFormDataField(formData, "stock", "50");
   });
 
   test("updateItem sends low_stock_notification parameter to server", async () => {
@@ -44,9 +51,11 @@ describe("Inventory Service API Wrappers", () => {
 
     expect(apiClient.patch).toHaveBeenCalledWith(
       `/api/inventory/${itemId}/`,
-      expect.objectContaining({
-        low_stock_notification: false,
-      }),
+      expect.any(FormData),
     );
+
+    const formData = (apiClient.patch as jest.Mock).mock.calls[0][1] as FormData;
+    expectFormDataField(formData, "low_stock_notification", "false");
+    expect(formData.get("low_stock_threshold")).toBe("");
   });
 });
