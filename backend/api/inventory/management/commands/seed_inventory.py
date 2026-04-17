@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from api.inventory.models import (
     Inventory,
+    InventoryCustomField,
     InventoryItem,
     InventoryMembership,
     ItemCategory,
@@ -86,6 +87,7 @@ class Command(BaseCommand):
             InventoryMembership.objects.all().delete()
             InventoryItem.objects.all().delete()
             ItemCategory.objects.all().delete()
+            InventoryCustomField.objects.all().delete()
             Inventory.objects.all().delete()
 
             # --- Inventories ---
@@ -93,7 +95,7 @@ class Command(BaseCommand):
                 ("Ola AS", "123456789"),  # Ola's bookstore
                 ("Jessica Cookies AS", "444555666"),  # Jessica's cookie shop
                 ("Kari AS", "987654321"),
-                ("Nordic Tools AS", "111222333"),
+                ("Survival Camp Gear AS", "111222333"),
                 ("Fjord Supply AS", "222333444"),
                 ("Oslo Retail AS", "333444555"),
             ]
@@ -128,6 +130,8 @@ class Command(BaseCommand):
                     ]
                 elif inv.name == "Ola AS":
                     category_names = ["Books", "Crime", "Non-fiction"]
+                elif inv.name == "Survival Camp Gear AS":
+                    category_names = ["Survival", "Weapons", "Wacky"]
                 else:
                     category_names = ["General", "Supplies"]
 
@@ -140,6 +144,27 @@ class Command(BaseCommand):
                     categories_for_inv[category_name] = created_category
 
                 categories_by_inventory[str(inv.id)] = categories_for_inv
+
+            # --- Custom Fields ---
+            for inv in inventories:
+                if inv.name == "Jessica Cookies AS":
+                    cf_data = [("Allergens", "text"), ("Batch Number", "text")]
+                elif inv.name == "Ola AS":
+                    cf_data = [
+                        ("Location", "text"),
+                        ("Condition", "text"),
+                        ("Pages", "number"),
+                    ]
+                else:
+                    cf_data = [
+                        ("Location", "text"),
+                        ("Warranty Months", "number"),
+                    ]
+
+                for cf_name, cf_type in cf_data:
+                    InventoryCustomField.objects.create(
+                        inventory=inv, name=cf_name, data_type=cf_type
+                    )
 
             # --- Memberships ---
             # Admin owns everything
@@ -306,6 +331,17 @@ class Command(BaseCommand):
                 ("Disposable Gloves (100 pcs)", 99),
             ]
 
+            camping_catalog = [
+                ("A-Matchsticks", 10),
+                ("Bear spray original", 399),
+                ("Bear spray (highly flammable version)", 499),
+                ("Bow and arrow", 1299),
+                ("Tent", 2499),
+                ("Hannah Montana bear spray", 599),
+                ("Hannah Montana bear spray flammable", 699),
+                ("Solar panel", 3499),
+            ]
+
             def pick_categories_for_item(inventory, item_name: str):
                 category_map = categories_by_inventory.get(
                     str(inventory.id), {}
@@ -377,30 +413,15 @@ class Command(BaseCommand):
                         if name in category_map
                     ]
 
-                if inventory.name == "Ola AS":
+                if inventory.name == "Survival Camp Gear AS":
                     lowered = item_name.lower()
                     picked = []
-                    if (
-                        "jo nesbø" in lowered
-                        or "pascal engman" in lowered
-                        or "jussi adler-olsen" in lowered
-                        or "lars kepler" in lowered
-                        or "jørn lier horst" in lowered
-                    ):
-                        picked.append("Crime")
-                    elif any(
-                        word in lowered
-                        for word in [
-                            "ledelse",
-                            "statsbudsjett",
-                            "vagusnerven",
-                            "hele deg",
-                            "sjøfareren",
-                        ]
-                    ):
-                        picked.append("Non-fiction")
-                    else:
-                        picked.append("Books")
+                    if "bear spray" in lowered or "bow" in lowered:
+                        picked.append("Weapons")
+                    if "hannah montana" in lowered or "flammable" in lowered:
+                        picked.append("Wacky")
+                    if not picked:
+                        picked.append("Survival")
 
                     return [
                         category_map[name]
@@ -439,6 +460,30 @@ class Command(BaseCommand):
                     current_stock = initial_stock
                     current_price = base_price
 
+                    mock_cf_data = {}
+                    if inventory.name == "Jessica Cookies AS":
+                        mock_cf_data["Allergens"] = random.choice(
+                            ["None", "Nuts", "Gluten", "Dairy", "Soy"]
+                        )
+                        mock_cf_data["Batch Number"] = (
+                            f"BTH-{random.randint(1000, 9999)}"
+                        )
+                    elif inventory.name == "Ola AS":
+                        mock_cf_data["Location"] = random.choice(
+                            ["Aisle 1", "Aisle 2", "Front", "Storage"]
+                        )
+                        mock_cf_data["Condition"] = random.choice(
+                            ["New", "Used - Good", "Used - Fair"]
+                        )
+                        mock_cf_data["Pages"] = str(random.randint(100, 1000))
+                    else:
+                        mock_cf_data["Location"] = random.choice(
+                            ["Warehouse A", "Warehouse B"]
+                        )
+                        mock_cf_data["Warranty Months"] = str(
+                            random.choice([0, 6, 12, 24])
+                        )
+
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID
                         if (is_ola and index == 0)
@@ -448,6 +493,7 @@ class Command(BaseCommand):
                         price=base_price,
                         stock=final_stock,
                         low_stock_threshold=low_stock_threshold,
+                        custom_fields=mock_cf_data,
                     )
 
                     selected_categories = pick_categories_for_item(
@@ -608,8 +654,15 @@ class Command(BaseCommand):
             seed_items_with_random_actor(
                 inventories_by_name["Jessica Cookies AS"], jessica_catalog
             )
+            seed_items_with_random_actor(
+                inventories_by_name["Survival Camp Gear AS"], camping_catalog
+            )
             for name, inv in inventories_by_name.items():
-                if name not in ["Ola AS", "Jessica Cookies AS"]:
+                if name not in [
+                    "Ola AS",
+                    "Jessica Cookies AS",
+                    "Survival Camp Gear AS",
+                ]:
                     seed_items_with_random_actor(inv, generic_catalog)
 
             counts_by_inventory_name = {
@@ -621,6 +674,9 @@ class Command(BaseCommand):
                 self.style.SUCCESS("\n✅ Seed completed successfully")
             )
             self.stdout.write(f"- Inventories: {Inventory.objects.count()}")
+            self.stdout.write(
+                f"- Custom Fields: {InventoryCustomField.objects.count()}"
+            )
             self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
             self.stdout.write(
                 f"- Stock Logs: {StockLog.objects.count()} "
