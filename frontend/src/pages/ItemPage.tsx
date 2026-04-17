@@ -147,10 +147,6 @@ export default function ItemPage() {
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState<{
-    src: string;
-    alt: string;
-  } | null>(null);
   const [page, setPage] = useState(0);
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
@@ -757,12 +753,6 @@ export default function ItemPage() {
                   <Table size="medium" sx={{ minWidth: 900 }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell
-                          align="center"
-                          sx={{ fontWeight: 600, width: 72 }}
-                        >
-                          Image
-                        </TableCell>
                         <TableCell sx={{ fontWeight: 600, width: "46%" }}>
                           <TableSortLabel
                             active={sortField === "name"}
@@ -842,37 +832,6 @@ export default function ItemPage() {
                     <TableBody>
                       {pagedItems.map((item) => (
                         <TableRow key={item.id} hover>
-                          <TableCell align="center" sx={{ width: 72 }}>
-                            {item.image_url ? (
-                              <Box
-                                component="img"
-                                src={item.image_url}
-                                alt={item.name}
-                                onClick={() => {
-                                  setPreviewImage({
-                                    src: item.image_url as string,
-                                    alt: item.name,
-                                  });
-                                }}
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 1,
-                                  objectFit: "cover",
-                                  cursor: "zoom-in",
-                                  display: "block",
-                                  mx: "auto",
-                                }}
-                              />
-                            ) : (
-                              <Box
-                                component="span"
-                                sx={{ color: "text.secondary" }}
-                              >
-                                -
-                              </Box>
-                            )}
-                          </TableCell>
                           <TableCell sx={{ whiteSpace: "normal" }}>
                             <Tooltip title="View item details" arrow>
                               <Button
@@ -993,30 +952,6 @@ export default function ItemPage() {
         setSnackMessage={setSnackMessage}
         setSnackOpen={setSnackOpen}
       />
-
-      <Dialog
-        open={previewImage !== null}
-        onClose={() => setPreviewImage(null)}
-        maxWidth="md"
-      >
-        <DialogContent sx={{ p: 1 }}>
-          {previewImage ? (
-            <Box
-              component="img"
-              src={previewImage.src}
-              alt={previewImage.alt}
-              sx={{
-                display: "block",
-                maxWidth: "min(90vw, 900px)",
-                maxHeight: "80vh",
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-              }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
         <Box component="form" onSubmit={handleSubmit}>
@@ -1272,6 +1207,7 @@ export default function ItemPage() {
                       : "In stock",
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
                 description: selectedDetailsItem.description,
+                imageUrl: selectedDetailsItem.image_url ?? null,
               }
             : undefined
         }

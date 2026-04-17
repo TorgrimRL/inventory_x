@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -8,6 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
 
 type Props = {
   open: boolean;
@@ -19,14 +21,18 @@ type Props = {
     lowStockThreshold?: number | null;
     status?: string;
     description?: string;
+    imageUrl?: string | null;
   };
   onClose: () => void;
 };
 
 export default function ItemDetailsModal({ open, item, onClose }: Props) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   if (!open) return null;
 
   return (
+    <>
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Item details</DialogTitle>
 
@@ -37,12 +43,31 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
           </Typography>
         ) : (
           <Stack spacing={2}>
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Product name
-              </Typography>
-              <Typography variant="h6">{item.name}</Typography>
-            </div>
+            <Stack direction="row" spacing={2} alignItems="flex-start">
+              {item.imageUrl ? (
+                <Box
+                  component="img"
+                  src={item.imageUrl}
+                  alt={item.name}
+                  onClick={() => setPreviewOpen(true)}
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 1,
+                    objectFit: "cover",
+                    cursor: "zoom-in",
+                    flexShrink: 0,
+                  }}
+                />
+              ) : null}
+
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Product name
+                </Typography>
+                <Typography variant="h6">{item.name}</Typography>
+              </div>
+            </Stack>
 
             <div>
               <Typography variant="body2" color="text.secondary">
@@ -113,5 +138,26 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
         </Button>
       </DialogActions>
     </Dialog>
+
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md">
+        <DialogContent sx={{ p: 1 }}>
+          {item?.imageUrl ? (
+            <Box
+              component="img"
+              src={item.imageUrl}
+              alt={item.name}
+              sx={{
+                display: "block",
+                maxWidth: "min(90vw, 900px)",
+                maxHeight: "80vh",
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

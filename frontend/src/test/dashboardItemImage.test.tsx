@@ -7,7 +7,7 @@ import ItemPage from "../pages/ItemPage";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("Item image display", () => {
+describe("Item image details display", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedAxios.get.mockImplementation((url) => {
@@ -33,6 +33,7 @@ describe("Item image display", () => {
             {
               id: 1,
               name: "Milk",
+              description: "Fresh milk from Norway",
               stock: 10,
               price: 20,
               low_stock_threshold: 8,
@@ -42,6 +43,7 @@ describe("Item image display", () => {
             {
               id: 2,
               name: "Bread",
+              description: "Baked this morning",
               stock: 4,
               price: 10,
               low_stock_threshold: 2,
@@ -54,39 +56,41 @@ describe("Item image display", () => {
     });
   });
 
-  test("shows thumbnail in item list and opens larger preview on click", async () => {
-    const user = userEvent.setup();
+  test("does not show image in item list", async () => {
     render(<ItemPage />);
 
     const milkRow = (await screen.findByText("Milk")).closest("tr");
     expect(milkRow).not.toBeNull();
+    expect(
+      within(milkRow as HTMLElement).queryByRole("img", { name: "Milk" }),
+    ).not.toBeInTheDocument();
+  });
 
-    const thumbnail = within(milkRow as HTMLElement).getByRole("img", {
+  test("shows image in item details and opens larger preview on click", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await user.click(await screen.findByRole("button", { name: "Milk" }));
+
+    const dialogs = await screen.findAllByRole("dialog");
+    const detailsDialog = dialogs[dialogs.length - 1];
+
+    const detailsImage = within(detailsDialog).getByRole("img", {
       name: "Milk",
     });
-    expect(thumbnail).toBeInTheDocument();
-    expect(thumbnail).toHaveAttribute(
+    expect(detailsImage).toBeInTheDocument();
+    expect(detailsImage).toHaveAttribute(
       "src",
       expect.stringMatching(/\/media\/items\/milk\.png$/i),
     );
 
-    await user.click(thumbnail);
+    await user.click(detailsImage);
 
-    const previewDialog = await screen.findByRole("dialog");
+    const allDialogs = await screen.findAllByRole("dialog");
+    const previewDialog = allDialogs[allDialogs.length - 1];
     const previewImage = within(previewDialog).getByRole("img", {
       name: "Milk",
     });
     expect(previewImage).toBeInTheDocument();
-  });
-
-  test("shows dash in image column when item has no image", async () => {
-    render(<ItemPage />);
-
-    const breadRow = (await screen.findByText("Bread")).closest("tr");
-    expect(breadRow).not.toBeNull();
-
-    expect(
-      within(breadRow as HTMLElement).getAllByText("-").length,
-    ).toBeGreaterThan(0);
   });
 });

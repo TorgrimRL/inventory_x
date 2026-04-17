@@ -62,6 +62,34 @@ describe("ItemDetailsModal", () => {
     expect(within(dialog).getByText(/^cheese$/i)).toBeInTheDocument();
   });
 
+  test("shows image next to name and opens larger preview on click", async () => {
+    const user = userEvent.setup();
+    renderModal({
+      item: {
+        name: "Milk",
+        description: "Fresh milk from Norway",
+        imageUrl: "/media/items/milk.png",
+      },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const image = within(dialog).getByRole("img", { name: /milk/i });
+
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute(
+      "src",
+      expect.stringMatching(/\/media\/items\/milk\.png$/i),
+    );
+
+    await user.click(image);
+
+    const dialogs = await screen.findAllByRole("dialog");
+    const previewDialog = dialogs[dialogs.length - 1];
+    expect(
+      within(previewDialog).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
+  });
+
   test("handles missing description without crashing", async () => {
     renderModal({
       item: {
