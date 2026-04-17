@@ -4,7 +4,7 @@ from uuid import UUID
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 
-from api.inventory.decorators import audit_logger
+from api.inventory.decorators import audit_logger, notify_low_stock
 from api.inventory.models import InventoryItem, ItemCategory
 
 
@@ -16,7 +16,9 @@ def _serialize_item(item: InventoryItem) -> dict[str, Any]:
         "stock": item.stock,
         "low_stock_threshold": item.low_stock_threshold,
         "low_stock_notification": item.low_stock_notification,
-        "category_ids": [str(category.id) for category in item.categories.all()],
+        "category_ids": [
+            str(category.id) for category in item.categories.all()
+        ],
         "custom_fields": item.custom_fields,
         "image_url": item.image_url,
     }
@@ -54,6 +56,7 @@ def _get_validated_categories(
     return categories
 
 
+@notify_low_stock
 @audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
@@ -94,6 +97,7 @@ def create_item(
         raise Exception("Error creating inventory item") from e
 
 
+@notify_low_stock
 @audit_logger("adjust_stock")
 def adjust_stock(
     inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
@@ -126,6 +130,7 @@ def adjust_stock(
         raise LookupError("Item not found") from err
 
 
+@notify_low_stock
 @audit_logger("update_item")
 def update_item(
     inventory_id: UUID,
