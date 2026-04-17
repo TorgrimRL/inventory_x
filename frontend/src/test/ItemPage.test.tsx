@@ -47,7 +47,9 @@ function getVisibleRows(): RowItem[] {
         (cells[4].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
       lowStockThreshold:
-        thresholdText === "—" || thresholdText === "" ? null : Number(thresholdText),
+        thresholdText === "—" || thresholdText === ""
+          ? null
+          : Number(thresholdText),
     };
   });
 }

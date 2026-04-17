@@ -155,7 +155,9 @@ function buildItemFormData(payload: ItemMutationPayload): FormData {
   formData.append("price", String(payload.price));
   formData.append(
     "low_stock_threshold",
-    payload.low_stock_threshold === null ? "" : String(payload.low_stock_threshold),
+    payload.low_stock_threshold === null
+      ? ""
+      : String(payload.low_stock_threshold),
   );
   formData.append(
     "low_stock_notification",

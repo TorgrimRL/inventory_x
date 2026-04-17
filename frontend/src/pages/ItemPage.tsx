@@ -821,7 +821,10 @@ export default function ItemPage() {
                                 }}
                               />
                             ) : (
-                              <Box component="span" sx={{ color: "text.secondary" }}>
+                              <Box
+                                component="span"
+                                sx={{ color: "text.secondary" }}
+                              >
                                 -
                               </Box>
                             )}
@@ -1002,9 +1005,7 @@ export default function ItemPage() {
                   hidden
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
-                    setNewItemImage(e.target.files?.[0] ?? null)
-                  }
+                  onChange={(e) => setNewItemImage(e.target.files?.[0] ?? null)}
                 />
               </Button>
               <Typography variant="body2" color="text.secondary">

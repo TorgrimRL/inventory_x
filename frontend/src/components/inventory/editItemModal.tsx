@@ -390,7 +390,12 @@ export default function EditItemModal({
                   component="img"
                   src={initialImageUrl}
                   alt={initialName}
-                  sx={{ width: 96, height: 96, borderRadius: 1, objectFit: "cover" }}
+                  sx={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: 1,
+                    objectFit: "cover",
+                  }}
                 />
               ) : null}
 
@@ -400,7 +405,9 @@ export default function EditItemModal({
                   component="label"
                   disabled={saving || !canEditDetails}
                 >
-                  {initialImageUrl && !removeImage ? "Change image" : "Upload image"}
+                  {initialImageUrl && !removeImage
+                    ? "Change image"
+                    : "Upload image"}
                   <input
                     hidden
                     type="file"

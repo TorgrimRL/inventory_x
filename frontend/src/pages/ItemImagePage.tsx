@@ -42,7 +42,9 @@ export default function ItemImagePage() {
         await getActiveInventory();
         const res = await axios.get("/api/inventory/");
         const items = (res.data?.data || []) as InventoryItem[];
-        const found = items.find((entry) => String(entry.id) === String(itemId));
+        const found = items.find(
+          (entry) => String(entry.id) === String(itemId),
+        );
         if (!found) {
           setError("Item not found");
         } else {
@@ -63,7 +65,11 @@ export default function ItemImagePage() {
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Stack spacing={2.5}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Box>
               <Typography variant="h4" fontWeight={800}>
                 Item image
@@ -120,7 +126,8 @@ export default function ItemImagePage() {
                 )}
 
                 <Typography variant="body2" color="text.secondary">
-                  Select an image, review it, and save it as the active item image.
+                  Select an image, review it, and save it as the active item
+                  image.
                 </Typography>
 
                 <Button variant="outlined" component="label">
@@ -156,7 +163,10 @@ export default function ItemImagePage() {
                     onClick={async () => {
                       if (!item || !selectedFile) return;
                       try {
-                        const res = await uploadItemImage(item.id, selectedFile);
+                        const res = await uploadItemImage(
+                          item.id,
+                          selectedFile,
+                        );
                         setItem((prev) =>
                           prev ? { ...prev, image_url: res.image_url } : prev,
                         );
