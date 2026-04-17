@@ -1,7 +1,8 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import EditItemModal from "../components/inventory/editItemModal";
+import ItemFormModal from "../components/inventory/ItemFormModal";
+import ApiClient from "../services/apiClient";
 import {
   adjustStock,
   createActiveCategory,
@@ -17,8 +18,6 @@ jest.mock("../services/inventoryService", () => ({
   listActiveCategories: jest.fn(),
   createActiveCategory: jest.fn(),
 }));
-
-import ApiClient from "../services/apiClient";
 
 jest.mock("../services/apiClient", () => ({
   get: jest.fn(),
@@ -40,7 +39,7 @@ const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
   typeof createActiveCategory
 >;
 
-describe("EditItemModal - user story tests", () => {
+describe("Edit Mode in ItemFormModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedListActiveCategories.mockResolvedValue([
@@ -52,17 +51,16 @@ describe("EditItemModal - user story tests", () => {
       id: "c4",
       name: "New",
     } as any);
-    mockedApiClientGet.mockResolvedValue({
-      data: {
-        data: [],
-      },
-    } as any);
+    mockedApiClientGet.mockResolvedValue({ data: { data: [] } } as any);
   });
+
   jest.setTimeout(15000);
+
   function renderModal(
-    overrides?: Partial<React.ComponentProps<typeof EditItemModal>>,
+    overrides?: Partial<React.ComponentProps<typeof ItemFormModal>>,
   ) {
-    const props: React.ComponentProps<typeof EditItemModal> = {
+    const props: React.ComponentProps<typeof ItemFormModal> = {
+      mode: "edit",
       open: true,
       itemId: 1,
       initialName: "Milk",
@@ -78,7 +76,7 @@ describe("EditItemModal - user story tests", () => {
       ...overrides,
     };
 
-    render(<EditItemModal {...props} />);
+    render(<ItemFormModal {...props} />);
     return props;
   }
 
@@ -138,7 +136,7 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Skim Milk",
       price: 30,
-      lowStockThreshold: 4,
+      low_stock_threshold: 4,
       low_stock_notification: false,
       category_ids: [],
       custom_fields: {},
@@ -147,6 +145,7 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
     expect(props.onClose).toHaveBeenCalled();
   });
+
   test("employee: name/price/threshold fields are disabled, but stock adjust still works", async () => {
     mockedAdjustStock.mockResolvedValueOnce({ stock: 10 } as any);
 
@@ -376,7 +375,7 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Milk",
       price: 25,
-      lowStockThreshold: null,
+      low_stock_threshold: null,
       low_stock_notification: false,
       category_ids: [],
       custom_fields: {},

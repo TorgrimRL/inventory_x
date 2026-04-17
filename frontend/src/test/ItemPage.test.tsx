@@ -176,9 +176,7 @@ describe("ItemPage", () => {
     await user.clear(stockInput);
     await user.type(stockInput, "5");
 
-    await user.click(
-      within(dialog).getByRole("button", { name: /^add item$/i }),
-    );
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
@@ -188,6 +186,7 @@ describe("ItemPage", () => {
         low_stock_threshold: null,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
       });
     });
 
@@ -234,9 +233,7 @@ describe("ItemPage", () => {
     await user.type(stockInput, "5");
     await user.type(thresholdInput, "4");
 
-    await user.click(
-      within(dialog).getByRole("button", { name: /^add item$/i }),
-    );
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
@@ -246,6 +243,7 @@ describe("ItemPage", () => {
         low_stock_threshold: 4,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
       });
     });
 
