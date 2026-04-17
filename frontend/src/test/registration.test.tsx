@@ -12,10 +12,15 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import Registration from "../components/auth/registrationForm";
+import { startSocialLogin } from "../services/authService";
 
 jest.mock("axios");
 jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
+}));
+jest.mock("../services/authService.ts", () => ({
+  __esModule: true,
+  startSocialLogin: jest.fn(),
 }));
 
 describe("Registration Component", () => {
@@ -201,5 +206,38 @@ describe("Registration Component", () => {
     fireEvent.click(screen.getByText("Login here"));
 
     expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
+  });
+  test("renders Google sign up button", () => {
+    render(<Registration />);
+
+    expect(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    ).toBeInTheDocument();
+  });
+
+  test("calls social login handler when clicking sign up with google", () => {
+    render(<Registration />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    );
+
+    expect(startSocialLogin).toHaveBeenCalledWith("google");
+  });
+
+  test("shows error message when Google sign up fails", async () => {
+    (startSocialLogin as jest.Mock).mockImplementation(() => {
+      throw new Error("Google sign up failed");
+    });
+
+    render(<Registration />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    );
+
+    expect(
+      await screen.findByText(/google sign up failed/i),
+    ).toBeInTheDocument();
   });
 });
