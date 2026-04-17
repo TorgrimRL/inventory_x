@@ -3,6 +3,7 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   Container,
@@ -18,7 +19,11 @@ import { useEffect, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
-import { checkSession } from "../../services/authService";
+import {
+  checkSession,
+  type CurrentUser,
+  getCurrentUser,
+} from "../../services/authService";
 import {
   type ActiveInventory,
   getActiveInventory,
@@ -32,6 +37,7 @@ interface NavbarProps {
   mode: ThemeMode;
   setMode: Dispatch<SetStateAction<ThemeMode>>;
 }
+
 export default function Navbar({ mode, setMode }: NavbarProps) {
   const theme = useTheme();
   const location = useLocation();
@@ -40,8 +46,8 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
   const toggleTheme = () => {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
-
   const [isValidSession, setIsValidSession] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeInventory, setActiveInventory] =
     useState<ActiveInventory | null>(null);
 
@@ -66,15 +72,36 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
       try {
         const session = await checkSession();
         setIsValidSession(session);
+
+        if (!session) {
+          setCurrentUser(null);
+          setActiveInventory(null);
+        }
       } catch {
         setIsValidSession(false);
+        setCurrentUser(null);
+        setActiveInventory(null);
       }
     }
 
     verifySession();
   }, [location.pathname]);
 
-  /* Load active inventory. Runs when: session changes or route changes */
+  useEffect(() => {
+    if (!isValidSession) return;
+
+    async function loadCurrentUser() {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      }
+    }
+
+    loadCurrentUser();
+  }, [location.pathname, isValidSession]);
+
   useEffect(() => {
     if (!isValidSession) return;
 
@@ -89,6 +116,16 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
 
     loadInventory();
   }, [location.pathname, isValidSession]);
+
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+  const openUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const closeUserMenu = () => {
+    setAnchorElUser(null);
+  };
 
   return (
     <AppBar
@@ -168,7 +205,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     </Button>
                   );
                 })}
-
                 {/* Active inventory */}
                 <Typography
                   variant="body2"
@@ -187,8 +223,72 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     ? `${activeInventory.name}`
                     : "No inventory selected"}
                 </Typography>
+                <IconButton
+                  aria-label="Open user menu"
+                  onClick={openUserMenu}
+                  sx={{ p: 0 }}
+                >
+                  <Avatar
+                    alt={currentUser?.username ?? "User"}
+                    src={currentUser?.picture ?? undefined}
+                    sx={{ width: 32, height: 32 }}
+                  >
+                    {currentUser?.username?.[0] ?? "U"}
+                  </Avatar>
+                </IconButton>
+                <Menu
+                  anchorEl={anchorElUser}
+                  open={Boolean(anchorElUser)}
+                  onClose={closeUserMenu}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                  <MenuItem
+                    disableRipple
+                    disableTouchRipple
+                    sx={{
+                      cursor: "default",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        gap: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        {mode === "dark" ? (
+                          <DarkModeIcon sx={{ fontSize: 20 }} />
+                        ) : (
+                          <LightModeIcon sx={{ fontSize: 20 }} />
+                        )}
+                        <Typography>Dark mode</Typography>
+                      </Box>
 
-                <LogoutButton />
+                      <ThemeSwitch
+                        checked={mode === "dark"}
+                        onChange={toggleTheme}
+                        onClick={(e) => e.stopPropagation()}
+                        slotProps={{ input: { "aria-label": "Toggle theme" } }}
+                      />
+                    </Box>
+                  </MenuItem>{" "}
+                  <MenuItem
+                    onClick={() => {
+                      closeUserMenu();
+                    }}
+                  >
+                    <LogoutButton />
+                  </MenuItem>
+                </Menu>{" "}
               </>
             ) : (
               <>
@@ -243,55 +343,56 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                 )}
               </>
             )}
-
             {/* Theme switch */}
-            <Box
-              sx={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <ThemeSwitch
-                checked={mode === "dark"}
-                onChange={toggleTheme}
-                slotProps={{ input: { "aria-label": "Toggle theme" } }}
-                icon={
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: theme.palette.primary.main,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <LightModeIcon
-                      sx={{ fontSize: 16, color: "common.white" }}
-                    />
-                  </Box>
-                }
-                checkedIcon={
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: theme.palette.secondary.main,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <DarkModeIcon
-                      sx={{ fontSize: 16, color: "common.white" }}
-                    />
-                  </Box>
-                }
-              />
-            </Box>
+            {!isValidSession && (
+              <Box
+                sx={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <ThemeSwitch
+                  checked={mode === "dark"}
+                  onChange={toggleTheme}
+                  slotProps={{ input: { "aria-label": "Toggle theme" } }}
+                  icon={
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.primary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <LightModeIcon
+                        sx={{ fontSize: 16, color: "common.white" }}
+                      />
+                    </Box>
+                  }
+                  checkedIcon={
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.secondary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <DarkModeIcon
+                        sx={{ fontSize: 16, color: "common.white" }}
+                      />
+                    </Box>
+                  }
+                />
+              </Box>
+            )}{" "}
           </Box>
 
           {/* MOBILE MENU */}

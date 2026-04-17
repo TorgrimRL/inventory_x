@@ -3,25 +3,30 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   Paper,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
-import { checkSession } from "../../services/authService";
+import { checkSession, startSocialLogin } from "../../services/authService";
+import GoogleAuthButton from "./googleAuthButton.tsx";
 
 const Login: React.FC = () => {
   // init app state.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+  const socialLoginFailed = searchParams.get("social_login_error") === "1";
+  const [error, setError] = useState(() =>
+    socialLoginFailed ? "Social login failed." : "",
+  );
   const [checkingAuth, setCheckingAuth] = useState(true);
-
   const navigate = useNavigate();
 
   // Validate session, skip the login.
@@ -38,6 +43,12 @@ const Login: React.FC = () => {
 
     verifyUser();
   }, [navigate]);
+
+  useEffect(() => {
+    if (socialLoginFailed) {
+      navigate(PATHS.LOGIN, { replace: true });
+    }
+  }, [socialLoginFailed, navigate]);
 
   // show loading while waiting for checkSession to complete.
   if (checkingAuth) {
@@ -89,47 +100,82 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    setError("");
+
+    try {
+      startSocialLogin("google");
+    } catch (err: any) {
+      setError(err.message || "Social Login failed");
+    }
+  };
   return (
     <Container maxWidth="sm">
-      <Paper sx={{ mt: 8, p: 4 }}>
-        <Typography variant="h5" mb={3}>
+      <Paper
+        sx={{
+          mt: 8,
+          p: 4,
+          maxWidth: 420,
+          mx: "auto",
+          width: "100%",
+        }}
+      >
+        <Typography variant="h5" mb={4} textAlign="center">
           Login
         </Typography>
+        <Stack spacing={2}>
+          <GoogleAuthButton onClick={handleGoogleLogin} variant="sign_in" />
 
-        <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField
-              label="Email"
-              type="email"
-              placeholder="info@inventoryx.no"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              fullWidth
-            />
+          <Divider sx={{ color: "text.secondary" }}>
+            or sign in with email
+          </Divider>
 
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-            />
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                label="Email"
+                type="email"
+                placeholder="info@inventoryx.no"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+              />
 
-            {error && <Alert severity="error">{error}</Alert>}
-            <Stack direction="row" spacing={2} justifyContent="center">
-              <Button type="submit" variant="contained">
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+              />
+
+              {error && <Alert severity="error">{error}</Alert>}
+
+              <Button type="submit" variant="contained" fullWidth>
                 Login
               </Button>
 
               <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => navigate(PATHS.PASSWORD_FORGOT)}
+                sx={{ alignSelf: "center", textTransform: "none" }}
+              >
+                Forgot Password?
+              </Button>
+
+              <Divider sx={{ color: "text.secondary" }}>new here?</Divider>
+
+              <Button
+                fullWidth
                 variant="outlined"
                 onClick={() => navigate(PATHS.REGISTRATION)}
               >
                 Create Account
               </Button>
             </Stack>
-          </Stack>
-        </Box>
+          </Box>
+        </Stack>{" "}
       </Paper>
     </Container>
   );
