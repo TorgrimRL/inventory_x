@@ -157,5 +157,5 @@ class LowStockNotificationTests(BaseAPITestCase):
             user=self.user,
         )
 
-        self.assertEqual(item.low_stock_notification, True)
+        self.assertEqual(item["low_stock_notification"], True)
         self.assertEqual(len(mail.outbox), 0)
