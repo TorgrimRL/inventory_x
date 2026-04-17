@@ -149,7 +149,7 @@ class StockLogTests(TestCase):
         initial_log_count = StockLog.objects.count()
 
         fake_uuid = uuid.uuid4()
-        with self.assertRaises(LookupError):
+        with self.assertRaises(ValueError):
             update_item(
                 inventory_id=self.inventory.id,
                 item_id=fake_uuid,

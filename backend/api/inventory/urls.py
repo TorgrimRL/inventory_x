@@ -3,6 +3,10 @@ from django.urls import path
 from api.inventory.views.active_inventory import ActiveInventoryView
 from api.inventory.views.adjust_stock import AdjustStockView
 from api.inventory.views.categories import CategoryDetailView, CategoryView
+from api.inventory.views.custom_field import (
+    CustomFieldDetailView,
+    CustomFieldListView,
+)
 from api.inventory.views.inventory import InventoryView
 from api.inventory.views.inventory_history import InventoryHistoryView
 from api.inventory.views.invite_user import InviteUserView
@@ -72,5 +76,15 @@ urlpatterns = [
         "active/categories/<uuid:category_id>/",
         CategoryDetailView.as_view(),
         name="inventory-category-detail",
+    ),
+    path(
+        "active/fields/",
+        CustomFieldListView.as_view(),
+        name="active-inventory-custom-fields",
+    ),
+    path(
+        "active/fields/<uuid:field_id>/",
+        CustomFieldDetailView.as_view(),
+        name="active-inventory-custom-fields-detail",
     ),
 ]
