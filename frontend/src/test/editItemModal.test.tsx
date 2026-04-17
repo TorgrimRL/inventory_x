@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import EditItemModal from "../components/inventory/editItemModal";
@@ -371,7 +378,7 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
-  test("image upload counts as a change and enables save", async () => {
+  test("owner can upload an image and save item changes", async () => {
     mockedUpdateItem.mockResolvedValueOnce({
       image_url: "/media/items/milk.png",
     } as any);
@@ -381,15 +388,20 @@ describe("EditItemModal - user story tests", () => {
 
     const dialog = await screen.findByRole("dialog");
     const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
 
+    expect(uploadButton).toBeEnabled();
     expect(saveButton).toBeDisabled();
 
-    const fileInput = within(dialog)
-      .getByRole("button", { name: /upload image/i })
-      .querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const file = new File(["image-data"], "milk.png", { type: "image/png" });
+
     await act(async () => {
-      await user.upload(fileInput, file);
+      fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
     expect(saveButton).toBeEnabled();
@@ -419,41 +431,42 @@ describe("EditItemModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
-  test("shows change image and remove image actions when item already has an image", async () => {
+  test("owner sees change image and remove image actions when item already has an image", async () => {
     renderModal({
       canEditDetails: true,
       initialImageUrl: "/media/items/existing.png",
     });
 
     const dialog = await screen.findByRole("dialog");
+    const changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    const removeButton = within(dialog).getByRole("button", {
+      name: /remove image/i,
+    });
 
-    expect(
-      within(dialog).getByRole("button", { name: /change image/i }),
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByRole("button", { name: /remove image/i }),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByRole("img", { name: /milk/i })).toBeInTheDocument();
+    expect(changeButton).toBeEnabled();
+    expect(removeButton).toBeEnabled();
   });
 
-  test("employee can see existing image but cannot upload, change, or remove it", async () => {
+  test("employee can see existing image but image actions are disabled", async () => {
     renderModal({
       canEditDetails: false,
       initialImageUrl: "/media/items/existing.png",
     });
 
     const dialog = await screen.findByRole("dialog");
+    const changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    const removeButton = within(dialog).getByRole("button", {
+      name: /remove image/i,
+    });
 
     expect(within(dialog).getByRole("img", { name: /milk/i })).toBeInTheDocument();
-
-    expect(
-      within(dialog).queryByRole("button", { name: /upload image/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(dialog).queryByRole("button", { name: /change image/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(dialog).queryByRole("button", { name: /remove image/i }),
-    ).not.toBeInTheDocument();
+    expect(changeButton).toHaveAttribute("aria-disabled", "true");
+    expect(removeButton).toBeDisabled();
   });
 
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {

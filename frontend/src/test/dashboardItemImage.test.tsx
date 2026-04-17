@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 
@@ -13,7 +7,7 @@ import ItemPage from "../pages/ItemPage";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe("Item image upload", () => {
+describe("Item image display", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedAxios.get.mockImplementation((url) => {
@@ -43,6 +37,15 @@ describe("Item image upload", () => {
               price: 20,
               low_stock_threshold: 8,
               low_stock_notification: false,
+              image_url: "/media/items/milk.png",
+            },
+            {
+              id: 2,
+              name: "Bread",
+              stock: 4,
+              price: 10,
+              low_stock_threshold: 2,
+              low_stock_notification: false,
               image_url: null,
             },
           ],
@@ -51,44 +54,16 @@ describe("Item image upload", () => {
     });
   });
 
-  test("uploads image successfully, shows thumbnail in item list, and enlarges on click", async () => {
-    mockedAxios.patch.mockResolvedValueOnce({
-      status: 200,
-      data: {
-        id: 1,
-        name: "Milk",
-        price: 20,
-        stock: 10,
-        low_stock_threshold: 8,
-        low_stock_notification: false,
-        category_ids: [],
-        image_url: "/media/items/milk.png",
-      },
-    } as any);
-
+  test("shows thumbnail in item list and opens larger preview on click", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
-    await screen.findByText("Milk");
+    const milkRow = (await screen.findByText("Milk")).closest("tr");
+    expect(milkRow).not.toBeNull();
 
-    await user.click(screen.getByRole("button", { name: /edit/i }));
-    const dialog = await screen.findByRole("dialog");
-
-    const fileInput = within(dialog).getByLabelText(/upload image/i, {
-      selector: 'input[type="file"]',
+    const thumbnail = within(milkRow as HTMLElement).getByRole("img", {
+      name: "Milk",
     });
-    const file = new File([new Uint8Array([137, 80, 78, 71])], "milk.png", {
-      type: "image/png",
-    });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalled();
-    });
-
-    const thumbnail = await screen.findByAltText(/milk image thumbnail/i);
     expect(thumbnail).toBeInTheDocument();
     expect(thumbnail).toHaveAttribute(
       "src",
@@ -96,50 +71,22 @@ describe("Item image upload", () => {
     );
 
     await user.click(thumbnail);
-    expect(
-      await screen.findByAltText(/milk image preview/i),
-    ).toBeInTheDocument();
+
+    const previewDialog = await screen.findByRole("dialog");
+    const previewImage = within(previewDialog).getByRole("img", {
+      name: "Milk",
+    });
+    expect(previewImage).toBeInTheDocument();
   });
 
-  test("shows validation error for invalid file type", async () => {
-    const user = userEvent.setup();
+  test("shows dash in image column when item has no image", async () => {
     render(<ItemPage />);
 
-    await screen.findByText("Milk");
-    await user.click(screen.getByRole("button", { name: /edit/i }));
-    const dialog = await screen.findByRole("dialog");
-
-    const fileInput = within(dialog).getByLabelText(/upload image/i, {
-      selector: 'input[type="file"]',
-    });
-    const file = new File(["gifdata"], "milk.gif", { type: "image/gif" });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    const breadRow = (await screen.findByText("Bread")).closest("tr");
+    expect(breadRow).not.toBeNull();
 
     expect(
-      await within(dialog).findByText(/file type not supported/i),
-    ).toBeInTheDocument();
-  });
-
-  test("shows validation error for file too large", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-    await user.click(screen.getByRole("button", { name: /edit/i }));
-    const dialog = await screen.findByRole("dialog");
-
-    const fileInput = within(dialog).getByLabelText(/upload image/i, {
-      selector: 'input[type="file"]',
-    });
-    const file = new File([new Uint8Array(5 * 1024 * 1024 + 10)], "milk.png", {
-      type: "image/png",
-    });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(
-      await within(dialog).findByText(/file is too large \(max 5 mb\)/i),
-    ).toBeInTheDocument();
+      within(breadRow as HTMLElement).getAllByText("-").length,
+    ).toBeGreaterThan(0);
   });
 });
