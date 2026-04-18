@@ -63,6 +63,7 @@ type InventoryItem = {
   image_url?: string | null;
   order_id?: string;
   description?: string;
+  custom_fields?: Record<string, any>;
 };
 
 type Category = {
@@ -170,6 +171,10 @@ export default function ItemPage() {
   };
   const [enableNotification, setEnableNotification] = useState(false);
 
+  const [customFields, setCustomFields] = useState<
+    { id: string; name: string; data_type: string }[]
+  >([]);
+
   async function loadItems() {
     setLoading(true);
     setError(null);
@@ -203,10 +208,20 @@ export default function ItemPage() {
     }
   }
 
+  async function loadCustomFields() {
+    try {
+      const res = await ApiClient.get("/api/inventory/active/fields/");
+      setCustomFields(res.data);
+    } catch {
+      setCustomFields([]);
+    }
+  }
+
   useEffect(() => {
     loadItems();
     loadRole();
     loadCategories();
+    loadCustomFields();
   }, []);
 
   function openDialog() {
@@ -1208,9 +1223,11 @@ export default function ItemPage() {
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
                 description: selectedDetailsItem.description,
                 imageUrl: selectedDetailsItem.image_url ?? null,
+                custom_fields: selectedDetailsItem.custom_fields,
               }
             : undefined
         }
+        customFields={customFields}
         onClose={handleCloseItemDetails}
       />
       <StockLog
