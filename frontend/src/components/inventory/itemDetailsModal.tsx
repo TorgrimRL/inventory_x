@@ -19,11 +19,40 @@ type Props = {
     lowStockThreshold?: number | null;
     status?: string;
     description?: string;
+    custom_fields?: Record<string, any>;
   };
+  customFields?: {
+    id: string;
+    name: string;
+    data_type: string;
+  }[];
   onClose: () => void;
 };
 
-export default function ItemDetailsModal({ open, item, onClose }: Props) {
+function getCustomFieldValue(
+  itemFields: Record<string, any> | string | null | undefined,
+  fieldId: string,
+) {
+  if (!itemFields) return "—";
+
+  try {
+    const parsed =
+      typeof itemFields === "string" ? JSON.parse(itemFields) : itemFields;
+
+    const value = parsed?.[fieldId];
+
+    return value !== undefined && value !== null && value !== "" ? value : "—";
+  } catch {
+    return "—";
+  }
+}
+
+export default function ItemDetailsModal({
+  open,
+  item,
+  customFields,
+  onClose,
+}: Props) {
   if (!open) return null;
 
   return (
@@ -103,6 +132,28 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
               </Typography>
               <Typography>{item.lowStockThreshold ?? "—"}</Typography>
             </div>
+
+            {customFields && customFields.length > 0 && (
+              <>
+                <Divider />
+                {customFields.map((field) => {
+                  const value = getCustomFieldValue(
+                    item?.custom_fields,
+                    field.id,
+                  );
+
+                  return (
+                    <div key={field.id}>
+                      <Typography variant="body2" color="text.secondary">
+                        {field.name}
+                      </Typography>
+
+                      <Typography>{value}</Typography>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </Stack>
         )}
       </DialogContent>
