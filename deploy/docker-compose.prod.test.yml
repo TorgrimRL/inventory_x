@@ -17,6 +17,16 @@ services:
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data_prodtest:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   web:
     build:
       context: ../backend
@@ -26,6 +36,8 @@ services:
       - ./.env.prod.test
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: >
       sh -c "uv run python manage.py migrate &&
@@ -53,3 +65,4 @@ services:
 
 volumes:
   postgres_data_prodtest:
+  redis_data_prodtest:

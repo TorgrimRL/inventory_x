@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -163,3 +166,50 @@ class TestInviteUserView(BaseAPITestCase):
 
         updated_session = self.client.session
         self.assertNotIn(SESSION_ACTIVE_INVENTORY_KEY, updated_session)
+
+
+class TestInviteUserMail(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create(
+            email="owner@example.com", password="password"
+        )
+        self.inventory, _ = Inventory.register_with_owner(
+            user=self.owner, name="Test Corp", org_number="123456789"
+        )
+        self.target_user = User.objects.create(
+            email="target@example.com", password="password"
+        )
+
+    def test_invite_user_mail_ok(self):
+        """
+        The employee is invited to a new inventory.
+        Result:  An email notification is sent to their registered address
+        clearly stating which inventory they were invited to
+        """
+        invite_user(self.owner, str(self.inventory.id), self.target_user.email)
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, ["target@example.com"])
+        self.assertIn(self.inventory.name, email.subject)
+
+    @patch("api.inventory.services.invite_user.send_mail")
+    def test_invite_user_mail_failed(self, mock_send_mail):
+        """
+        The employee is invited to an inventory,
+        but the email service is temporarily unavailable.
+        Result: No additional email is sent, while the invitation is proceed
+        """
+
+        mock_send_mail.side_effect = Exception("Temporary Email Server Outage")
+
+        invite_user(self.owner, str(self.inventory.id), self.target_user.email)
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.assertTrue(
+            InventoryMembership.objects.filter(
+                inventory=self.inventory,
+                user=self.target_user,
+                role=InventoryMembership.Role.EMPLOYEE,
+            ).exists()
+        )
