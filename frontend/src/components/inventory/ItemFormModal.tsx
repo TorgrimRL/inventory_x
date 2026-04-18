@@ -73,6 +73,8 @@ function extractError(err: any, fallback: string) {
   return fallback;
 }
 
+const EMPTY_ARRAY: string[] = [];
+
 export default function ItemFormModal({
   open,
   mode,
@@ -82,7 +84,7 @@ export default function ItemFormModal({
   initialLowStockThreshold = null,
   low_stock_notification = false,
   currentStock = 0,
-  initialCategoryIds = [],
+  initialCategoryIds = EMPTY_ARRAY,
   initialCustomFields,
   canEditDetails,
   onClose,
@@ -142,7 +144,9 @@ export default function ItemFormModal({
     if (typeof initialCustomFields === "string") {
       try {
         parsed = JSON.parse(initialCustomFields);
-      } catch {}
+      } catch (err) {
+        console.error("Failed to parse custom fields:", err);
+      }
     } else if (initialCustomFields) {
       parsed = { ...initialCustomFields };
     }
@@ -153,8 +157,21 @@ export default function ItemFormModal({
       .catch(() => setCategories([]));
     ApiClient.get("/api/inventory/active/fields/")
       .then((res) => setCustomFieldsDef(res.data?.data || res.data || []))
-      .catch(() => setCustomFieldsDef([]));
-  }, [open, itemId]);
+      .catch(() => {
+        setCustomFieldsDef([]);
+        setError("Warning: Failed to load custom fields.");
+      });
+  }, [
+    open,
+    mode,
+    itemId,
+    initialName,
+    initialPrice,
+    initialLowStockThreshold,
+    low_stock_notification,
+    initialCategoryIds,
+    initialCustomFields,
+  ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;

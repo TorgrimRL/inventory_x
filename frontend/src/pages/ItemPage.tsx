@@ -108,6 +108,10 @@ export default function ItemPage() {
       setCustomFields((data.data || data || []) as InventoryCustomField[]);
     } catch {
       setCustomFields([]);
+      setSnackMessage(
+        "Warning: Failed to load custom fields. Some columns might be missing.",
+      );
+      setSnackOpen(true);
     }
   }
 
@@ -322,6 +326,11 @@ export default function ItemPage() {
   const hasCategoryFilter = selectedCategoryIds.length > 0;
   const showFilteredMetrics =
     searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
+
+  const initialCategoryIds = useMemo(
+    () => selectedItem?.category_ids?.map(String) || [],
+    [selectedItem?.category_ids],
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -629,7 +638,7 @@ export default function ItemPage() {
         initialName={selectedItem?.name || ""}
         initialPrice={selectedItem ? Number(selectedItem.price) : 0}
         currentStock={selectedItem?.stock || 0}
-        initialCategoryIds={selectedItem?.category_ids?.map(String) || []}
+        initialCategoryIds={initialCategoryIds}
         initialCustomFields={selectedItem?.custom_fields}
         initialLowStockThreshold={selectedItem?.low_stock_threshold ?? null}
         low_stock_notification={selectedItem?.low_stock_notification || false}
@@ -672,13 +681,13 @@ export default function ItemPage() {
 
       <Snackbar
         open={snackOpen}
-        autoHideDuration={2500}
+        autoHideDuration={3500}
         onClose={() => setSnackOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackOpen(false)}
-          severity="success"
+          severity={snackMessage.includes("Warning") ? "error" : "success"}
           variant="filled"
         >
           {snackMessage}

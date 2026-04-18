@@ -512,4 +512,61 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     await user.type(warrantyInput, "12");
     expect(warrantyInput).toHaveValue(12);
   });
+
+  test("owner: shows warning and renders safely if custom fields API fails", async () => {
+    // Force the custom fields API call to fail
+    mockedApiClientGet.mockRejectedValueOnce(new Error("Network Error"));
+
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Check that our fallback error message appears
+    expect(
+      await within(dialog).findByText(/Warning: Failed to load custom fields/i),
+    ).toBeInTheDocument();
+
+    // Verify core UI still rendered and didn't crash
+    expect(
+      within(dialog).getByRole("textbox", { name: /name/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("spinbutton", { name: /price/i }),
+    ).toBeInTheDocument();
+  });
+
+  test("owner: can still save basic changes without data loss when custom fields fail", async () => {
+    mockedApiClientGet.mockRejectedValueOnce(new Error("Network Error"));
+    mockedUpdateItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    renderModal({
+      canEditDetails: true,
+      initialCustomFields: { old_field: "Do not delete me" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Wait for the API failure state to settle
+    await within(dialog).findByText(/Warning: Failed to load custom fields/i);
+
+    // Edit a basic field
+    const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Emergency Rescue Edit");
+
+    // Click save
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    // Verify updateItem was called with the new name AND the old custom fields
+    await waitFor(() => {
+      expect(mockedUpdateItem).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          name: "Emergency Rescue Edit",
+          custom_fields: { old_field: "Do not delete me" },
+        }),
+      );
+    });
+  });
 });
