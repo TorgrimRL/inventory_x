@@ -43,7 +43,18 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
           </Typography>
         ) : (
           <Stack spacing={2}>
-            <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="flex-start"
+            >
+              <Box sx={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 104px)" }}>
+                <Typography variant="body2" color="text.secondary">
+                  Product name
+                </Typography>
+                <Typography variant="h6">{item.name}</Typography>
+              </Box>
+
               {item.imageUrl ? (
                 <Box
                   component="img"
@@ -60,13 +71,6 @@ export default function ItemDetailsModal({ open, item, onClose }: Props) {
                   }}
                 />
               ) : null}
-
-              <div>
-                <Typography variant="body2" color="text.secondary">
-                  Product name
-                </Typography>
-                <Typography variant="h6">{item.name}</Typography>
-              </div>
             </Stack>
 
             <div>
