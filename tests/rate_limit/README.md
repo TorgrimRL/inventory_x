@@ -14,7 +14,7 @@ Run locally against the prod-like stack:
 BASE_URL=http://localhost:8081 k6 run tests/rate_limit/k6_load_test.js
 ```
 
-Run against production:
+Optional: run against production:
 
 ```bash
 BASE_URL=https://inventoryx.td.org.uit.no k6 run tests/rate_limit/k6_load_test.js
