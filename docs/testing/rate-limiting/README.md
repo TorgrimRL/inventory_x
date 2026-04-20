@@ -41,6 +41,7 @@ This is a combined lightweight load and rate-limit verification test. It is not 
 | `signup_rate_limited` counter | `>= 1` |
 | `pwreset_rate_limited` counter | `>= 1` |
 | `api_rate_limited` counter | `>= 1` |
+
 ## Run local test
 
 Start the local prod-like stack:
@@ -73,6 +74,7 @@ for i in $(seq 1 10); do
     -X POST "https://inventoryx.td.org.uit.no/api/user/password_reset?email=probe@example.invalid"
 done
 ```
+
 Login example:
 ```bash
 for i in $(seq 1 12); do
@@ -82,6 +84,7 @@ for i in $(seq 1 12); do
     https://inventoryx.td.org.uit.no/api/user/login/
 done
 ```
+
 Expected result: the first requests return normal application responses such as 200 or 401, and later requests return 429 Too Many Requests.
 
 ## Evidence
@@ -111,6 +114,7 @@ The production curl verification shows that password reset and login requests in
 ![Production curl rate-limit verification](results/prod-curl-rate-limit.png)
 
 The `429 Too Many Requests` responses are expected and show that the configured Nginx rate limits were triggered in production.
+
 ## Sources
 
 - Nginx `limit_req` module documentation: `limit_req_zone`, `limit_req`, `burst`, `nodelay`, and `limit_req_status`.
