@@ -84,11 +84,6 @@ done
 ```
 Expected result: the first requests return normal application responses such as 200 or 401, and later requests return 429 Too Many Requests.
 
-Ja, da bør README-en **ikke være avhengig av Grafana-lenken**. Bruk screenshot som permanent repo-bevis.
-
-Bytt Evidence-delen til dette:
-
-
 ## Evidence
 
 The rate-limit behavior was verified in two ways.
@@ -116,7 +111,7 @@ The production curl verification shows that password reset and login requests in
 ![Production curl rate-limit verification](results/prod-curl-rate-limit.png)
 
 The `429 Too Many Requests` responses are expected and show that the configured Nginx rate limits were triggered in production.
-urces
+## Sources
 
 - Nginx `limit_req` module documentation: `limit_req_zone`, `limit_req`, `burst`, `nodelay`, and `limit_req_status`.
 - OWASP Authentication Cheat Sheet: authentication endpoints should be protected against automated attacks.
