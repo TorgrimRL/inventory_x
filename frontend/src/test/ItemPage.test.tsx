@@ -250,6 +250,75 @@ describe("ItemPage", () => {
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
   });
+
+  test("add item with custom fields", async () => {
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 201,
+      data: {
+        id: 7,
+        name: "Monitor",
+        price: 200,
+        stock: 10,
+        low_stock_threshold: null,
+        low_stock_notification: false,
+        category_ids: [],
+        custom_fields: { cf1: "Aisle 3", cf2: "24" },
+      },
+    } as any);
+
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    await user.click(screen.getByRole("button", { name: /add item/i }));
+
+    const dialog = await screen.findByRole("dialog");
+
+    const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
+    const priceInput = within(dialog).getByRole("spinbutton", {
+      name: /^price$/i,
+    });
+    const stockInput = within(dialog).getByRole("spinbutton", {
+      name: /initial stock/i,
+    });
+
+    // Find custom fields
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    await user.type(nameInput, "Monitor");
+    await user.clear(priceInput);
+    await user.type(priceInput, "200");
+    await user.clear(stockInput);
+    await user.type(stockInput, "10");
+
+    // Fill custom fields
+    await user.type(locationInput, "Aisle 3");
+    await user.type(warrantyInput, "24");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
+        name: "Monitor",
+        price: 200,
+        stock: 10,
+        low_stock_threshold: null,
+        low_stock_notification: false,
+        category_ids: [],
+        custom_fields: { cf1: "Aisle 3", cf2: "24" },
+      });
+    });
+
+    expect(await screen.findByText(/item added/i)).toBeInTheDocument();
+    expect(await screen.findByText("Monitor")).toBeInTheDocument();
+  });
+
   test("sorts by stock, name, price,low stock threshold  and status(asc/desc) via table header controls", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
