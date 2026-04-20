@@ -39,7 +39,7 @@ import {
   type InventoryCustomField,
   type InventoryItem,
   isLowStock,
-} from "../types/inventory";
+} from "../types/itemPageTypes.ts";
 
 export default function ItemPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);

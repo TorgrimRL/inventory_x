@@ -18,7 +18,7 @@ import {
   type InventoryCustomField,
   type InventoryItem,
   isLowStock,
-} from "../../types/inventory";
+} from "../../types/itemPageTypes";
 import InlineCategorySelect from "./InlineCategorySelect";
 
 interface ItemTableProps {

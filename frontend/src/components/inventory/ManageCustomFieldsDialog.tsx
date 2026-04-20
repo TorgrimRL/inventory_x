@@ -16,7 +16,10 @@ import {
   createCustomField,
   deleteCustomField,
 } from "../../services/inventoryService";
-import type { DataTypeEnum, InventoryCustomField } from "../../types/inventory";
+import type {
+  DataTypeEnum,
+  InventoryCustomField,
+} from "../../types/itemPageTypes";
 
 type ManageCustomFieldsDialogProps = {
   open: boolean;

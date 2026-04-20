@@ -1,4 +1,7 @@
-import type { DataTypeEnum, InventoryCustomField } from "../types/inventory";
+import type {
+  DataTypeEnum,
+  InventoryCustomField,
+} from "../types/itemPageTypes";
 import apiClient from "./apiClient";
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";

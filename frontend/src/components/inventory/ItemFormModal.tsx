@@ -30,7 +30,7 @@ import {
 import type {
   InventoryCustomField,
   InventoryItem,
-} from "../../types/inventory";
+} from "../../types/itemPageTypes";
 
 type Props = {
   open: boolean;
