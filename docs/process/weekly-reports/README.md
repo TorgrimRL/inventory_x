@@ -22,6 +22,24 @@ process:
 - agile feedback, by giving the team a regular review point with an external stakeholder
 - backlog refinement, by turning feedback into concrete follow-up work
 
+## Generating a new report
+
+New weekly reports can be generated from the repository root with:
+
+```bash
+make report
+````
+
+This runs:
+
+```bash
+python3 scripts/reporting/generate_weekly_pr_report.py
+```
+
+The script uses the GitHub CLI to fetch pull requests merged into `main` during
+the last 7 days and writes the generated report to this folder.
+
+
 ## Reports
 
 - [2026-01-20](2026-01-20-merged-prs.md)
