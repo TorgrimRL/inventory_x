@@ -1,4 +1,4 @@
-.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db debug-up debug-down swagger
+.PHONY: up down reset seed logs fmt lint test check init logs-backend logs-frontend logs-db debug-up debug-down swagger report
 
 BACKEND_RUN = docker compose run --rm backend
 BACKEND_RUN_NODEPS = docker compose run --rm --no-deps backend
@@ -123,3 +123,6 @@ swagger:
 init:
 	$(MAKE) reset
 	$(MAKE) seed
+
+report:
+	python3 scripts/reporting/generate_weekly_pr_report.py
