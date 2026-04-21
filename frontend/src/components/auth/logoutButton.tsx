@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import apiClient from "../../services/apiClient";
+import { redirectToUrl } from "../../services/authService";
 
 export default function LogoutButton() {
   const navigate = useNavigate();
@@ -12,11 +13,16 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     try {
       const res = await apiClient.post("/api/user/logout/");
+      const logoutUrl = res.data?.logout_url;
 
-      if (res.status === 200) {
-        localStorage.clear();
-        navigate(PATHS.LOGIN, { replace: true });
+      localStorage.clear();
+
+      if (logoutUrl) {
+        redirectToUrl(logoutUrl);
+        return;
       }
+
+      navigate(PATHS.LOGIN, { replace: true });
     } catch (err) {
       console.error("Logout failed:", err);
     }

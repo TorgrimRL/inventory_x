@@ -146,6 +146,10 @@ class Command(BaseCommand):
                 categories_by_inventory[str(inv.id)] = categories_for_inv
 
             # --- Custom Fields ---
+            custom_fields_by_inventory: dict[
+                str, dict[str, InventoryCustomField]
+            ] = {}
+
             for inv in inventories:
                 if inv.name == "Jessica Cookies AS":
                     cf_data = [("Allergens", "text"), ("Batch Number", "text")]
@@ -161,10 +165,13 @@ class Command(BaseCommand):
                         ("Warranty Months", "number"),
                     ]
 
+                cfs_for_inv = {}
                 for cf_name, cf_type in cf_data:
-                    InventoryCustomField.objects.create(
+                    cf = InventoryCustomField.objects.create(
                         inventory=inv, name=cf_name, data_type=cf_type
                     )
+                    cfs_for_inv[cf_name] = cf
+                custom_fields_by_inventory[str(inv.id)] = cfs_for_inv
 
             # --- Memberships ---
             # Admin owns everything
@@ -461,28 +468,47 @@ class Command(BaseCommand):
                     current_price = base_price
 
                     mock_cf_data = {}
+                    inv_cfs = custom_fields_by_inventory.get(
+                        str(inventory.id), {}
+                    )
+
                     if inventory.name == "Jessica Cookies AS":
-                        mock_cf_data["Allergens"] = random.choice(
-                            ["None", "Nuts", "Gluten", "Dairy", "Soy"]
-                        )
-                        mock_cf_data["Batch Number"] = (
-                            f"BTH-{random.randint(1000, 9999)}"
-                        )
+                        if "Allergens" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Allergens"].id)] = (
+                                random.choice(
+                                    ["None", "Nuts", "Gluten", "Dairy", "Soy"]
+                                )
+                            )
+                        if "Batch Number" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Batch Number"].id)] = (
+                                f"BTH-{random.randint(1000, 9999)}"
+                            )
                     elif inventory.name == "Ola AS":
-                        mock_cf_data["Location"] = random.choice(
-                            ["Aisle 1", "Aisle 2", "Front", "Storage"]
-                        )
-                        mock_cf_data["Condition"] = random.choice(
-                            ["New", "Used - Good", "Used - Fair"]
-                        )
-                        mock_cf_data["Pages"] = str(random.randint(100, 1000))
+                        if "Location" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Location"].id)] = (
+                                random.choice(
+                                    ["Aisle 1", "Aisle 2", "Front", "Storage"]
+                                )
+                            )
+                        if "Condition" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Condition"].id)] = (
+                                random.choice(
+                                    ["New", "Used - Good", "Used - Fair"]
+                                )
+                            )
+                        if "Pages" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Pages"].id)] = str(
+                                random.randint(100, 1000)
+                            )
                     else:
-                        mock_cf_data["Location"] = random.choice(
-                            ["Warehouse A", "Warehouse B"]
-                        )
-                        mock_cf_data["Warranty Months"] = str(
-                            random.choice([0, 6, 12, 24])
-                        )
+                        if "Location" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Location"].id)] = (
+                                random.choice(["Warehouse A", "Warehouse B"])
+                            )
+                        if "Warranty Months" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Warranty Months"].id)] = (
+                                str(random.choice([0, 6, 12, 24]))
+                            )
 
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID

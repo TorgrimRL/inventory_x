@@ -12,10 +12,15 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App";
 import Registration from "../components/auth/registrationForm";
+import { startSocialLogin } from "../services/authService";
 
 jest.mock("axios");
 jest.mock("react-router-dom", () => ({
   useNavigate: jest.fn(),
+}));
+jest.mock("../services/authService.ts", () => ({
+  __esModule: true,
+  startSocialLogin: jest.fn(),
 }));
 
 describe("Registration Component", () => {
@@ -41,7 +46,7 @@ describe("Registration Component", () => {
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByLabelText("Confirm Password")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /sign up/i }),
+      screen.getByRole("button", { name: /^sign up$/i }),
     ).toBeInTheDocument();
   });
 
@@ -52,7 +57,7 @@ describe("Registration Component", () => {
       target: { value: "invalid-email" }, // missing @ and .
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Invalid email address."),
@@ -68,7 +73,7 @@ describe("Registration Component", () => {
     });
 
     // Leave password empty and submit
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Password: Cannot be empty"),
@@ -89,7 +94,7 @@ describe("Registration Component", () => {
       target: { value: "different123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Password: Passwords do not match."),
@@ -114,7 +119,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalledWith("/api/user/signup/", {
@@ -158,7 +163,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Email: User with this email already exists."),
@@ -188,7 +193,7 @@ describe("Registration Component", () => {
       target: { value: "secret123" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     expect(
       await screen.findByText("Name: Name is too long."),
@@ -201,5 +206,38 @@ describe("Registration Component", () => {
     fireEvent.click(screen.getByText("Login here"));
 
     expect(mockNavigate).toHaveBeenCalledWith(PATHS.LOGIN);
+  });
+  test("renders Google sign up button", () => {
+    render(<Registration />);
+
+    expect(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    ).toBeInTheDocument();
+  });
+
+  test("calls social login handler when clicking sign up with google", () => {
+    render(<Registration />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    );
+
+    expect(startSocialLogin).toHaveBeenCalledWith("google");
+  });
+
+  test("shows error message when Google sign up fails", async () => {
+    (startSocialLogin as jest.Mock).mockImplementation(() => {
+      throw new Error("Google sign up failed");
+    });
+
+    render(<Registration />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /sign up with google/i }),
+    );
+
+    expect(
+      await screen.findByText(/google sign up failed/i),
+    ).toBeInTheDocument();
   });
 });

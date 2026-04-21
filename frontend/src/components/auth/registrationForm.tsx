@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../../App";
 import axios from "../../services/apiClient";
+import { startSocialLogin } from "../../services/authService.ts";
+import GoogleAuthButton from "./googleAuthButton.tsx";
 
 const Registration: React.FC = () => {
   const [name, setName] = useState("");
@@ -83,11 +85,28 @@ const Registration: React.FC = () => {
       setLoading(false);
     }
   };
+  const handleGoogleSignup = () => {
+    setError("");
+
+    try {
+      startSocialLogin("google");
+    } catch (err: any) {
+      setError(err.message || "Google sign up failed");
+    }
+  };
 
   if (success) {
     return (
       <Container maxWidth="sm">
-        <Paper sx={{ mt: 8, p: 4 }}>
+        <Paper
+          sx={{
+            mt: 8,
+            p: 4,
+            maxWidth: 420,
+            mx: "auto",
+            width: "100%",
+          }}
+        >
           <Stack spacing={2} alignItems="center">
             <Typography variant="h5">Welcome!</Typography>
 
@@ -106,11 +125,25 @@ const Registration: React.FC = () => {
 
   return (
     <Container maxWidth="sm">
-      <Paper sx={{ mt: 8, p: 4 }}>
-        <Typography variant="h5" mb={3}>
+      <Paper
+        sx={{
+          mt: 8,
+          p: 4,
+          maxWidth: 420,
+          mx: "auto",
+          width: "100%",
+        }}
+      >
+        <Typography variant="h5" mb={3} textAlign="center">
           Create Account
         </Typography>
+        <Stack spacing={2} mb={3}>
+          <GoogleAuthButton onClick={handleGoogleSignup} variant="sign_up" />
 
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            or sign up with email
+          </Typography>
+        </Stack>
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <Stack spacing={2}>
             <TextField

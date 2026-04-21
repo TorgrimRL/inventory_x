@@ -1,5 +1,3 @@
-# Created By Inventory X
-# 2026-01-24
 import logging
 from typing import cast
 
@@ -59,6 +57,8 @@ class LoginView(views.APIView):
         login(request._request, cast(UserModel, user))
 
         response_data = LoginResponseSerializer({"username": str(user)}).data
+        request.session.pop("auth_provider", None)
+        request.session.pop("auth0_picture", None)
 
         return Response(
             response_data,

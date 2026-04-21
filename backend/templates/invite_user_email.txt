@@ -1,0 +1,11 @@
+Dear {{ user }},
+
+You have been invited to join the {{ inventory_name }} inventory.
+Click the link below to proceed:
+
+{{ link }}
+
+If you were not expecting this invitation, please ignore this email.
+
+Kind Regards,
+Inventory X
