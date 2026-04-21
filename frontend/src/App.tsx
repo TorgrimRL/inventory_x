@@ -19,6 +19,7 @@ import LandingPage from "./pages/landingPage";
 import ForgotPassword from "./pages/PasswordForgot.tsx";
 import ResetPassword from "./pages/PasswordReset.tsx";
 import AuthGuardLayout from "./services/authguard.tsx";
+import PrivacyPolicy from "./pages/policyPage.tsx";
 
 export const PATHS = {
   HOME: "/",
@@ -32,6 +33,7 @@ export const PATHS = {
   PASSWORD_RESET: "/password_reset",
   INVITE_EMPLOYEE: "/invite_employee",
   INVENTORY_MEMBERS: "/inventory_members",
+  POLICY: "/policy",
 } as const;
 
 type ThemeMode = "light" | "dark";
@@ -50,6 +52,7 @@ function App({ mode, setMode }: AppProps) {
         <Route path={PATHS.REGISTRATION} element={<Registration />} />
         <Route path={PATHS.PASSWORD_RESET} element={<ResetPassword />} />
         <Route path={PATHS.PASSWORD_FORGOT} element={<ForgotPassword />} />
+        <Route path={PATHS.POLICY} element={<PrivacyPolicy />} />
 
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 

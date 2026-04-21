@@ -247,6 +247,18 @@ export default function LandingPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
           Copyright © 2026. All rights reserved.
         </Typography>
+        <Typography variant="body2" color="text.secondary">
+          <Button
+            variant="text"
+            color="primary"
+            onClick={() => navigate(PATHS.POLICY)}
+            sx={{ textTransform: "none", fontSize: "0.875rem" }}
+          >
+            Privacy Policy
+          </Button>
+        </Typography>
+
+
       </Box>
     </Box>
   );
