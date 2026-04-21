@@ -1,5 +1,8 @@
+import type {
+  DataTypeEnum,
+  InventoryCustomField,
+} from "../types/itemPageTypes";
 import apiClient from "./apiClient";
-
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
@@ -122,14 +125,21 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
 }
 
 export type InventoryItem = {
-  id: number | string;
+  id: number;
   name: string;
   stock: number;
   price: number;
   low_stock_threshold: number | null;
-  category_ids?: string[];
-  category_names?: string[];
+  category_ids: number[] | null;
+  category_names: string[] | null;
+  custom_fields: Record<string, any> | null;
 };
+
+export interface CustomFieldSchema {
+  id: number;
+  name: string;
+  data_type: string;
+}
 
 export async function listInventoryItems(): Promise<InventoryItem[]> {
   const res = await apiClient.get("/api/inventory/");
@@ -264,4 +274,19 @@ export async function removeInventoryMember(
 ): Promise<{ message: string }> {
   const res = await apiClient.delete(`/api/inventory/members/${membershipId}/`);
   return res.data;
+}
+
+export async function createCustomField(
+  name: string,
+  data_type: DataTypeEnum,
+): Promise<InventoryCustomField> {
+  const res = await apiClient.post("/api/inventory/active/fields/", {
+    name,
+    data_type,
+  });
+  return res.data;
+}
+
+export async function deleteCustomField(id: string): Promise<void> {
+  await apiClient.delete(`/api/inventory/active/fields/${id}/`);
 }

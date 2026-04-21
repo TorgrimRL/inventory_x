@@ -22,20 +22,24 @@ describe("Theme persistence", () => {
     localStorage.clear();
   });
 
-  test("app starts in light mode by default", () => {
+  test("app starts in light mode by default", async () => {
     render(<Root />);
+    await screen.findByRole("checkbox", { name: /toggle theme/i });
     expect(localStorage.getItem("theme")).toBe("light");
   });
 
-  test("loads dark theme from localStorage on startup", () => {
+  test("loads dark theme from localStorage on startup", async () => {
     localStorage.setItem("theme", "dark");
     render(<Root />);
+    await screen.findByRole("checkbox", { name: /toggle theme/i });
     expect(localStorage.getItem("theme")).toBe("dark");
   });
 
-  test("switching theme updates localStorage", () => {
+  test("switching theme updates localStorage", async () => {
     render(<Root />);
-    const switchInput = screen.getByRole("checkbox", { name: /toggle theme/i });
+    const switchInput = await screen.findByRole("checkbox", {
+      name: /toggle theme/i,
+    });
     fireEvent.click(switchInput);
     expect(localStorage.getItem("theme")).toBe("dark");
   });
