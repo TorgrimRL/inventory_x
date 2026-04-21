@@ -445,78 +445,101 @@ class Command(BaseCommand):
                 custom_descriptions = {
                     "Ola AS": {
                         "Minnesota — Jo Nesbø": (
-                            "A crime novel by Jo Nesbø, part of the store’s popular Nordic noir selection. "
-                            "Frequently featured in promotions and bestseller displays."
+                            "A crime novel by Jo Nesbø, part of the store's "
+                            "popular Nordic noir selection. "
+                            "Frequently featured in promotions and bestseller "
+                            "displays."
                         ),
                         "Kongeriket — Jo Nesbø": (
-                            "A bestselling novel by Jo Nesbø, stocked in the Norwegian fiction section. "
+                            "A bestselling novel by Jo Nesbø, stocked in the "
+                            "Norwegian fiction section. "
                             "Tracked for high demand and seasonal sales."
                         ),
                         "Ufred — Åsne Seierstad": (
-                            "A non-fiction title by Åsne Seierstad, covering current global issues. "
-                            "Part of the store’s curated journalism and documentary section."
+                            "A non-fiction title by Åsne Seierstad, covering "
+                            "current global issues. "
+                            "Part of the store's curated journalism and "
+                            "documentary section."
                         ),
                         "Min første bakebok — Elin Vatnar Nilsen": (
-                            "A beginner-friendly cookbook designed for children and families. "
+                            "A beginner-friendly cookbook designed for "
+                            "children and families. "
                             "Often displayed in the gift and hobby section."
                         ),
                     },
-
                     "Jessica Cookies AS": {
                         "NY-style Chocolate Chip Cookie (single)": (
-                            "A large, soft cookie inspired by classic New York-style baking, "
-                            "with a crisp outer layer and melted chocolate chunks inside."
+                            "A large, soft cookie inspired by classic "
+                            "New York-style baking, "
+                            "with a crisp outer layer and melted "
+                            "chocolate chunks inside."
                         ),
                         "Stuffed Cookie: Nutella (single)": (
-                            "A premium cookie filled with a soft Nutella center. "
-                            "One of the shop’s best-selling and most popular items."
+                            "A premium cookie filled with a soft Nutella "
+                            "center. "
+                            "One of the shop's best-selling and most "
+                            "popular items."
                         ),
                         "Cookie Box (6 pcs) — assorted": (
                             "A box containing six assorted cookies. "
-                            "Commonly used for takeaway orders, gifts, and pre-orders."
+                            "Commonly used for takeaway orders, gifts, "
+                            "and pre-orders."
                         ),
                         "Brownies (box of 6)": (
-                            "A box of freshly baked brownies, prepared for retail sale "
+                            "A box of freshly baked brownies, prepared "
+                            "for retail sale "
                             "and customer orders."
                         ),
                         "Dip: Salted Caramel (200ml)": (
-                            "A rich salted caramel dip used as an add-on for cookies "
+                            "A rich salted caramel dip used as an add-on "
+                            "for cookies "
                             "and dessert boxes."
                         ),
                         "Flour (5kg)": (
                             "Bulk flour used in daily cookie production. "
-                            "Tracked as a core ingredient in the bakery workflow."
+                            "Tracked as a core ingredient in the bakery "
+                            "workflow."
                         ),
                         "Butter (2kg)": (
                             "Butter used in baking dough and fillings. "
-                            "A key ingredient for maintaining product quality."
+                            "A key ingredient for maintaining product "
+                            "quality."
                         ),
                     },
-
                     "Survival Camp Gear AS": {
                         "Tent": (
-                            "A durable camping tent designed for outdoor trips and extended use. "
-                            "Tracked as essential gear in the survival inventory."
+                            "A durable camping tent designed for outdoor "
+                            "trips and extended use. "
+                            "Tracked as essential gear in the survival "
+                            "inventory."
                         ),
                         "Solar panel": (
-                            "A portable solar panel used for charging devices in remote areas. "
-                            "Part of the store’s energy and survival equipment range."
+                            "A portable solar panel used for charging "
+                            "devices in remote areas. "
+                            "Part of the store's energy and survival "
+                            "equipment range."
                         ),
                         "Bow and arrow": (
-                            "Outdoor equipment used for survival training and recreational activities. "
-                            "Handled as specialized gear in inventory tracking."
+                            "Outdoor equipment used for survival training "
+                            "and recreational activities. "
+                            "Handled as specialized gear in inventory "
+                            "tracking."
                         ),
                         "Bear spray original": (
-                            "Safety equipment designed for protection in wildlife areas. "
-                            "Stored and tracked as a regulated item."
+                            "Safety equipment designed for protection "
+                            "in wildlife areas. "
+                            "Stored and tracked as a regulated "
+                            "item."
                         ),
                     },
                 }
 
-                inventory_descriptions = custom_descriptions.get(inventory.name, {})
+                inventory_descriptions = custom_descriptions.get(
+                    inventory.name, {}
+                )
 
                 return inventory_descriptions.get(item_name, "")
-            
+
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
                 members = [
                     m.user
