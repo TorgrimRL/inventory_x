@@ -234,8 +234,8 @@ export default function ItemFormModal({
         lowStockThresholdNumber !== (initialLowStockThreshold ?? null) ||
         initialCategoryKey !== selectedCategoryKey ||
         notification !== Boolean(low_stock_notification) ||
-        initialCustomFieldsKey !== currentCustomFieldsKey));
-
+        initialCustomFieldsKey !== currentCustomFieldsKey ||
+        desc.trim() !== (description || "").trim()));
   const stockChanged = wantsStockChange && direction !== null;
   const hasChanges = isAdd || detailsChanged || stockChanged;
 
@@ -273,11 +273,10 @@ export default function ItemFormModal({
     setSaving(true);
     try {
       if (isAdd) {
-        const trimmedDesc = desc.trim();
         const payload = {
           name: name.trim(),
           price: priceNumber,
-          ...(trimmedDesc ? { description: trimmedDesc } : {}),
+          description: desc.trim(),
           stock: initialStockNumber,
           low_stock_threshold: lowStockThresholdNumber,
           low_stock_notification: notification,
@@ -292,11 +291,10 @@ export default function ItemFormModal({
 
       // Edit Mode
       if (canEditDetails && detailsChanged && itemId) {
-        const trimmedDesc = desc.trim();
         const payload = {
           name: name.trim(),
           price: priceNumber,
-          ...(trimmedDesc ? { description: trimmedDesc } : {}),
+          description: desc.trim(),
           low_stock_threshold: lowStockThresholdNumber,
           low_stock_notification: notification,
           category_ids: [...selectedCategoryIds],
@@ -312,7 +310,7 @@ export default function ItemFormModal({
             low_stock_notification: payload.low_stock_notification,
             category_ids: payload.category_ids,
             custom_fields: payload.custom_fields,
-            description: payload.description,
+            description: desc.trim(),
           });
         }
       }
@@ -392,7 +390,8 @@ export default function ItemFormModal({
               onChange={(e) => setDescription(e.target.value)}
               fullWidth
               multiline
-              minRows={2}
+              minRows={3}
+              maxRows={3}
               disabled={saving || (!isAdd && !canEditDetails)}
             />
 
