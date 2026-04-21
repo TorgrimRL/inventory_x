@@ -1,5 +1,4 @@
 import AddIcon from "@mui/icons-material/Add";
-import HistoryIcon from "@mui/icons-material/History";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -18,12 +17,12 @@ import {
   Stack,
   Switch,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
+import ItemDetailsModal from "../components/inventory/itemDetailsModal.tsx";
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ItemTable from "../components/inventory/ItemTable";
@@ -60,12 +59,16 @@ export default function ItemPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [customFields, setCustomFields] = useState<InventoryCustomField[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] =
+    useState<InventoryItem | null>(null);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [page, setPage] = useState(0);
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
   );
+
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -78,10 +81,6 @@ export default function ItemPage() {
 
   const handleOpenStockLog = (id: number | string) => setSelectedLogItemId(id);
   const handleCloseStockLog = () => setSelectedLogItemId(null);
-
-  const [customFields, setCustomFields] = useState<
-    { id: string; name: string; data_type: string }[]
-  >([]);
 
   async function loadItems() {
     setLoading(true);
@@ -130,15 +129,6 @@ export default function ItemPage() {
     }
   }
 
-  async function loadCustomFields() {
-    try {
-      const res = await ApiClient.get("/api/inventory/active/fields/");
-      setCustomFields(res.data);
-    } catch {
-      setCustomFields([]);
-    }
-  }
-
   useEffect(() => {
     loadItems();
     loadRole();
@@ -163,6 +153,17 @@ export default function ItemPage() {
   function closeForm() {
     setFormOpen(false);
     setSelectedItem(null);
+  }
+
+  function handleOpenItemDetails(item: InventoryItem) {
+    console.log("clicked item", item);
+    setSelectedDetailsItem(item);
+    setDetailsOpen(true);
+  }
+
+  function handleCloseItemDetails() {
+    setDetailsOpen(false);
+    setSelectedDetailsItem(null);
   }
 
   const lowStockThreshold = Math.max(
@@ -630,6 +631,7 @@ export default function ItemPage() {
                 renderCategoryNames={renderCategoryNames}
                 openEditDetails={openEditDetails}
                 customFields={customFields}
+                openItemDetails={handleOpenItemDetails}
               />
             )}
           </Paper>
@@ -651,6 +653,7 @@ export default function ItemPage() {
         mode={formMode}
         itemId={selectedItem?.id}
         initialName={selectedItem?.name || ""}
+        description={selectedItem?.description || ""}
         initialPrice={selectedItem ? Number(selectedItem.price) : 0}
         currentStock={selectedItem?.stock || 0}
         initialCategoryIds={initialCategoryIds}
@@ -726,7 +729,7 @@ export default function ItemPage() {
                       ? "Low stock"
                       : "In stock",
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
-                description: selectedDetailsItem.description,
+                description: selectedDetailsItem.description ?? undefined,
                 custom_fields: selectedDetailsItem.custom_fields,
               }
             : undefined

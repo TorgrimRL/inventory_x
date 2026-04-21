@@ -1,7 +1,9 @@
+import HistoryIcon from "@mui/icons-material/History";
 import {
   Box,
   Button,
   Chip,
+  IconButton,
   Stack,
   Table,
   TableBody,
@@ -11,6 +13,7 @@ import {
   TablePagination,
   TableRow,
   TableSortLabel,
+  Tooltip,
 } from "@mui/material";
 
 import {
@@ -22,6 +25,7 @@ import {
 import InlineCategorySelect from "./InlineCategorySelect";
 
 interface ItemTableProps {
+  openItemDetails: (item: InventoryItem) => void;
   pagedItems: InventoryItem[];
   totalItemsCount: number;
   page: number;
@@ -80,6 +84,7 @@ export default function ItemTable({
   renderCategoryNames,
   openEditDetails,
   customFields = [],
+  openItemDetails,
 }: ItemTableProps) {
   const columns: ColumnDef[] = [
     {
@@ -88,13 +93,9 @@ export default function ItemTable({
       width: "46%",
       sortField: "name",
       render: (item) => (
-        <Box
-          component="span"
-          onClick={() => handleOpenStockLog(item.id)}
-          sx={{ cursor: "pointer", color: "primary.main" }}
-        >
-          {item.name}
-        </Box>
+        <Tooltip title="View item details" arrow>
+          <Box component="span">{item.name}</Box>
+        </Tooltip>
       ),
     },
     {
@@ -164,15 +165,30 @@ export default function ItemTable({
     {
       id: "actions",
       label: "Actions",
-      align: "right",
+      align: "center",
       render: (item) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => openEditDetails(item)}
-        >
-          Edit
-        </Button>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Tooltip title="View history log" arrow>
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenStockLog(item.id);
+              }}
+            >
+              <HistoryIcon />
+            </IconButton>
+          </Tooltip>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditDetails(item);
+            }}
+          >
+            Edit
+          </Button>
+        </Stack>
       ),
     },
   ];
@@ -211,7 +227,17 @@ export default function ItemTable({
 
           <TableBody>
             {pagedItems.map((item) => (
-              <TableRow key={item.id} hover>
+              <TableRow
+                key={item.id}
+                hover
+                onClick={() => openItemDetails(item)}
+                sx={{
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "action.hover",
+                  },
+                }}
+              >
                 {columns.map((col) => (
                   <TableCell
                     key={col.id}

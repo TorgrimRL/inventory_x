@@ -45,6 +45,7 @@ type Props = {
   low_stock_notification?: boolean;
   initialCustomFields?: string | Record<string, any>;
   canEditDetails: boolean;
+  description?: string;
 
   onClose: () => void;
 
@@ -57,6 +58,7 @@ type Props = {
     low_stock_notification: boolean;
     category_ids?: string[];
     custom_fields?: Record<string, any>;
+    description?: string;
   }) => void;
   onStockUpdated?: (newStock: number) => void;
   onItemDeleted?: (id: number | string) => void;
@@ -80,6 +82,7 @@ export default function ItemFormModal({
   mode,
   itemId,
   initialName = "",
+  description = "",
   initialPrice = 0,
   initialLowStockThreshold = null,
   low_stock_notification = false,
@@ -125,6 +128,7 @@ export default function ItemFormModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [desc, setDescription] = useState(description);
 
   useEffect(() => {
     if (!open) return;
@@ -139,6 +143,7 @@ export default function ItemFormModal({
     setDirection(null);
     setSelectedCategoryIds(initialCategoryIds);
     setError(null);
+    setDescription(description || "");
 
     let parsed = {};
     if (typeof initialCustomFields === "string") {
@@ -171,6 +176,7 @@ export default function ItemFormModal({
     low_stock_notification,
     initialCategoryIds,
     initialCustomFields,
+    description,
   ]);
 
   const priceNumber = useMemo(() => Number(price), [price]);
@@ -267,9 +273,11 @@ export default function ItemFormModal({
     setSaving(true);
     try {
       if (isAdd) {
+        const trimmedDesc = desc.trim();
         const payload = {
           name: name.trim(),
           price: priceNumber,
+          ...(trimmedDesc ? { description: trimmedDesc } : {}),
           stock: initialStockNumber,
           low_stock_threshold: lowStockThresholdNumber,
           low_stock_notification: notification,
@@ -284,9 +292,11 @@ export default function ItemFormModal({
 
       // Edit Mode
       if (canEditDetails && detailsChanged && itemId) {
+        const trimmedDesc = desc.trim();
         const payload = {
           name: name.trim(),
           price: priceNumber,
+          ...(trimmedDesc ? { description: trimmedDesc } : {}),
           low_stock_threshold: lowStockThresholdNumber,
           low_stock_notification: notification,
           category_ids: [...selectedCategoryIds],
@@ -302,6 +312,7 @@ export default function ItemFormModal({
             low_stock_notification: payload.low_stock_notification,
             category_ids: payload.category_ids,
             custom_fields: payload.custom_fields,
+            description: payload.description,
           });
         }
       }
@@ -374,6 +385,15 @@ export default function ItemFormModal({
                   ? "Name is required"
                   : " "
               }
+            />
+            <TextField
+              label="Description"
+              value={desc}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              multiline
+              minRows={2}
+              disabled={saving || (!isAdd && !canEditDetails)}
             />
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>

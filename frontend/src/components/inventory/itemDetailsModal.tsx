@@ -16,10 +16,10 @@ type Props = {
     category?: string;
     stock?: number;
     price?: number;
-    lowStockThreshold?: number | null;
+    lowStockThreshold?: number | null | undefined;
     status?: string;
-    description?: string;
-    custom_fields?: Record<string, any>;
+    custom_fields?: string | Record<string, any>;
+    description?: string | undefined;
   };
   customFields?: {
     id: string;
