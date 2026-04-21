@@ -257,8 +257,6 @@ export default function LandingPage() {
             Privacy Policy
           </Button>
         </Typography>
-
-
       </Box>
     </Box>
   );

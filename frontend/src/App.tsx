@@ -18,8 +18,8 @@ import ItemPage from "./pages/ItemPage";
 import LandingPage from "./pages/landingPage";
 import ForgotPassword from "./pages/PasswordForgot.tsx";
 import ResetPassword from "./pages/PasswordReset.tsx";
-import AuthGuardLayout from "./services/authguard.tsx";
 import PrivacyPolicy from "./pages/policyPage.tsx";
+import AuthGuardLayout from "./services/authguard.tsx";
 
 export const PATHS = {
   HOME: "/",

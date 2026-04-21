@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Container, Paper, Typography } from "@mui/material";
 
 export default function PrivacyPolicy() {
@@ -65,9 +64,10 @@ export default function PrivacyPolicy() {
             >
               Inventory X
             </Box>
-            . We respect your privacy and are committed to protecting your personal
-            data. This Privacy Policy explains what information we collect, how we
-            use it, and your rights when you use our inventory management platform.
+            . We respect your privacy and are committed to protecting your
+            personal data. This Privacy Policy explains what information we
+            collect, how we use it, and your rights when you use our inventory
+            management platform.
           </Typography>
 
           <Typography
@@ -78,32 +78,39 @@ export default function PrivacyPolicy() {
             1. Information We Collect
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
-            We collect information that you provide to us directly when you register
-            for an account, create an organization, or use our services. Based on
-            our system architecture, this includes:
+            We collect information that you provide to us directly when you
+            register for an account, create an organization, or use our
+            services. Based on our system architecture, this includes:
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: 3, m: 0, color: "#555", display: "flex", flexDirection: "column", gap: 1 }}
+            sx={{
+              pl: 3,
+              m: 0,
+              color: "#555",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
           >
             <li>
               <strong>Account Information:</strong> Your email address, display
               name, and a securely hashed password.
             </li>
             <li>
-              <strong>Organization Information:</strong> Your Organization Name and
-              9-digit Organization Number.
+              <strong>Organization Information:</strong> Your Organization Name
+              and 9-digit Organization Number.
             </li>
             <li>
               <strong>Inventory Data:</strong> Data you input into the system,
-              including item names, stock levels, pricing, custom categories, images
-              and any custom text or number fields you define.
+              including item names, stock levels, pricing, custom categories,
+              images and any custom text or number fields you define.
             </li>
             <li>
-              <strong>Activity & Audit Logs:</strong> To provide accountability for
-              organizations, we maintain a strict audit log. If you adjust inventory
-              levels, we record the action, the amount, the timestamp, and link it
-              directly to your user account.
+              <strong>Activity & Audit Logs:</strong> To provide accountability
+              for organizations, we maintain a strict audit log. If you adjust
+              inventory levels, we record the action, the amount, the timestamp,
+              and link it directly to your user account.
             </li>
           </Box>
 
@@ -115,33 +122,40 @@ export default function PrivacyPolicy() {
             2. How We Use Your Information
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
-            We use the collected data strictly to provide and improve our services
-            to you:
+            We use the collected data strictly to provide and improve our
+            services to you:
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: 3, m: 0, color: "#555", display: "flex", flexDirection: "column", gap: 1 }}
+            sx={{
+              pl: 3,
+              m: 0,
+              color: "#555",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
           >
             <li>
-              <strong>Authentication & Security:</strong> Your email and password
-              are used to securely log you into the platform.
+              <strong>Authentication & Security:</strong> Your email and
+              password are used to securely log you into the platform.
             </li>
             <li>
-              <strong>Service Delivery:</strong> To store and display your inventory
-              data and custom fields.
+              <strong>Service Delivery:</strong> To store and display your
+              inventory data and custom fields.
             </li>
             <li>
-              <strong>Role Management:</strong> To facilitate "Owner" and "Employee"
-              permissions within an organization.
+              <strong>Role Management:</strong> To facilitate "Owner" and
+              "Employee" permissions within an organization.
             </li>
             <li>
-              <strong>Notifications:</strong> To send you automated alerts, such as
-              "Low Stock Notifications," when your inventory drops below your
+              <strong>Notifications:</strong> To send you automated alerts, such
+              as "Low Stock Notifications," when your inventory drops below your
               defined thresholds.
             </li>
             <li>
-              <strong>Accountability:</strong> To provide organization owners with
-              accurate audit logs of who adjusted stock and when.
+              <strong>Accountability:</strong> To provide organization owners
+              with accurate audit logs of who adjusted stock and when.
             </li>
           </Box>
 
@@ -153,8 +167,8 @@ export default function PrivacyPolicy() {
             3. Cookies and Tracking Technologies
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
-            Our frontend application uses essential technologies (like local storage
-            or session cookies) to keep you logged in securely.
+            Our frontend application uses essential technologies (like local
+            storage or session cookies) to keep you logged in securely.
           </Typography>
 
           <Typography
@@ -170,13 +184,20 @@ export default function PrivacyPolicy() {
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: 3, m: 0, color: "#555", display: "flex", flexDirection: "column", gap: 1 }}
+            sx={{
+              pl: 3,
+              m: 0,
+              color: "#555",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
           >
             <li>
-              <strong>Within Your Organization:</strong> If you are an "Employee,"
-              your display name and stock adjustment activity will be visible to the
-              "Owner" and other members of your organization via the Stock Audit
-              Logs.
+              <strong>Within Your Organization:</strong> If you are an
+              "Employee," your display name and stock adjustment activity will
+              be visible to the "Owner" and other members of your organization
+              via the Stock Audit Logs.
             </li>
           </Box>
 
@@ -189,10 +210,11 @@ export default function PrivacyPolicy() {
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
             We retain your personal and inventory data for as long as your
-            organization's account or inventory is active. Because audit logs are
-            critical for business inventory integrity, records of stock adjustments
-            linked to your display name may be retained by the organization owner
-            even if your specific user account is removed from the organization.
+            organization's account or inventory is active. Because audit logs
+            are critical for business inventory integrity, records of stock
+            adjustments linked to your display name may be retained by the
+            organization owner even if your specific user account is removed
+            from the organization.
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
             If you wish to permanently delete your account, please contact us at{" "}
@@ -220,12 +242,19 @@ export default function PrivacyPolicy() {
             6. Contact Us
           </Typography>
           <Typography variant="body1" paragraph sx={{ color: "#555" }}>
-            If you have any questions about this Privacy Policy or the data we hold,
-            please contact us at:
+            If you have any questions about this Privacy Policy or the data we
+            hold, please contact us at:
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: 3, m: 0, color: "#555", display: "flex", flexDirection: "column", gap: 1 }}
+            sx={{
+              pl: 3,
+              m: 0,
+              color: "#555",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
           >
             <li>
               <strong>Email:</strong>{" "}
