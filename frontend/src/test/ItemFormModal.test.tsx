@@ -405,7 +405,6 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
-
   test("owner can upload an image and save item changes", async () => {
     mockedUpdateItem.mockResolvedValueOnce({
       image_url: "/media/items/milk.png",
@@ -463,6 +462,54 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  test("owner sees file type error for unsupported image upload", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["gif-data"], "milk.gif", { type: "image/gif" });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(
+      await within(dialog).findByText(/file type not supported/i),
+    ).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+  });
+
+  test("owner sees file size error for oversized image upload", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "large.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(
+      await within(dialog).findByText(/file is too large \(max 5 mb\)/i),
+    ).toBeInTheDocument();
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+  });
+
   test("owner sees change image and remove image actions when item already has an image", async () => {
     renderModal({
       canEditDetails: true,
@@ -477,7 +524,9 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       name: /remove image/i,
     });
 
-    expect(within(dialog).getByRole("img", { name: /milk/i })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
     expect(changeButton).toBeEnabled();
     expect(removeButton).toBeEnabled();
   });
@@ -496,7 +545,9 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       name: /remove image/i,
     });
 
-    expect(within(dialog).getByRole("img", { name: /milk/i })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
     expect(changeButton).toHaveAttribute("aria-disabled", "true");
     expect(removeButton).toBeDisabled();
   });

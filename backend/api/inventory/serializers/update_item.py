@@ -1,10 +1,14 @@
 import uuid
 from typing import Any
 
+from django.core.files.uploadedfile import UploadedFile
 from rest_framework import serializers
 
 from api.inventory.context import get_active_inventory_id
 from api.inventory.models import InventoryCustomField
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024
 
 
 class InventoryItemUpdateSerializer(serializers.Serializer):
@@ -21,6 +25,18 @@ class InventoryItemUpdateSerializer(serializers.Serializer):
     low_stock_notification = serializers.BooleanField(required=False)
     image = serializers.ImageField(required=False, allow_null=True)
     remove_image = serializers.BooleanField(required=False, default=False)
+
+    def validate_image(self, value: UploadedFile | None) -> UploadedFile | None:
+        if value is None:
+            return value
+
+        if value.content_type not in ALLOWED_IMAGE_TYPES:
+            raise serializers.ValidationError("File type not supported")
+
+        if value.size > MAX_IMAGE_FILE_SIZE:
+            raise serializers.ValidationError("File is too large (max 5 MB)")
+
+        return value
 
     def validate_custom_fields(self, value: dict[str, Any]) -> dict[str, Any]:
         if not value:

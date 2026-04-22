@@ -59,7 +59,9 @@ describe("Item image details display", () => {
   test("does not show image in item list", async () => {
     render(<ItemPage />);
 
-    const milkRow = (await screen.findByText("Milk")).closest("tr");
+    const table = await screen.findByRole("table");
+    const milkCell = within(table).getAllByText("Milk")[0];
+    const milkRow = milkCell.closest("tr");
     expect(milkRow).not.toBeNull();
     expect(
       within(milkRow as HTMLElement).queryByRole("img", { name: "Milk" }),
@@ -70,10 +72,16 @@ describe("Item image details display", () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
-    await user.click(await screen.findByRole("button", { name: "Milk" }));
+    const table = await screen.findByRole("table");
+    const bodyRows = within(table).getAllByRole("row").slice(1);
+    const milkRow = bodyRows.find((row) => within(row).queryByText("Milk"));
+    expect(milkRow).toBeTruthy();
 
-    const dialogs = await screen.findAllByRole("dialog");
-    const detailsDialog = dialogs[dialogs.length - 1];
+    await user.click(milkRow as HTMLElement);
+
+    const detailsDialog = await screen.findByRole("dialog", {
+      name: /item details/i,
+    });
 
     const detailsImage = within(detailsDialog).getByRole("img", {
       name: "Milk",

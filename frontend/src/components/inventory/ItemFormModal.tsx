@@ -78,6 +78,8 @@ function extractError(err: any, fallback: string) {
 }
 
 const EMPTY_ARRAY: string[] = [];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 
 export default function ItemFormModal({
   open,
@@ -282,6 +284,20 @@ export default function ItemFormModal({
     }
   }
 
+  function validateSelectedImage(file: File | null): string | null {
+    if (!file) return null;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return "File type not supported";
+    }
+
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      return "File is too large (max 5 MB)";
+    }
+
+    return null;
+  }
+
   async function handleSave() {
     setError(null);
 
@@ -305,6 +321,9 @@ export default function ItemFormModal({
         return setError("Please select increase or decrease.");
       if (stockWouldBeNegative) return setError("Stock cannot be negative.");
     }
+
+    const imageValidationError = validateSelectedImage(selectedImage);
+    if (imageValidationError) return setError(imageValidationError);
 
     setSaving(true);
     try {
@@ -490,7 +509,6 @@ export default function ItemFormModal({
               }
             />
 
-
             {(isAdd || canEditDetails || previewUrl) && (
               <Stack spacing={1}>
                 <Typography variant="body2" color="text.secondary">
@@ -515,15 +533,26 @@ export default function ItemFormModal({
                     component="label"
                     variant="outlined"
                     disabled={saving || (!isAdd && !canEditDetails)}
-                    aria-disabled={!isAdd && !canEditDetails ? "true" : undefined}
+                    aria-disabled={
+                      !isAdd && !canEditDetails ? "true" : undefined
+                    }
                   >
                     {previewUrl ? "Change image" : "Upload image"}
                     <input
                       hidden
                       type="file"
-                      accept="image/*"
+                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
+                        const validationError = validateSelectedImage(file);
+
+                        if (validationError) {
+                          setSelectedImage(null);
+                          setError(validationError);
+                          return;
+                        }
+
+                        setError(null);
                         setSelectedImage(file);
                         setRemoveImage(false);
                       }}
