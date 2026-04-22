@@ -501,7 +501,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       "blob:preview",
     );
     expect(
-      within(dialog).getByText(/preview of selected image/i),
+      within(dialog).getByText(/preview of selected image, shown before you save/i),
     ).toBeInTheDocument();
 
     await user.click(saveButton);

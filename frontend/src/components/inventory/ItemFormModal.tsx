@@ -541,16 +541,18 @@ export default function ItemFormModal({
                       src={previewUrl}
                       alt={name || initialName || "Item image"}
                       sx={{
-                        width: 120,
-                        height: 120,
+                        width: { xs: "100%", sm: 220 },
+                        maxWidth: 220,
+                        height: { xs: 220, sm: 220 },
                         borderRadius: 1,
                         objectFit: "cover",
                         border: (theme) => `1px solid ${theme.palette.divider}`,
+                        backgroundColor: "background.paper",
                       }}
                     />
                     {selectedImage ? (
                       <Typography variant="caption" color="text.secondary">
-                        Preview of selected image
+                        Preview of selected image, shown before you save
                       </Typography>
                     ) : null}
                   </Box>
