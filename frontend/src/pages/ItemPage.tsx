@@ -22,6 +22,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
+import ItemDetailsModal from "../components/inventory/itemDetailsModal.tsx";
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
 import ItemTable from "../components/inventory/ItemTable";
@@ -58,12 +59,16 @@ export default function ItemPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [customFields, setCustomFields] = useState<InventoryCustomField[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] =
+    useState<InventoryItem | null>(null);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
   const [page, setPage] = useState(0);
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
   );
+
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -148,6 +153,16 @@ export default function ItemPage() {
   function closeForm() {
     setFormOpen(false);
     setSelectedItem(null);
+  }
+
+  function handleOpenItemDetails(item: InventoryItem) {
+    setSelectedDetailsItem(item);
+    setDetailsOpen(true);
+  }
+
+  function handleCloseItemDetails() {
+    setDetailsOpen(false);
+    setSelectedDetailsItem(null);
   }
 
   const lowStockThreshold = Math.max(
@@ -615,6 +630,7 @@ export default function ItemPage() {
                 renderCategoryNames={renderCategoryNames}
                 openEditDetails={openEditDetails}
                 customFields={customFields}
+                openItemDetails={handleOpenItemDetails}
               />
             )}
           </Paper>
@@ -636,6 +652,7 @@ export default function ItemPage() {
         mode={formMode}
         itemId={selectedItem?.id}
         initialName={selectedItem?.name || ""}
+        description={selectedItem?.description || ""}
         initialPrice={selectedItem ? Number(selectedItem.price) : 0}
         currentStock={selectedItem?.stock || 0}
         initialCategoryIds={initialCategoryIds}
@@ -693,7 +710,32 @@ export default function ItemPage() {
           {snackMessage}
         </Alert>
       </Snackbar>
-
+      <ItemDetailsModal
+        open={detailsOpen}
+        item={
+          selectedDetailsItem
+            ? {
+                name: selectedDetailsItem.name,
+                category: renderCategoryNames(
+                  (selectedDetailsItem.category_ids || []).map(String),
+                ),
+                stock: selectedDetailsItem.stock,
+                price: Number(selectedDetailsItem.price),
+                status:
+                  selectedDetailsItem.stock === 0
+                    ? "Low stock"
+                    : isLowStock(selectedDetailsItem)
+                      ? "Low stock"
+                      : "In stock",
+                lowStockThreshold: selectedDetailsItem.low_stock_threshold,
+                description: selectedDetailsItem.description ?? undefined,
+                custom_fields: selectedDetailsItem.custom_fields,
+              }
+            : undefined
+        }
+        customFields={customFields}
+        onClose={handleCloseItemDetails}
+      />
       <StockLog
         open={Boolean(selectedLogItemId)}
         itemId={selectedLogItemId}

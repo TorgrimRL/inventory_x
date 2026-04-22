@@ -54,6 +54,7 @@ class InventoryView(APIView):
         try:
             membership = get_request_active_membership(request)
             name = serializer.validated_data["name"]
+            description = serializer.validated_data.get("description", "")
             price = serializer.validated_data["price"]
             stock = serializer.validated_data.get("stock", 0)
             low_stock_threshold = serializer.validated_data.get(
@@ -69,6 +70,7 @@ class InventoryView(APIView):
             created = create_item(
                 inventory_id=membership.inventory.id,
                 name=name,
+                description=description,
                 price=price,
                 stock=stock,
                 user=membership.user,
