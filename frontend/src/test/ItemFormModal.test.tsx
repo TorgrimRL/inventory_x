@@ -406,6 +406,17 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  test("shows upload requirements text for item images", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).getByText(/allowed formats: jpg, jpeg, png, webp/i),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText(/max size: 5 mb/i)).toBeInTheDocument();
+  });
+
   test("owner can upload an image and save item changes", async () => {
     mockedUpdateItem.mockResolvedValueOnce({
       image_url: "/media/items/milk.png",
@@ -489,6 +500,9 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       "src",
       "blob:preview",
     );
+    expect(
+      within(dialog).getByText(/preview of selected image/i),
+    ).toBeInTheDocument();
 
     await user.click(saveButton);
 

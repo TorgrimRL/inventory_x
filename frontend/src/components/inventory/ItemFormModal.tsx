@@ -524,19 +524,36 @@ export default function ItemFormModal({
                 <Typography variant="body2" color="text.secondary">
                   Image
                 </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Allowed formats: JPG, JPEG, PNG, WEBP. Max size: 5 MB.
+                </Typography>
                 {previewUrl ? (
                   <Box
-                    component="img"
-                    src={previewUrl}
-                    alt={name || initialName || "Item image"}
                     sx={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 1,
-                      objectFit: "cover",
-                      border: (theme) => `1px solid ${theme.palette.divider}`,
+                      display: "inline-flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                      alignItems: "flex-start",
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={previewUrl}
+                      alt={name || initialName || "Item image"}
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: 1,
+                        objectFit: "cover",
+                        border: (theme) => `1px solid ${theme.palette.divider}`,
+                      }}
+                    />
+                    {selectedImage ? (
+                      <Typography variant="caption" color="text.secondary">
+                        Preview of selected image
+                      </Typography>
+                    ) : null}
+                  </Box>
                 ) : null}
                 <Stack direction="row" spacing={1}>
                   <Button
