@@ -1,7 +1,7 @@
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import PieChartOutlineIcon from "@mui/icons-material/PieChartOutline";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import {
   Box,
   Button,
