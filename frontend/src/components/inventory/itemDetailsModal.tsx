@@ -18,11 +18,11 @@ type Props = {
     category?: string;
     stock?: number;
     price?: number;
-    lowStockThreshold?: number | null;
+    lowStockThreshold?: number | null | undefined;
     status?: string;
-    description?: string;
+    custom_fields?: string | Record<string, any>;
+    description?: string | undefined;
     imageUrl?: string | null;
-    custom_fields?: Record<string, any>;
   };
   customFields?: {
     id: string;
@@ -73,7 +73,9 @@ export default function ItemDetailsModal({
           ) : (
             <Stack spacing={2}>
               <Stack direction="row" spacing={2} alignItems="flex-start">
-                <Box sx={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 104px)" }}>
+                <Box
+                  sx={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 104px)" }}
+                >
                   <Typography variant="body2" color="text.secondary">
                     Product name
                   </Typography>
@@ -162,10 +164,7 @@ export default function ItemDetailsModal({
                 <>
                   <Divider />
                   {customFields.map((field) => {
-                    const value = getCustomFieldValue(
-                      item.custom_fields,
-                      field.id,
-                    );
+                    const value = getCustomFieldValue(item.custom_fields, field.id);
 
                     return (
                       <div key={field.id}>
@@ -190,7 +189,11 @@ export default function ItemDetailsModal({
         </DialogActions>
       </Dialog>
 
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md">
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="md"
+      >
         <DialogContent sx={{ p: 1 }}>
           {item?.imageUrl ? (
             <Box

@@ -144,6 +144,10 @@ class Command(BaseCommand):
                 categories_by_inventory[str(inv.id)] = categories_for_inv
 
             # --- Custom Fields ---
+            custom_fields_by_inventory: dict[
+                str, dict[str, InventoryCustomField]
+            ] = {}
+
             for inv in inventories:
                 if inv.name == "Jessica Cookies AS":
                     cf_data = [("Allergens", "text"), ("Batch Number", "text")]
@@ -159,10 +163,13 @@ class Command(BaseCommand):
                         ("Warranty Months", "number"),
                     ]
 
+                cfs_for_inv = {}
                 for cf_name, cf_type in cf_data:
-                    InventoryCustomField.objects.create(
+                    cf = InventoryCustomField.objects.create(
                         inventory=inv, name=cf_name, data_type=cf_type
                     )
+                    cfs_for_inv[cf_name] = cf
+                custom_fields_by_inventory[str(inv.id)] = cfs_for_inv
 
             # --- Memberships ---
             # Admin owns everything
@@ -432,6 +439,105 @@ class Command(BaseCommand):
                 )
                 return [default_category] if default_category else []
 
+            def build_item_description(inventory, item_name: str) -> str:
+                custom_descriptions = {
+                    "Ola AS": {
+                        "Minnesota — Jo Nesbø": (
+                            "A crime novel by Jo Nesbø, part of the store's "
+                            "popular Nordic noir selection. "
+                            "Frequently featured in promotions and bestseller "
+                            "displays."
+                        ),
+                        "Kongeriket — Jo Nesbø": (
+                            "A bestselling novel by Jo Nesbø, stocked in the "
+                            "Norwegian fiction section. "
+                            "Tracked for high demand and seasonal sales."
+                        ),
+                        "Ufred — Åsne Seierstad": (
+                            "A non-fiction title by Åsne Seierstad, covering "
+                            "current global issues. "
+                            "Part of the store's curated journalism and "
+                            "documentary section."
+                        ),
+                        "Min første bakebok — Elin Vatnar Nilsen": (
+                            "A beginner-friendly cookbook designed for "
+                            "children and families. "
+                            "Often displayed in the gift and hobby section."
+                        ),
+                    },
+                    "Jessica Cookies AS": {
+                        "NY-style Chocolate Chip Cookie (single)": (
+                            "A large, soft cookie inspired by classic "
+                            "New York-style baking, "
+                            "with a crisp outer layer and melted "
+                            "chocolate chunks inside."
+                        ),
+                        "Stuffed Cookie: Nutella (single)": (
+                            "A premium cookie filled with a soft Nutella "
+                            "center. "
+                            "One of the shop's best-selling and most "
+                            "popular items."
+                        ),
+                        "Cookie Box (6 pcs) — assorted": (
+                            "A box containing six assorted cookies. "
+                            "Commonly used for takeaway orders, gifts, "
+                            "and pre-orders."
+                        ),
+                        "Brownies (box of 6)": (
+                            "A box of freshly baked brownies, prepared "
+                            "for retail sale "
+                            "and customer orders."
+                        ),
+                        "Dip: Salted Caramel (200ml)": (
+                            "A rich salted caramel dip used as an add-on "
+                            "for cookies "
+                            "and dessert boxes."
+                        ),
+                        "Flour (5kg)": (
+                            "Bulk flour used in daily cookie production. "
+                            "Tracked as a core ingredient in the bakery "
+                            "workflow."
+                        ),
+                        "Butter (2kg)": (
+                            "Butter used in baking dough and fillings. "
+                            "A key ingredient for maintaining product "
+                            "quality."
+                        ),
+                    },
+                    "Survival Camp Gear AS": {
+                        "Tent": (
+                            "A durable camping tent designed for outdoor "
+                            "trips and extended use. "
+                            "Tracked as essential gear in the survival "
+                            "inventory."
+                        ),
+                        "Solar panel": (
+                            "A portable solar panel used for charging "
+                            "devices in remote areas. "
+                            "Part of the store's energy and survival "
+                            "equipment range."
+                        ),
+                        "Bow and arrow": (
+                            "Outdoor equipment used for survival training "
+                            "and recreational activities. "
+                            "Handled as specialized gear in inventory "
+                            "tracking."
+                        ),
+                        "Bear spray original": (
+                            "Safety equipment designed for protection "
+                            "in wildlife areas. "
+                            "Stored and tracked as a regulated "
+                            "item."
+                        ),
+                    },
+                }
+
+                inventory_descriptions = custom_descriptions.get(
+                    inventory.name, {}
+                )
+
+                return inventory_descriptions.get(item_name, "")
+
             def seed_items_with_random_actor(inventory, catalog, is_ola=False):
                 members = [
                     m.user
@@ -460,28 +566,47 @@ class Command(BaseCommand):
                     current_price = base_price
 
                     mock_cf_data = {}
+                    inv_cfs = custom_fields_by_inventory.get(
+                        str(inventory.id), {}
+                    )
+
                     if inventory.name == "Jessica Cookies AS":
-                        mock_cf_data["Allergens"] = random.choice(
-                            ["None", "Nuts", "Gluten", "Dairy", "Soy"]
-                        )
-                        mock_cf_data["Batch Number"] = (
-                            f"BTH-{random.randint(1000, 9999)}"
-                        )
+                        if "Allergens" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Allergens"].id)] = (
+                                random.choice(
+                                    ["None", "Nuts", "Gluten", "Dairy", "Soy"]
+                                )
+                            )
+                        if "Batch Number" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Batch Number"].id)] = (
+                                f"BTH-{random.randint(1000, 9999)}"
+                            )
                     elif inventory.name == "Ola AS":
-                        mock_cf_data["Location"] = random.choice(
-                            ["Aisle 1", "Aisle 2", "Front", "Storage"]
-                        )
-                        mock_cf_data["Condition"] = random.choice(
-                            ["New", "Used - Good", "Used - Fair"]
-                        )
-                        mock_cf_data["Pages"] = str(random.randint(100, 1000))
+                        if "Location" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Location"].id)] = (
+                                random.choice(
+                                    ["Aisle 1", "Aisle 2", "Front", "Storage"]
+                                )
+                            )
+                        if "Condition" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Condition"].id)] = (
+                                random.choice(
+                                    ["New", "Used - Good", "Used - Fair"]
+                                )
+                            )
+                        if "Pages" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Pages"].id)] = str(
+                                random.randint(100, 1000)
+                            )
                     else:
-                        mock_cf_data["Location"] = random.choice(
-                            ["Warehouse A", "Warehouse B"]
-                        )
-                        mock_cf_data["Warranty Months"] = str(
-                            random.choice([0, 6, 12, 24])
-                        )
+                        if "Location" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Location"].id)] = (
+                                random.choice(["Warehouse A", "Warehouse B"])
+                            )
+                        if "Warranty Months" in inv_cfs:
+                            mock_cf_data[str(inv_cfs["Warranty Months"].id)] = (
+                                str(random.choice([0, 6, 12, 24]))
+                            )
 
                     item = InventoryItem.objects.create(
                         id=STATIC_ITEM_UUID
@@ -492,6 +617,7 @@ class Command(BaseCommand):
                         price=base_price,
                         stock=final_stock,
                         low_stock_threshold=low_stock_threshold,
+                        description=build_item_description(inventory, name),
                         custom_fields=mock_cf_data,
                     )
 
@@ -699,6 +825,15 @@ class Command(BaseCommand):
                 f"- Custom Fields: {InventoryCustomField.objects.count()}"
             )
             self.stdout.write(f"- Items: {InventoryItem.objects.count()}")
+
+            descriptions_added_count = InventoryItem.objects.exclude(
+                description=""
+            ).count()
+
+            self.stdout.write(
+                f"- Descriptions added: {descriptions_added_count}"
+            )
+
             self.stdout.write(
                 f"- Stock Logs: {StockLog.objects.count()} "
                 "(with history & random actors)"

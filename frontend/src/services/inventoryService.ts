@@ -1,5 +1,5 @@
+import type { DataTypeEnum } from "../types/itemPageTypes";
 import apiClient from "./apiClient";
-
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
 
@@ -122,7 +122,7 @@ export async function listActiveCategories(): Promise<ItemCategory[]> {
 }
 
 export type InventoryItem = {
-  id: number | string;
+  id: number;
   name: string;
   stock: number;
   price: number;
@@ -131,7 +131,15 @@ export type InventoryItem = {
   category_ids?: string[];
   category_names?: string[];
   image_url?: string | null;
+  custom_fields?: Record<string, any> | null;
+  description?: string;
 };
+
+export interface CustomFieldSchema {
+  id: number;
+  name: string;
+  data_type: DataTypeEnum;
+}
 
 export async function listInventoryItems(): Promise<InventoryItem[]> {
   const res = await apiClient.get("/api/inventory/");
@@ -142,9 +150,11 @@ export async function listInventoryItems(): Promise<InventoryItem[]> {
 type ItemMutationPayload = {
   name: string;
   price: number;
+  description?: string;
   low_stock_threshold: null | number;
   low_stock_notification: boolean;
   category_ids?: string[];
+  custom_fields?: Record<string, any>;
   image?: File | null;
   remove_image?: boolean;
 };
@@ -153,6 +163,7 @@ function buildItemFormData(payload: ItemMutationPayload): FormData {
   const formData = new FormData();
   formData.append("name", payload.name);
   formData.append("price", String(payload.price));
+  formData.append("description", payload.description ?? "");
   formData.append(
     "low_stock_threshold",
     payload.low_stock_threshold === null
@@ -167,6 +178,8 @@ function buildItemFormData(payload: ItemMutationPayload): FormData {
   for (const categoryId of payload.category_ids ?? []) {
     formData.append("category_ids", categoryId);
   }
+
+  formData.append("custom_fields", JSON.stringify(payload.custom_fields ?? {}));
 
   if (payload.image) {
     formData.append("image", payload.image);
@@ -303,4 +316,24 @@ export async function removeInventoryMember(
 ): Promise<{ message: string }> {
   const res = await apiClient.delete(`/api/inventory/members/${membershipId}/`);
   return res.data;
+}
+
+export async function createCustomField(
+  name: string,
+  data_type: DataTypeEnum,
+): Promise<{
+  id: string;
+  name: string;
+  data_type: DataTypeEnum;
+  created_at: string;
+}> {
+  const res = await apiClient.post("/api/inventory/active/fields/", {
+    name,
+    data_type,
+  });
+  return res.data;
+}
+
+export async function deleteCustomField(id: string): Promise<void> {
+  await apiClient.delete(`/api/inventory/active/fields/${id}/`);
 }

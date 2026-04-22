@@ -15,7 +15,8 @@ class VerifyView(views.APIView):
 
     @extend_schema(
         summary="Verify User Session",
-        description="Checks validity of the token and returns the username.",
+        description="Checks validity of the token and returns the username"
+        " and optional picture .",
         request=None,
         responses=VERIFY_RESPONSES,
     )
@@ -23,6 +24,7 @@ class VerifyView(views.APIView):
         response_content = {
             "detail": "Session is valid",
             "username": str(request.user),
+            "picture": request.session.get("auth0_picture"),
         }
 
         serializer = VerifySessionResponseSerializer(response_content)

@@ -4,6 +4,7 @@ Django settings for backend project.
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import environ
 
@@ -102,7 +103,9 @@ SPECTACULAR_SETTINGS = {
         "persistAuthorization": True,
     },
 }
-
+IS_TESTING = any("pytest" in arg for arg in sys.argv) or env.bool(
+    "TESTING", default=False
+)
 # ==============================================================================
 # CORS, CSRF, & PROXY
 # ==============================================================================
@@ -132,7 +135,7 @@ SESSION_COOKIE_AGE = 60 * 60
 # ==============================================================================
 # EMAIL CONFIGURATION
 # ==============================================================================
-if "test" in sys.argv or env.bool("TESTING", default=False):
+if IS_TESTING:
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -209,3 +212,63 @@ LOGGING = {
         },
     },
 }
+# ==============================================================================
+# Auth 0 variables
+# ==============================================================================
+AUTH0_DOMAIN = env("AUTH0_DOMAIN", default="test-auth0.example.com")
+AUTH0_CLIENT_ID = env("AUTH0_CLIENT_ID", default="test-client-id")
+AUTH0_CLIENT_SECRET = env("AUTH0_CLIENT_SECRET", default="test-client-secret")
+BACKEND_PUBLIC_URL = env("BACKEND_PUBLIC_URL", default="http://localhost:8000")
+AUTH0_CALLBACK_URL = env(
+    "AUTH0_CALLBACK_URL",
+    default=f"{BACKEND_PUBLIC_URL}/api/user/auth0/callback/",
+)
+AUTH0_LOGOUT_RETURN_TO = env(
+    "AUTH0_LOGOUT_RETURN_TO",
+    default=f"{HOST_ENDPOINT}/login",
+)
+AUTH0_LOGIN_SUCCESS_RETURN_TO = env(
+    "AUTH0_LOGIN_SUCCESS_RETURN_TO",
+    default=f"{HOST_ENDPOINT}/inventories",
+)
+
+AUTH0_FEDERATED_LOGOUT = env.bool(
+    "AUTH0_FEDERATED_LOGOUT",
+    default=False,
+)
+AUTH0_LOGIN_FAILURE_RETURN_TO = env(
+    "AUTH0_LOGIN_FAILURE_RETURN_TO",
+    default=f"{HOST_ENDPOINT}/login",
+)
+
+# ==============================================================================
+# REDIS / CACHE / SESSION SETUP
+# ==============================================================================
+
+
+CACHES: dict[str, dict[str, Any]]
+
+if IS_TESTING:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "test-cache",
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+else:
+    REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
+
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            "KEY_PREFIX": "inventory_x",
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+SESSION_CACHE_ALIAS = "default"

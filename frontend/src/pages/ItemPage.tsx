@@ -1,5 +1,4 @@
 import AddIcon from "@mui/icons-material/Add";
-import HistoryIcon from "@mui/icons-material/History";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -7,15 +6,9 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  FormControlLabel,
   IconButton,
   ListItemText,
   MenuItem,
@@ -23,157 +16,71 @@ import {
   Snackbar,
   Stack,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
-import EditItemModal from "../components/inventory/editItemModal";
-import InlineCategorySelect from "../components/inventory/InlineCategorySelect";
 import InventoryKpiSummary from "../components/inventory/InventoryKpiSummary";
 import ItemDetailsModal from "../components/inventory/itemDetailsModal.tsx";
+import ItemFormModal from "../components/inventory/ItemFormModal";
 import ItemSearchBar from "../components/inventory/ItemSearchBar";
+import ItemTable from "../components/inventory/ItemTable";
 import ManageCategoriesDialog from "../components/inventory/ManageCategoriesDialog";
+import ManageCustomFieldsDialog from "../components/inventory/ManageCustomFieldsDialog";
 import StockLog from "../components/inventory/StockLog";
 import ApiClient from "../services/apiClient.ts";
 import {
-  createItem,
   getActiveInventory,
   listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
-
-type InventoryItem = {
-  id: number | string;
-  name: string;
-  stock: number;
-  price: number;
-  low_stock_threshold: number | null;
-  low_stock_notification: boolean;
-  category_ids?: string[];
-  image_url?: string | null;
-  order_id?: string;
-  description?: string;
-  custom_fields?: Record<string, any>;
-};
-
-type Category = {
-  id: string;
-  name: string;
-};
-
-function extractBackendMessage(err: any): string {
-  const data = err?.response?.data;
-
-  if (!data) return "Failed to add item.";
-  if (typeof data === "string") return data;
-  if (typeof data?.detail === "string") return data.detail;
-  if (typeof data?.message === "string") return data.message;
-
-  if (typeof data === "object") {
-    const parts: string[] = [];
-
-    for (const [key, value] of Object.entries(data)) {
-      if (Array.isArray(value)) parts.push(`${key}: ${value.join(" ")}`);
-      else if (typeof value === "string") parts.push(`${key}: ${value}`);
-      else if (value && typeof value === "object") {
-        parts.push(`${key}: ${JSON.stringify(value)}`);
-      }
-    }
-
-    if (parts.length > 0) return parts.join(" | ");
-  }
-
-  return "Failed to add item.";
-}
-
-function isLowStock(item: InventoryItem) {
-  return (
-    item.low_stock_threshold != null && item.stock <= item.low_stock_threshold
-  );
-}
+import {
+  type Category,
+  type InventoryCustomField,
+  type InventoryItem,
+  isLowStock,
+} from "../types/itemPageTypes.ts";
 
 export default function ItemPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
 
-  const [name, setName] = useState("");
-  const [newItemCategoryIds, setNewItemCategoryIds] = useState<string[]>([]);
-  const [price, setPrice] = useState<string>("0");
-  const priceNumber = Number(price);
-  const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
-  const [description, setDescription] = useState("");
-
-  const [stock, setStock] = useState<string>("0");
-  const stockNumber = Number(stock);
-  const stockIsInvalid = !Number.isFinite(stockNumber) || stockNumber < 0;
-
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [selectedDetailsItem, setSelectedDetailsItem] =
-    useState<InventoryItem | null>(null);
-
-  const [newItemLowStockThreshold, setNewItemLowStockThreshold] =
-    useState<string>("");
-  const newItemLowStockThresholdNumber =
-    newItemLowStockThreshold.trim() === ""
-      ? null
-      : Number(newItemLowStockThreshold);
-  const newItemLowStockThresholdInvalid =
-    newItemLowStockThreshold.trim() !== "" &&
-    (newItemLowStockThresholdNumber === null ||
-      !Number.isInteger(newItemLowStockThresholdNumber) ||
-      newItemLowStockThresholdNumber < 0);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"add" | "edit">("add");
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState("Item added");
-  const [newItemImage, setNewItemImage] = useState<File | null>(null);
 
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [customFields, setCustomFields] = useState<InventoryCustomField[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] =
+    useState<InventoryItem | null>(null);
 
   const [canEditDetails, setCanEditDetails] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [updatingItemId, setUpdatingItemId] = useState<string | number | null>(
     null,
   );
-  const [sortField, setSortField] = useState<
-    "name" | "stock" | "price" | "low_stock_threshold" | "status"
-  >("stock");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [lowStockThresholdInput, setLowStockThresholdInput] = useState("5");
   const [selectedLogItemId, setSelectedLogItemId] = useState<
     number | string | null
   >(null);
 
-  const handleOpenStockLog = (id: number | string) => {
-    setSelectedLogItemId(id);
-  };
+  const [customFieldsDialogOpen, setCustomFieldsDialogOpen] = useState(false);
 
-  const handleCloseStockLog = () => {
-    setSelectedLogItemId(null);
-  };
-  const [enableNotification, setEnableNotification] = useState(false);
-
-  const [customFields, setCustomFields] = useState<
-    { id: string; name: string; data_type: string }[]
-  >([]);
+  const handleOpenStockLog = (id: number | string) => setSelectedLogItemId(id);
+  const handleCloseStockLog = () => setSelectedLogItemId(null);
 
   async function loadItems() {
     setLoading(true);
@@ -199,21 +106,26 @@ export default function ItemPage() {
     }
   }
 
+  async function loadCustomFields() {
+    try {
+      const res = await ApiClient.get("/api/inventory/active/fields/");
+      const data = res.data;
+      setCustomFields((data.data || data || []) as InventoryCustomField[]);
+    } catch {
+      setCustomFields([]);
+      setSnackMessage(
+        "Warning: Failed to load custom fields. Some columns might be missing.",
+      );
+      setSnackOpen(true);
+    }
+  }
+
   async function loadCategories() {
     try {
       const allCategories = await listActiveCategories();
       setCategories(allCategories);
     } catch {
       setCategories([]);
-    }
-  }
-
-  async function loadCustomFields() {
-    try {
-      const res = await ApiClient.get("/api/inventory/active/fields/");
-      setCustomFields(res.data);
-    } catch {
-      setCustomFields([]);
     }
   }
 
@@ -224,40 +136,22 @@ export default function ItemPage() {
     loadCustomFields();
   }, []);
 
-  function openDialog() {
+  function openAddForm() {
     setError(null);
-    setName("");
-    setDescription("");
-    setNewItemCategoryIds([]);
-    setPrice("0");
-    setStock("0");
-    setNewItemLowStockThreshold("");
-    setEnableNotification(false);
-    setNewItemImage(null);
-    setOpen(true);
-  }
-
-  function closeDialog() {
-    if (saving) return;
-
-    setOpen(false);
-    setError(null);
-    setName("");
-    setDescription("");
-    setNewItemCategoryIds([]);
-    setPrice("0");
-    setStock("0");
-    setNewItemLowStockThreshold("");
-    setEnableNotification(false);
+    setSelectedItem(null);
+    setFormMode("add");
+    setFormOpen(true);
   }
 
   function openEditDetails(item: InventoryItem) {
+    setError(null);
     setSelectedItem(item);
-    setEditOpen(true);
+    setFormMode("edit");
+    setFormOpen(true);
   }
 
-  function closeEditDetails() {
-    setEditOpen(false);
+  function closeForm() {
+    setFormOpen(false);
     setSelectedItem(null);
   }
 
@@ -270,78 +164,6 @@ export default function ItemPage() {
   function handleCloseItemDetails() {
     setDetailsOpen(false);
     setSelectedDetailsItem(null);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-
-    const s = Number(stock);
-    if (!Number.isFinite(s) || s < 0) {
-      setError("Stock cannot be negative.");
-      return;
-    }
-
-    if (newItemLowStockThresholdInvalid) {
-      setError("Low stock threshold must be a whole number or empty.");
-      return;
-    }
-
-    setSaving(true);
-
-    const categoryIdsToSave = [...newItemCategoryIds];
-
-    const trimmedDescription = description.trim();
-
-    const payload = {
-      name: name.trim(),
-      price: Number(price),
-      stock: s,
-      low_stock_threshold: newItemLowStockThresholdNumber,
-      low_stock_notification: enableNotification,
-      category_ids: categoryIdsToSave,
-      ...(trimmedDescription ? { description: trimmedDescription } : {}),
-      image: newItemImage,
-    };
-
-    try {
-      const createdData = await createItem(payload);
-      const created = {
-        ...createdData,
-        ...(createdData.description
-          ? { description: createdData.description }
-          : trimmedDescription
-            ? { description: trimmedDescription }
-            : {}),
-        category_ids: categoryIdsToSave,
-      } as InventoryItem;
-
-      setItems((prev) => [
-        ...prev,
-        {
-          ...created,
-          order_id: Math.random().toString(),
-        },
-      ]);
-
-      setSnackMessage("Item added");
-      setSnackOpen(true);
-
-      setOpen(false);
-      setName("");
-      setDescription("");
-      setNewItemCategoryIds([]);
-      setPrice("0");
-      setStock("0");
-      setNewItemLowStockThreshold("");
-      setEnableNotification(false);
-      setNewItemImage(null);
-    } catch (err) {
-      console.error(err);
-      setError(extractBackendMessage(err));
-    } finally {
-      setSaving(false);
-    }
   }
 
   const lowStockThreshold = Math.max(
@@ -397,18 +219,36 @@ export default function ItemPage() {
     );
 
     return [...filtered].sort((a, b) => {
+      const getVal = (item: InventoryItem) => {
+        if (sortField === "status") return isLowStock(item) ? 0 : 1;
+        if (sortField in item) return (item as any)[sortField];
+
+        let cFields = item.custom_fields;
+        if (typeof cFields === "string") {
+          try {
+            cFields = JSON.parse(cFields);
+          } catch {
+            cFields = {};
+          }
+        }
+        return (cFields as Record<string, any>)?.[sortField];
+      };
+
+      let valA = getVal(a);
+      let valB = getVal(b);
+
+      if (valA === null || valA === undefined) valA = "";
+      if (valB === null || valB === undefined) valB = "";
+
       let compare = 0;
 
-      if (sortField === "name") compare = a.name.localeCompare(b.name);
-      else if (sortField === "stock") compare = a.stock - b.stock;
-      else if (sortField === "price")
-        compare = Number(a.price) - Number(b.price);
-      else if (sortField === "low_stock_threshold") {
-        compare =
-          (a.low_stock_threshold ?? Number.MAX_SAFE_INTEGER) -
-          (b.low_stock_threshold ?? Number.MAX_SAFE_INTEGER);
-      } else if (sortField === "status") {
-        compare = Number(isLowStock(a)) - Number(isLowStock(b));
+      if (valA === "" && valB !== "") compare = 1;
+      else if (valA !== "" && valB === "") compare = -1;
+      else {
+        const numA = Number(valA);
+        const numB = Number(valB);
+        if (!isNaN(numA) && !isNaN(numB)) compare = numA - numB;
+        else compare = String(valA).localeCompare(String(valB));
       }
 
       return sortDirection === "asc" ? compare : -compare;
@@ -448,15 +288,13 @@ export default function ItemPage() {
     sortDirection,
   ]);
 
-  function handleSort(
-    field: "name" | "stock" | "price" | "low_stock_threshold" | "status",
-  ) {
+  function handleSort(field: string) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
     }
     setSortField(field);
-    setSortDirection("asc");
+    setSortDirection("desc");
   }
 
   function handleClearSearch() {
@@ -505,6 +343,11 @@ export default function ItemPage() {
   const showFilteredMetrics =
     searchInput.trim().length > 0 || lowStockOnly || hasCategoryFilter;
 
+  const initialCategoryIds = useMemo(
+    () => selectedItem?.category_ids?.map(String) || [],
+    [selectedItem?.category_ids],
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -521,6 +364,16 @@ export default function ItemPage() {
                 variant="outlined"
                 color="inherit"
                 startIcon={<SettingsIcon />}
+                onClick={() => setCustomFieldsDialogOpen(true)}
+              >
+                Manage fields
+              </Button>
+            )}
+            {canEditDetails && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<SettingsIcon />}
                 onClick={() => setCategoryDialogOpen(true)}
               >
                 Manage categories
@@ -530,7 +383,7 @@ export default function ItemPage() {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={openDialog}
+                onClick={openAddForm}
               >
                 Add item
               </Button>
@@ -583,10 +436,11 @@ export default function ItemPage() {
             </Box>
 
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              alignItems="center"
-              sx={{ mb: 2, mt: 1 }}
+              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ mb: 4, mt: 1, rowGap: 1 }}
+              flexWrap="wrap"
             >
               <TextField
                 select
@@ -604,15 +458,13 @@ export default function ItemPage() {
                   const isNoCategoryInNext =
                     nextIds.includes("__no_category__");
 
-                  if (!wasNoCategorySelected && isNoCategoryInNext) {
+                  if (!wasNoCategorySelected && isNoCategoryInNext)
                     setSelectedCategoryIds(["__no_category__"]);
-                  } else if (wasNoCategorySelected && nextIds.length > 1) {
+                  else if (wasNoCategorySelected && nextIds.length > 1)
                     setSelectedCategoryIds(
                       nextIds.filter((id) => id !== "__no_category__"),
                     );
-                  } else {
-                    setSelectedCategoryIds(nextIds);
-                  }
+                  else setSelectedCategoryIds(nextIds);
                 }}
                 sx={{ minWidth: 260 }}
                 SelectProps={{
@@ -668,7 +520,11 @@ export default function ItemPage() {
               spacing={1.5}
               sx={{ mb: 2 }}
             >
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                sx={{ flexWrap: "wrap" }}
+              >
                 <TextField
                   size="small"
                   type="number"
@@ -679,42 +535,38 @@ export default function ItemPage() {
                   }}
                   onChange={(e) => {
                     const next = e.target.value;
-                    if (next === "") {
-                      setLowStockThresholdInput("");
-                      return;
-                    }
+                    if (next === "") return setLowStockThresholdInput("");
                     if (!/^\d+$/.test(next)) return;
                     setLowStockThresholdInput(
                       String(Number.parseInt(next, 10)),
                     );
                   }}
                   onBlur={() => {
-                    if (lowStockThresholdInput.trim() === "") {
+                    if (lowStockThresholdInput.trim() === "")
                       setLowStockThresholdInput("0");
-                    }
                   }}
                   inputProps={{ min: 0, step: 1 }}
-                  sx={{ width: 130 }}
+                  sx={{ width: { xs: "100%", sm: 150 } }}
                 />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="body2">Low stock only</Typography>
+                    <Switch
+                      checked={lowStockOnly}
+                      onChange={(e) => setLowStockOnly(e.target.checked)}
+                      inputProps={{ "aria-label": "Low stock only" }}
+                    />
+                  </Stack>
 
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography variant="body2">Low stock only</Typography>
-                  <Switch
-                    checked={lowStockOnly}
-                    onChange={(e) => setLowStockOnly(e.target.checked)}
-                    inputProps={{ "aria-label": "Low stock only" }}
-                  />
+                  <Button
+                    onClick={resetListControls}
+                    variant="outlined"
+                    color="inherit"
+                    size="small"
+                  >
+                    Reset
+                  </Button>
                 </Stack>
-
-                <Button
-                  onClick={resetListControls}
-                  variant="outlined"
-                  color="inherit"
-                  size="small"
-                  sx={{ alignSelf: "center" }}
-                >
-                  Reset
-                </Button>
               </Stack>
             </Stack>
 
@@ -763,196 +615,24 @@ export default function ItemPage() {
                 </Typography>
               </Stack>
             ) : (
-              <>
-                <TableContainer component={Box} sx={{ overflowX: "auto" }}>
-                  <Table size="medium" sx={{ minWidth: 900 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, width: "46%" }}>
-                          <TableSortLabel
-                            active={sortField === "name"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "name" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("name")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Product name
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 600, width: "12%" }}>
-                          Category
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "stock"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "stock" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("stock")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Stock
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "price"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "price" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("price")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Price
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "status"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "status" ? sortDirection : "asc"
-                            }
-                            onClick={() => handleSort("status")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Status
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          <TableSortLabel
-                            active={sortField === "low_stock_threshold"}
-                            hideSortIcon={false}
-                            direction={
-                              sortField === "low_stock_threshold"
-                                ? sortDirection
-                                : "asc"
-                            }
-                            onClick={() => handleSort("low_stock_threshold")}
-                            sx={{ "& .MuiTableSortLabel-icon": { opacity: 1 } }}
-                          >
-                            Low Stock Threshold
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>
-                          Actions
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {pagedItems.map((item) => (
-                        <TableRow key={item.id} hover>
-                          <TableCell sx={{ whiteSpace: "normal" }}>
-                            <Tooltip title="View item details" arrow>
-                              <Button
-                                variant="text"
-                                onClick={() => handleOpenItemDetails(item)}
-                                sx={{
-                                  p: 0,
-                                  minWidth: 0,
-                                  textTransform: "none",
-                                  justifyContent: "flex-start",
-                                  textAlign: "left",
-                                  color: "inherit",
-                                  fontSize: "inherit",
-                                  fontWeight: 400,
-                                  "&:hover": {
-                                    textDecoration: "underline",
-                                  },
-                                }}
-                              >
-                                {item.name}
-                              </Button>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell>
-                            {/* NOTE: Hardcoded to be disabled, maybe could made into a optional feature a user can enable in future */}
-                            {/* eslint-disable-next-line no-constant-condition */}
-                            {false ? (
-                              <Stack
-                                spacing={1}
-                                sx={{ minWidth: 160, maxWidth: 190 }}
-                              >
-                                <InlineCategorySelect
-                                  item={item}
-                                  categories={categories}
-                                  updating={updatingItemId === item.id}
-                                  onSave={handleInlineCategoryChange}
-                                  renderCategoryNames={renderCategoryNames}
-                                />
-                              </Stack>
-                            ) : (
-                              renderCategoryNames(
-                                (item.category_ids || []).map(String),
-                              )
-                            )}
-                          </TableCell>
-                          <TableCell align="right">{item.stock}</TableCell>
-                          <TableCell align="right">
-                            {new Intl.NumberFormat("nb-NO", {
-                              style: "currency",
-                              currency: "NOK",
-                            }).format(Number(item.price))}
-                          </TableCell>
-                          <TableCell align="right">
-                            {isLowStock(item) ? (
-                              <Chip
-                                label="Low stock"
-                                color="warning"
-                                size="small"
-                              />
-                            ) : (
-                              "—"
-                            )}
-                          </TableCell>
-                          <TableCell align="right">
-                            {item.low_stock_threshold ?? "—"}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                              justifyContent="flex-end"
-                              alignItems="center"
-                            >
-                              <Tooltip title="View history log" arrow>
-                                <IconButton
-                                  aria-label="View history log"
-                                  onClick={() => handleOpenStockLog(item.id)}
-                                >
-                                  <HistoryIcon />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => openEditDetails(item)}
-                              >
-                                Edit
-                              </Button>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <TablePagination
-                  component="div"
-                  count={displayedItems.length}
-                  page={page}
-                  onPageChange={(_, nextPage) => setPage(nextPage)}
-                  rowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[30]}
-                />
-              </>
+              <ItemTable
+                pagedItems={pagedItems}
+                totalItemsCount={displayedItems.length}
+                page={page}
+                setPage={setPage}
+                rowsPerPage={rowsPerPage}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                handleSort={handleSort}
+                handleOpenStockLog={handleOpenStockLog}
+                categories={categories}
+                updatingItemId={updatingItemId}
+                handleInlineCategoryChange={handleInlineCategoryChange}
+                renderCategoryNames={renderCategoryNames}
+                openEditDetails={openEditDetails}
+                customFields={customFields}
+                openItemDetails={handleOpenItemDetails}
+              />
             )}
           </Paper>
         </Stack>
@@ -968,211 +648,40 @@ export default function ItemPage() {
         setSnackOpen={setSnackOpen}
       />
 
-      <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="md">
-        <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle>Add new item</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                label="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-                required
-                fullWidth
-                disabled={saving}
-              />
-
-              <TextField
-                label="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                fullWidth
-                multiline
-                minRows={4}
-                maxRows={4}
-                disabled={saving}
-                sx={{
-                  "& .MuiInputBase-inputMultiline": {
-                    overflowY: "auto",
-                  },
-                }}
-              />
-
-              <TextField
-                select
-                label="Categories"
-                value={newItemCategoryIds}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setNewItemCategoryIds(
-                    Array.isArray(value) ? value : String(value).split(","),
-                  );
-                }}
-                fullWidth
-                disabled={saving}
-                helperText="Optional: choose one or more existing categories"
-                SelectProps={{
-                  multiple: true,
-                  renderValue: (selected) => {
-                    const ids = selected as string[];
-                    if (ids.length === 0) return "No category added";
-                    return ids
-                      .map(
-                        (id) =>
-                          categories.find((category) => category.id === id)
-                            ?.name || id,
-                      )
-                      .join(", ");
-                  },
-                }}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    <Checkbox
-                      checked={newItemCategoryIds.includes(category.id)}
-                      size="small"
-                    />
-                    <ListItemText primary={category.name} />
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <Button variant="outlined" component="label" disabled={saving}>
-                {newItemImage ? "Change image" : "Upload image"}
-                <input
-                  hidden
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setNewItemImage(e.target.files?.[0] ?? null)}
-                />
-              </Button>
-              <Typography variant="body2" color="text.secondary">
-                {newItemImage ? newItemImage.name : "No image selected"}
-              </Typography>
-
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                <TextField
-                  label="Price"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  type="number"
-                  inputProps={{ step: "0.01", min: 0 }}
-                  required
-                  fullWidth
-                  disabled={saving}
-                  error={priceIsInvalid}
-                  helperText={priceIsInvalid ? "Price cannot be negative" : " "}
-                />
-
-                <TextField
-                  label="Initial stock"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  type="number"
-                  inputProps={{ step: "1", min: 0 }}
-                  required
-                  fullWidth
-                  disabled={saving}
-                  error={stockIsInvalid}
-                  helperText={stockIsInvalid ? "Stock cannot be negative" : " "}
-                />
-              </Stack>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={enableNotification}
-                    onChange={(e) => setEnableNotification(e.target.checked)}
-                    disabled={saving}
-                    color="primary"
-                  />
-                }
-                label="Enable low stock notifications for this item"
-              />
-
-              <TextField
-                label="Low stock threshold"
-                value={newItemLowStockThreshold}
-                onChange={(e) => setNewItemLowStockThreshold(e.target.value)}
-                type="number"
-                inputProps={{ step: "1", min: 0 }}
-                fullWidth
-                disabled={saving}
-                error={newItemLowStockThresholdInvalid}
-                helperText={
-                  newItemLowStockThresholdInvalid
-                    ? "Threshold must be a whole number or empty"
-                    : "Leave empty for no threshold"
-                }
-              />
-            </Stack>
-          </DialogContent>
-
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={closeDialog} color="inherit" disabled={saving}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={
-                saving ||
-                stockIsInvalid ||
-                priceIsInvalid ||
-                newItemLowStockThresholdInvalid ||
-                name.trim().length === 0
-              }
-            >
-              {saving ? "Saving…" : "Add item"}
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-
-      {selectedItem && (
-        <EditItemModal
-          open={editOpen}
-          itemId={selectedItem.id}
-          initialName={selectedItem.name}
-          initialDescription={selectedItem.description || ""}
-          initialPrice={Number(selectedItem.price)}
-          currentStock={selectedItem.stock}
-          initialCategoryIds={(selectedItem.category_ids || []).map(String)}
-          initialLowStockThreshold={selectedItem.low_stock_threshold ?? null}
-          initialImageUrl={selectedItem.image_url ?? null}
-          low_stock_notification={selectedItem.low_stock_notification}
-          canEditDetails={canEditDetails}
-          onClose={closeEditDetails}
-          onItemUpdated={(updated: {
-            id: number | string;
-            name: string;
-            description?: string;
-            price: number;
-            lowStockThreshold: number | null;
-            low_stock_notification: boolean;
-            category_ids?: string[];
-            image_url?: string | null;
-          }) => {
-            setItems((prev) =>
-              prev.map((it) =>
-                it.id === updated.id
-                  ? {
-                      ...it,
-                      name: updated.name,
-                      description: updated.description,
-                      price: updated.price,
-                      low_stock_threshold: updated.lowStockThreshold,
-                      low_stock_notification: updated.low_stock_notification,
-                      category_ids: updated.category_ids,
-                      image_url: updated.image_url,
-                    }
-                  : it,
-              ),
-            );
-            setSnackMessage("Item updated");
-            setSnackOpen(true);
-          }}
-          onStockUpdated={(newStock) => {
+      <ItemFormModal
+        open={formOpen}
+        mode={formMode}
+        itemId={selectedItem?.id}
+        initialName={selectedItem?.name || ""}
+        description={selectedItem?.description || ""}
+        initialPrice={selectedItem ? Number(selectedItem.price) : 0}
+        currentStock={selectedItem?.stock || 0}
+        initialCategoryIds={initialCategoryIds}
+        initialImageUrl={selectedItem?.image_url ?? null}
+        initialCustomFields={selectedItem?.custom_fields}
+        initialLowStockThreshold={selectedItem?.low_stock_threshold ?? null}
+        low_stock_notification={selectedItem?.low_stock_notification || false}
+        canEditDetails={canEditDetails}
+        onClose={closeForm}
+        onItemCreated={(created) => {
+          setItems((prev) => [
+            ...prev,
+            { ...created, order_id: Math.random().toString() },
+          ]);
+          setSnackMessage("Item added");
+          setSnackOpen(true);
+        }}
+        onItemUpdated={(updated: any) => {
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === updated.id ? { ...it, ...updated } : it,
+            ),
+          );
+          setSnackMessage("Item updated");
+          setSnackOpen(true);
+        }}
+        onStockUpdated={(newStock) => {
+          if (selectedItem) {
             setItems((prev) =>
               prev.map((it) =>
                 it.id === selectedItem.id ? { ...it, stock: newStock } : it,
@@ -1180,24 +689,24 @@ export default function ItemPage() {
             );
             setSnackMessage("Stock updated");
             setSnackOpen(true);
-          }}
-          onItemDeleted={(id) => {
-            setItems((prev) => prev.filter((it) => it.id !== id));
-            setSnackMessage("Item deleted");
-            setSnackOpen(true);
-          }}
-        />
-      )}
+          }
+        }}
+        onItemDeleted={(id) => {
+          setItems((prev) => prev.filter((it) => it.id !== id));
+          setSnackMessage("Item deleted");
+          setSnackOpen(true);
+        }}
+      />
 
       <Snackbar
         open={snackOpen}
-        autoHideDuration={2500}
+        autoHideDuration={3500}
         onClose={() => setSnackOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackOpen(false)}
-          severity="success"
+          severity={snackMessage.includes("Warning") ? "error" : "success"}
           variant="filled"
         >
           {snackMessage}
@@ -1221,7 +730,7 @@ export default function ItemPage() {
                       ? "Low stock"
                       : "In stock",
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
-                description: selectedDetailsItem.description,
+                description: selectedDetailsItem.description ?? undefined,
                 imageUrl: selectedDetailsItem.image_url ?? null,
                 custom_fields: selectedDetailsItem.custom_fields,
               }
@@ -1234,6 +743,15 @@ export default function ItemPage() {
         open={Boolean(selectedLogItemId)}
         itemId={selectedLogItemId}
         onClose={handleCloseStockLog}
+      />
+
+      <ManageCustomFieldsDialog
+        open={customFieldsDialogOpen}
+        onClose={() => setCustomFieldsDialogOpen(false)}
+        customFields={customFields}
+        setCustomFields={setCustomFields}
+        setSnackMessage={setSnackMessage}
+        setSnackOpen={setSnackOpen}
       />
     </Box>
   );

@@ -8,7 +8,8 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import EditItemModal from "../components/inventory/editItemModal";
+import ItemFormModal from "../components/inventory/ItemFormModal";
+import ApiClient from "../services/apiClient";
 import {
   adjustStock,
   createActiveCategory,
@@ -25,6 +26,14 @@ jest.mock("../services/inventoryService", () => ({
   createActiveCategory: jest.fn(),
 }));
 
+jest.mock("../services/apiClient", () => ({
+  get: jest.fn(),
+}));
+
+const mockedApiClientGet = ApiClient.get as jest.MockedFunction<
+  typeof ApiClient.get
+>;
+
 const mockedAdjustStock = adjustStock as jest.MockedFunction<
   typeof adjustStock
 >;
@@ -37,12 +46,13 @@ const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
   typeof createActiveCategory
 >;
 
-describe("EditItemModal - user story tests", () => {
+describe("Edit Mode in ItemFormModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     URL.createObjectURL = jest.fn(
       () => "blob:preview",
     ) as typeof URL.createObjectURL;
+    URL.revokeObjectURL = jest.fn() as typeof URL.revokeObjectURL;
     mockedListActiveCategories.mockResolvedValue([
       { id: "c1", name: "Cookies" },
       { id: "c2", name: "Cakes" },
@@ -52,13 +62,16 @@ describe("EditItemModal - user story tests", () => {
       id: "c4",
       name: "New",
     } as any);
+    mockedApiClientGet.mockResolvedValue({ data: { data: [] } } as any);
   });
+
   jest.setTimeout(15000);
 
   function renderModal(
-    overrides?: Partial<React.ComponentProps<typeof EditItemModal>>,
+    overrides?: Partial<React.ComponentProps<typeof ItemFormModal>>,
   ) {
-    const props: React.ComponentProps<typeof EditItemModal> = {
+    const props: React.ComponentProps<typeof ItemFormModal> = {
+      mode: "edit",
       open: true,
       itemId: 1,
       initialName: "Milk",
@@ -74,7 +87,7 @@ describe("EditItemModal - user story tests", () => {
       ...overrides,
     };
 
-    render(<EditItemModal {...props} />);
+    render(<ItemFormModal {...props} />);
     return props;
   }
 
@@ -122,6 +135,8 @@ describe("EditItemModal - user story tests", () => {
         low_stock_threshold: 4,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
+        description: "",
         image: null,
         remove_image: false,
       });
@@ -135,10 +150,12 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Skim Milk",
       price: 30,
-      lowStockThreshold: 4,
+      low_stock_threshold: 4,
       low_stock_notification: false,
       category_ids: [],
-      image_url: undefined,
+      custom_fields: {},
+      description: "",
+      image_url: null,
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -199,6 +216,7 @@ describe("EditItemModal - user story tests", () => {
     await user.clear(priceInput);
     await user.type(priceInput, "-1");
 
+    // Save should be disabled (because price invalid for owners)
     expect(
       within(dialog).getByRole("button", { name: /^save$/i }),
     ).toBeDisabled();
@@ -219,10 +237,13 @@ describe("EditItemModal - user story tests", () => {
     renderModal({ canEditDetails: true });
 
     const dialog = await screen.findByRole("dialog");
+
+    // change something to trigger updateItem
     const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
     await user.clear(nameInput);
     await user.type(nameInput, "New Name");
 
+    // amount can stay 0 (no stock change)
     const amountInput = within(dialog).getByRole("spinbutton", {
       name: /amount/i,
     });
@@ -237,6 +258,7 @@ describe("EditItemModal - user story tests", () => {
       ),
     ).toBeInTheDocument();
 
+    // updateItem called, adjustStock should not be called because amount=0
     expect(mockedUpdateItem).toHaveBeenCalled();
     expect(mockedAdjustStock).not.toHaveBeenCalled();
   });
@@ -307,6 +329,7 @@ describe("EditItemModal - user story tests", () => {
     expect(mockedDeleteItem).not.toHaveBeenCalled();
     expect(props.onItemDeleted).not.toHaveBeenCalled();
 
+    // Check that the confirmation dialog text is gone
     await waitFor(() => {
       expect(
         screen.queryByText(/Are you sure you want to delete this item/i),
@@ -360,6 +383,8 @@ describe("EditItemModal - user story tests", () => {
         low_stock_threshold: null,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
+        description: "",
         image: null,
         remove_image: false,
       });
@@ -369,14 +394,17 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Milk",
       price: 25,
-      lowStockThreshold: null,
+      low_stock_threshold: null,
       low_stock_notification: false,
       category_ids: [],
-      image_url: undefined,
+      custom_fields: {},
+      description: "",
+      image_url: null,
     });
 
     expect(props.onClose).toHaveBeenCalled();
   });
+
 
   test("owner can upload an image and save item changes", async () => {
     mockedUpdateItem.mockResolvedValueOnce({
@@ -414,6 +442,8 @@ describe("EditItemModal - user story tests", () => {
         low_stock_threshold: null,
         low_stock_notification: false,
         category_ids: [],
+        custom_fields: {},
+        description: "",
         image: file,
         remove_image: false,
       });
@@ -423,9 +453,11 @@ describe("EditItemModal - user story tests", () => {
       id: 1,
       name: "Milk",
       price: 25,
-      lowStockThreshold: null,
+      low_stock_threshold: null,
       low_stock_notification: false,
       category_ids: [],
+      custom_fields: {},
+      description: "",
       image_url: "/media/items/milk.png",
     });
     expect(props.onClose).toHaveBeenCalled();
@@ -493,5 +525,165 @@ describe("EditItemModal - user story tests", () => {
 
     expect(mockedUpdateItem).not.toHaveBeenCalled();
     expect(mockedAdjustStock).not.toHaveBeenCalled();
+  });
+
+  test("owner: custom fields render in edit modal and can be edited", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [
+          { id: "cf1", name: "Location", data_type: "text" },
+          { id: "cf2", name: "Warranty", data_type: "number" },
+        ],
+      },
+    } as any);
+    mockedUpdateItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    const props = renderModal({
+      canEditDetails: true,
+      initialCustomFields: { cf1: "Aisle 1", cf2: "12" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Check if custom fields rendered with initial values
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    expect(locationInput).toHaveValue("Aisle 1");
+    expect(warrantyInput).toHaveValue(12);
+
+    // Edit the values
+    await user.clear(locationInput);
+    await user.type(locationInput, "Warehouse B");
+
+    await user.clear(warrantyInput);
+    await user.type(warrantyInput, "24");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedUpdateItem).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          custom_fields: { cf1: "Warehouse B", cf2: "24" },
+        }),
+      );
+    });
+
+    expect(props.onItemUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        custom_fields: { cf1: "Warehouse B", cf2: "24" },
+      }),
+    );
+  });
+
+  test("employee: custom field inputs are disabled", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [{ id: "cf1", name: "Location", data_type: "text" }],
+      },
+    } as any);
+
+    renderModal({
+      canEditDetails: false, // Employee
+      initialCustomFields: { cf1: "Aisle 1" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+
+    // Ensure it's rendered but disabled
+    expect(locationInput).toHaveValue("Aisle 1");
+    expect(locationInput).toBeDisabled();
+  });
+
+  test("owner: number custom fields strictly enforce numeric input", async () => {
+    mockedApiClientGet.mockResolvedValueOnce({
+      data: {
+        data: [{ id: "cf2", name: "Warranty", data_type: "number" }],
+      },
+    } as any);
+
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    // Attempt to type text into a number field
+    await user.type(warrantyInput, "abc");
+
+    // The input should remain empty
+    expect(warrantyInput).toHaveValue(null);
+
+    // Typing a valid number should work
+    await user.type(warrantyInput, "12");
+    expect(warrantyInput).toHaveValue(12);
+  });
+
+  test("owner: shows warning and renders safely if custom fields API fails", async () => {
+    // Force the custom fields API call to fail
+    mockedApiClientGet.mockRejectedValueOnce(new Error("Network Error"));
+
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Check that our fallback error message appears
+    expect(
+      await within(dialog).findByText(/Warning: Failed to load custom fields/i),
+    ).toBeInTheDocument();
+
+    // Verify core UI still rendered and didn't crash
+    expect(
+      within(dialog).getByRole("textbox", { name: /name/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("spinbutton", { name: /price/i }),
+    ).toBeInTheDocument();
+  });
+
+  test("owner: can still save basic changes without data loss when custom fields fail", async () => {
+    mockedApiClientGet.mockRejectedValueOnce(new Error("Network Error"));
+    mockedUpdateItem.mockResolvedValueOnce({} as any);
+
+    const user = userEvent.setup();
+    renderModal({
+      canEditDetails: true,
+      initialCustomFields: { old_field: "Do not delete me" },
+    });
+
+    const dialog = await screen.findByRole("dialog");
+
+    // Wait for the API failure state to settle
+    await within(dialog).findByText(/Warning: Failed to load custom fields/i);
+
+    // Edit a basic field
+    const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Emergency Rescue Edit");
+
+    // Click save
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    // Verify updateItem was called with the new name AND the old custom fields
+    await waitFor(() => {
+      expect(mockedUpdateItem).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          name: "Emergency Rescue Edit",
+          custom_fields: { old_field: "Do not delete me" },
+        }),
+      );
+    });
   });
 });

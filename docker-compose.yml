@@ -31,6 +31,8 @@ services:
       - backend_venv:/app/.venv
       - backend_media:/app/media
     depends_on:
+      redis:
+        condition: service_healthy
       db:
         condition: service_healthy
     command: >
@@ -50,6 +52,16 @@ services:
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
       - backend
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   postgres_data:

@@ -38,31 +38,25 @@ function getVisibleRows(): RowItem[] {
 
   return bodyRows.map((row) => {
     const cells = within(row).getAllByRole("cell");
-    const thresholdText = cells[5].textContent?.trim() ?? "";
+    const thresholdText = cells[3].textContent?.trim() ?? "";
 
     return {
-      name: cells[1].textContent?.trim() || "",
-      stock: Number(cells[3].textContent?.trim() || "0"),
+      name: cells[0].textContent?.trim() || "",
+      stock: Number(cells[2].textContent?.trim() || "0"),
       price: Number(
-        (cells[4].textContent || "0").replace(/[^\d.-]/g, "") || "0",
+        (cells[3].textContent || "0").replace(/[^\d.-]/g, "") || "0",
       ),
-      lowStockThreshold:
-        thresholdText === "—" || thresholdText === ""
-          ? null
-          : Number(thresholdText),
+      lowStockThreshold: thresholdText === "" ? null : Number(thresholdText),
     };
   });
 }
 
 describe("ItemPage", () => {
   jest.setTimeout(30000);
-  let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.resetAllMocks();
-    consoleWarnSpy = jest
-      .spyOn(console, "warn")
-      .mockImplementation((...args: unknown[]) => {
+    jest.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
         const first = String(args[0] ?? "");
         const second = String(args[1] ?? "");
         const combined = `${first} ${second}`;
@@ -77,6 +71,17 @@ describe("ItemPage", () => {
         console.info(...args);
       });
     mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/active/fields/") {
+        return Promise.resolve({
+          data: {
+            data: [
+              { id: "cf1", name: "Location", data_type: "text" },
+              { id: "cf2", name: "Warranty", data_type: "number" },
+            ],
+          },
+        } as any);
+      }
+
       if (url === "/api/inventory/") {
         return Promise.resolve({
           data: {
@@ -90,6 +95,7 @@ describe("ItemPage", () => {
                 low_stock_threshold: 8,
                 low_stock_notification: false,
                 image_url: "/media/items/milk.png",
+                custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
               },
               {
                 id: 2,
@@ -99,6 +105,7 @@ describe("ItemPage", () => {
                 category_ids: [],
                 low_stock_threshold: 3,
                 low_stock_notification: false,
+                custom_fields: JSON.stringify({ cf1: "Aisle 2" }),
               },
               {
                 id: 3,
@@ -108,6 +115,7 @@ describe("ItemPage", () => {
                 category_ids: ["c1", "c3"],
                 low_stock_threshold: 4,
                 low_stock_notification: false,
+                custom_fields: "{}",
               },
               {
                 id: 4,
@@ -116,7 +124,6 @@ describe("ItemPage", () => {
                 price: 15,
                 category_ids: ["c3"],
                 low_stock_threshold: null,
-                low_stock_notification: false,
               },
             ],
           },
@@ -142,6 +149,7 @@ describe("ItemPage", () => {
       return Promise.resolve({ data: {} } as any);
     });
   });
+
 
   test("clicking an item image opens a larger preview", async () => {
     const user = userEvent.setup();
@@ -171,6 +179,7 @@ describe("ItemPage", () => {
       data: {
         id: 5,
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         category_ids: [],
@@ -204,9 +213,7 @@ describe("ItemPage", () => {
     await user.clear(stockInput);
     await user.type(stockInput, "5");
 
-    await user.click(
-      within(dialog).getByRole("button", { name: /^add item$/i }),
-    );
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledTimes(1);
@@ -216,10 +223,12 @@ describe("ItemPage", () => {
     expect(url).toBe("/api/inventory/");
     expectFormDataEntries(payload, {
       name: ["Keyboard"],
+      description: [""],
       price: ["100"],
       stock: ["5"],
       low_stock_threshold: [""],
       low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({})],
     });
     expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
@@ -232,6 +241,7 @@ describe("ItemPage", () => {
       data: {
         id: 6,
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
@@ -266,9 +276,7 @@ describe("ItemPage", () => {
     await user.type(stockInput, "5");
     await user.type(thresholdInput, "4");
 
-    await user.click(
-      within(dialog).getByRole("button", { name: /^add item$/i }),
-    );
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledTimes(1);
@@ -278,28 +286,114 @@ describe("ItemPage", () => {
     expect(url).toBe("/api/inventory/");
     expectFormDataEntries(payload, {
       name: ["Keyboard"],
+      description: [""],
       price: ["100"],
       stock: ["5"],
       low_stock_threshold: ["4"],
       low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({})],
     });
     expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
   });
+
+  test("add item with custom fields", async () => {
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 201,
+      data: {
+        id: 7,
+        name: "Monitor",
+        description: "",
+        price: 200,
+        stock: 10,
+        low_stock_threshold: null,
+        low_stock_notification: false,
+        category_ids: [],
+        custom_fields: { cf1: "Aisle 3", cf2: "24" },
+      },
+    } as any);
+
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    await user.click(screen.getByRole("button", { name: /add item/i }));
+
+    const dialog = await screen.findByRole("dialog");
+
+    const nameInput = within(dialog).getByRole("textbox", { name: /name/i });
+    const priceInput = within(dialog).getByRole("spinbutton", {
+      name: /^price$/i,
+    });
+    const stockInput = within(dialog).getByRole("spinbutton", {
+      name: /initial stock/i,
+    });
+
+    // Find custom fields
+    const locationInput = await within(dialog).findByRole("textbox", {
+      name: /Location/i,
+    });
+    const warrantyInput = await within(dialog).findByRole("spinbutton", {
+      name: /Warranty/i,
+    });
+
+    await user.type(nameInput, "Monitor");
+    await user.clear(priceInput);
+    await user.type(priceInput, "200");
+    await user.clear(stockInput);
+    await user.type(stockInput, "10");
+
+    // Fill custom fields
+    await user.type(locationInput, "Aisle 3");
+    await user.type(warrantyInput, "24");
+
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Monitor"],
+      description: [""],
+      price: ["200"],
+      stock: ["10"],
+      low_stock_threshold: [""],
+      low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({ cf1: "Aisle 3", cf2: "24" })],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
+
+    expect(await screen.findByText(/item added/i)).toBeInTheDocument();
+    expect(await screen.findByText("Monitor")).toBeInTheDocument();
+  });
+
   test("sorts by stock, name, price,low stock threshold  and status(asc/desc) via table header controls", async () => {
     const user = userEvent.setup();
     render(<ItemPage />);
 
     await screen.findByText("Milk");
 
-    // Default sort is stock asc
+    // Default sort: Name desc
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Milk",
+      "Eggs",
+      "Butter",
+      "Bread",
+    ]);
+
+    // Name asc
+    await user.click(screen.getByRole("button", { name: /product name/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
+      "Butter",
       "Eggs",
       "Milk",
-      "Butter",
     ]);
 
     // Stock desc
@@ -311,30 +405,16 @@ describe("ItemPage", () => {
       "Bread",
     ]);
 
-    // Name asc, then desc
-    await user.click(screen.getByRole("button", { name: /product name/i }));
+    // Stock asc
+    await user.click(screen.getByRole("button", { name: /^stock$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
-      "Butter",
       "Eggs",
       "Milk",
-    ]);
-    await user.click(screen.getByRole("button", { name: /product name/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Milk",
-      "Eggs",
       "Butter",
-      "Bread",
     ]);
 
-    // Price asc, then desc
-    await user.click(screen.getByRole("button", { name: /price/i }));
-    expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Bread",
-      "Eggs",
-      "Butter",
-      "Milk",
-    ]);
+    // Price desc
     await user.click(screen.getByRole("button", { name: /price/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
@@ -342,27 +422,39 @@ describe("ItemPage", () => {
       "Eggs",
       "Bread",
     ]);
-    // Low Stock Threshold asc, then desc
-    await user.click(
-      screen.getByRole("button", { name: /^low stock threshold$/i }),
-    );
+
+    // Price asc
+    await user.click(screen.getByRole("button", { name: /price/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
       "Eggs",
-      "Milk",
       "Butter",
+      "Milk",
     ]);
+
+    // Low Stock Threshold desc
     await user.click(
       screen.getByRole("button", { name: /^low stock threshold$/i }),
     );
     expect(getVisibleRows().map((r) => r.name)).toEqual([
-      "Butter",
+      "Butter", // null -> push to top on desc
       "Milk",
       "Eggs",
       "Bread",
     ]);
 
-    // Status asc, then desc
+    // Low Stock Threshold asc
+    await user.click(
+      screen.getByRole("button", { name: /^low stock threshold$/i }),
+    );
+    expect(getVisibleRows().map((r) => r.name)).toEqual([
+      "Bread",
+      "Eggs",
+      "Milk",
+      "Butter", // null -> bottom
+    ]);
+
+    // Status desc
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Milk",
@@ -371,6 +463,7 @@ describe("ItemPage", () => {
       "Bread",
     ]);
 
+    // Status asc
     await user.click(screen.getByRole("button", { name: /^status$/i }));
     expect(getVisibleRows().map((r) => r.name)).toEqual([
       "Bread",
@@ -421,9 +514,12 @@ describe("ItemPage", () => {
     expectFormDataEntries(payload, {
       name: ["Milk"],
       price: ["20"],
+      description: [""],
       low_stock_threshold: ["8"],
       low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({ cf1: "Aisle 1", cf2: "0" })],
       category_ids: ["c1", "c3"],
+    });
     });
   });
 
@@ -561,9 +657,6 @@ describe("ItemPage", () => {
     expect(screen.getByText("Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Butter")).toBeInTheDocument();
   });
-  afterEach(() => {
-    consoleWarnSpy.mockRestore();
-  });
 
   test("shows low stock status only for items at or below their item threshold", async () => {
     render(<ItemPage />);
@@ -690,4 +783,114 @@ describe("ItemPage", () => {
     expect(await screen.findByText("Category deleted")).toBeInTheDocument();
     expect(within(dialog).queryByText("Cookies")).not.toBeInTheDocument();
   });
-});
+
+  test("renders custom field columns and supports sorting", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+
+    // Check if custom field headers are rendered
+    expect(
+      screen.getByRole("button", { name: /location/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /warranty/i }),
+    ).toBeInTheDocument();
+
+    // Check if custom field data is rendered in the table for Milk
+    expect(screen.getByText("Aisle 1")).toBeInTheDocument();
+
+    // Test sorting by a custom field (Location)
+    await user.click(screen.getByRole("button", { name: /location/i }));
+
+    // Check order
+    let rows = getVisibleRows().map((r) => r.name);
+    // Since Bread is Aisle 2 and Milk is Aisle 1:
+    expect(rows.indexOf("Bread")).toBeLessThan(rows.indexOf("Milk"));
+
+    // Click again for Descending
+    await user.click(screen.getByRole("button", { name: /location/i }));
+    rows = getVisibleRows().map((r) => r.name);
+    expect(rows.indexOf("Milk")).toBeLessThan(rows.indexOf("Bread"));
+  });
+
+  test("Manage custom fields dialog - add, delete, and type selection", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+    await screen.findByText("Milk");
+
+    // Open manage fields dialog
+    await user.click(screen.getByRole("button", { name: /manage fields/i }));
+    const dialog = await screen.findByRole("dialog", {
+      name: /manage custom fields/i,
+    });
+
+    // Verify existing fields are loaded
+    expect(within(dialog).getByText(/Location/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Warranty/i)).toBeInTheDocument();
+
+    // Mock the create field response
+    mockedAxios.post.mockResolvedValueOnce({
+      status: 201,
+      data: { id: "cf3", name: "Color", data_type: "text" },
+    } as any);
+
+    // Add a new field
+    const nameInput = within(dialog).getByRole("textbox", {
+      name: /new field name/i,
+    });
+    await user.type(nameInput, "Color");
+
+    // Select type
+    const typeSelect = within(dialog).getByRole("combobox", { name: /type/i });
+    fireEvent.mouseDown(typeSelect);
+    fireEvent.click(await screen.findByRole("option", { name: /text/i }));
+
+    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+
+    expect(await screen.findByText("Custom field created")).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Color/i)).toBeInTheDocument();
+
+    // Delete a field
+    mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
+
+    // Find the row containing 'Warranty' and click its Delete button
+    const warrantyText = within(dialog).getByText(/Warranty/i);
+    const warrantyRow = warrantyText.closest(".MuiStack-root") as HTMLElement;
+    await user.click(
+      within(warrantyRow).getByRole("button", { name: /delete/i }),
+    );
+
+    expect(await screen.findByText("Custom field deleted")).toBeInTheDocument();
+    expect(within(dialog).queryByText(/Warranty/i)).not.toBeInTheDocument();
+  });
+
+  test("employees cannot see the 'Manage fields' button", async () => {
+    // Mock the active inventory check to return role: 'employee'
+    mockedAxios.get.mockImplementation((url) => {
+      if (url === "/api/inventory/active/") {
+        return Promise.resolve({
+          data: {
+            id: "inv1",
+            name: "Test",
+            orgNumber: "123",
+            role: "employee",
+          },
+        } as any);
+      }
+      return Promise.resolve({ data: { data: [] } } as any);
+    });
+
+    render(<ItemPage />);
+
+    // Wait for the page to load
+    await waitFor(() => {
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+
+    // Manage fields button should be hidden for employees
+    expect(
+      screen.queryByRole("button", { name: /manage fields/i }),
+    ).not.toBeInTheDocument();
+  });
