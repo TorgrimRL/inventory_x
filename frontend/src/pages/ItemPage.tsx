@@ -156,7 +156,6 @@ export default function ItemPage() {
   }
 
   function handleOpenItemDetails(item: InventoryItem) {
-    console.log("clicked item", item);
     setSelectedDetailsItem(item);
     setDetailsOpen(true);
   }
