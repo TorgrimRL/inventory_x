@@ -19,8 +19,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import ApiClient from "../../services/apiClient";
-import type { ItemCategory } from "../../services/inventoryService";
-import { toMediaUrl } from "../../utils/mediaUrl";
 import {
   adjustStock,
   createItem,
@@ -28,6 +26,8 @@ import {
   listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
+import type { ItemCategory } from "../../services/inventoryService";
+import { toMediaUrl } from "../../utils/mediaUrl";
 import type {
   InventoryCustomField,
   InventoryItem,
@@ -191,6 +191,7 @@ export default function ItemFormModal({
     initialCategoryIds,
     initialCustomFields,
     description,
+    initialImageUrl,
   ]);
 
   const objectUrlRef = useRef<string | null>(null);
@@ -219,7 +220,8 @@ export default function ItemFormModal({
     };
   }, [selectedImage]);
 
-  const previewUrl = localPreviewUrl ?? (removeImage ? null : toMediaUrl(currentImageUrl));
+  const previewUrl =
+    localPreviewUrl ?? (removeImage ? null : toMediaUrl(currentImageUrl));
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;

@@ -10,7 +10,6 @@ import userEvent from "@testing-library/user-event";
 
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ApiClient from "../services/apiClient";
-import { toMediaUrl } from "../utils/mediaUrl";
 import {
   adjustStock,
   createActiveCategory,
@@ -18,6 +17,7 @@ import {
   listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
+import { toMediaUrl } from "../utils/mediaUrl";
 
 jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
@@ -501,16 +501,17 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       "blob:preview",
     );
     expect(
-      within(dialog).getByText(/preview of selected image, shown before you save/i),
+      within(dialog).getByText(
+        /preview of selected image, shown before you save/i,
+      ),
     ).toBeInTheDocument();
 
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
-        "src",
-        toMediaUrl("/media/items/milk.png"),
-      );
+      expect(
+        within(dialog).getByRole("img", { name: /milk/i }),
+      ).toHaveAttribute("src", toMediaUrl("/media/items/milk.png"));
     });
   });
 
