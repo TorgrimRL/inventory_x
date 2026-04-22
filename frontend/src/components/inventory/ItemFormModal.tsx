@@ -194,31 +194,32 @@ export default function ItemFormModal({
   ]);
 
   const objectUrlRef = useRef<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
 
-  const previewUrl = useMemo(() => {
+  useEffect(() => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
 
-    if (selectedImage) {
-      const nextUrl = URL.createObjectURL(selectedImage);
-      objectUrlRef.current = nextUrl;
-      return nextUrl;
+    if (!selectedImage) {
+      setLocalPreviewUrl(null);
+      return;
     }
 
-    if (removeImage) return null;
-    return toMediaUrl(currentImageUrl);
-  }, [currentImageUrl, removeImage, selectedImage]);
+    const nextUrl = URL.createObjectURL(selectedImage);
+    objectUrlRef.current = nextUrl;
+    setLocalPreviewUrl(nextUrl);
 
-  useEffect(() => {
     return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
+      if (objectUrlRef.current === nextUrl) {
+        URL.revokeObjectURL(nextUrl);
         objectUrlRef.current = null;
       }
     };
-  }, []);
+  }, [selectedImage]);
+
+  const previewUrl = localPreviewUrl ?? (removeImage ? null : toMediaUrl(currentImageUrl));
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
