@@ -135,6 +135,9 @@ export default function ItemFormModal({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [desc, setDescription] = useState(description);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
+    initialImageUrl,
+  );
   const [removeImage, setRemoveImage] = useState(false);
 
   useEffect(() => {
@@ -152,6 +155,7 @@ export default function ItemFormModal({
     setError(null);
     setDescription(description || "");
     setSelectedImage(null);
+    setCurrentImageUrl(initialImageUrl);
     setRemoveImage(false);
 
     let parsed = {};
@@ -203,8 +207,8 @@ export default function ItemFormModal({
     }
 
     if (removeImage) return null;
-    return initialImageUrl;
-  }, [initialImageUrl, removeImage, selectedImage]);
+    return currentImageUrl;
+  }, [currentImageUrl, removeImage, selectedImage]);
 
   useEffect(() => {
     return () => {
@@ -341,6 +345,7 @@ export default function ItemFormModal({
           remove_image: removeImage,
         };
         const createdData = await createItem(payload);
+        setCurrentImageUrl(createdData?.image_url ?? null);
         if (onItemCreated) onItemCreated(createdData);
         onClose();
         return;
@@ -360,6 +365,12 @@ export default function ItemFormModal({
           remove_image: removeImage,
         };
         const updatedResponse = await updateItem(itemId, payload);
+        const updatedImageUrl =
+          updatedResponse?.image_url ?? (removeImage ? null : currentImageUrl);
+        setCurrentImageUrl(updatedImageUrl);
+        setSelectedImage(null);
+        setRemoveImage(false);
+
         if (onItemUpdated) {
           onItemUpdated({
             id: itemId,
@@ -370,9 +381,7 @@ export default function ItemFormModal({
             category_ids: payload.category_ids,
             custom_fields: payload.custom_fields,
             description: desc.trim(),
-            image_url:
-              updatedResponse?.image_url ??
-              (removeImage ? null : initialImageUrl),
+            image_url: updatedImageUrl,
           });
         }
       }

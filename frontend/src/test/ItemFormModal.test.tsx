@@ -462,6 +462,43 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  test("uploaded image is shown immediately in the open edit modal", async () => {
+    mockedUpdateItem.mockResolvedValueOnce({
+      image_url: "/media/items/milk.png",
+    } as any);
+
+    const user = userEvent.setup();
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["image-data"], "milk.png", { type: "image/png" });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
+      "src",
+      "blob:preview",
+    );
+
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
+        "src",
+        "/media/items/milk.png",
+      );
+    });
+  });
+
   test("owner sees file type error for unsupported image upload", async () => {
     renderModal({ canEditDetails: true });
 
