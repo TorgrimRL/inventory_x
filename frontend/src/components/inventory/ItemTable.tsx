@@ -99,27 +99,6 @@ export default function ItemTable({
       ),
     },
     {
-      id: "image",
-      label: "Image",
-      align: "center",
-      render: (item) =>
-        item.image_url ? (
-          <Box
-            component="img"
-            src={item.image_url}
-            alt={item.name}
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          "-"
-        ),
-    },
-    {
       id: "category",
       label: "Category",
       width: "12%",

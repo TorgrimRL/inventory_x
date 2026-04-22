@@ -54,7 +54,8 @@ describe("Inventory Service API Wrappers", () => {
       expect.any(FormData),
     );
 
-    const formData = (apiClient.patch as jest.Mock).mock.calls[0][1] as FormData;
+    const formData = (apiClient.patch as jest.Mock).mock
+      .calls[0][1] as FormData;
     expectFormDataField(formData, "low_stock_notification", "false");
     expect(formData.get("low_stock_threshold")).toBe("");
   });

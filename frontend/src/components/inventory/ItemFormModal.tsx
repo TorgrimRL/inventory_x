@@ -19,6 +19,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import ApiClient from "../../services/apiClient";
+import type { ItemCategory } from "../../services/inventoryService";
 import {
   adjustStock,
   createItem,
@@ -26,12 +27,11 @@ import {
   listActiveCategories,
   updateItem,
 } from "../../services/inventoryService";
-import type { ItemCategory } from "../../services/inventoryService";
-import { toMediaUrl } from "../../utils/mediaUrl";
 import type {
   InventoryCustomField,
   InventoryItem,
 } from "../../types/itemPageTypes";
+import { toMediaUrl } from "../../utils/mediaUrl";
 
 type Props = {
   open: boolean;
