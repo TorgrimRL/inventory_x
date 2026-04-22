@@ -250,6 +250,23 @@ export async function deleteItem(itemId: number | string) {
   return res.data;
 }
 
+export async function uploadItemImage(itemId: number | string, image: File) {
+  const formData = new FormData();
+  formData.append("image", image);
+
+  const res = await apiClient.post(`/api/inventory/${itemId}/image/`, formData);
+  return res.data as { image_url: string; message: string };
+}
+
+export async function removeItemImage(itemId: number | string) {
+  const res = await apiClient.patch(`/api/inventory/${itemId}/`, (() => {
+    const formData = new FormData();
+    formData.append("remove_image", "true");
+    return formData;
+  })());
+  return res.data;
+}
+
 const INVITE_ENDPOINT = "/api/inventory/inventories/invite/";
 
 /**

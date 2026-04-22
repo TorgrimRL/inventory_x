@@ -1,3 +1,7 @@
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import PieChartOutlineIcon from "@mui/icons-material/PieChartOutline";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import {
   Box,
   Button,
@@ -9,7 +13,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Package, PieChart, TrendingUp, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { PATHS } from "../App.tsx";
@@ -18,25 +21,25 @@ const topoBg = "/topography-2000x600.svg";
 
 const FEATURES = [
   {
-    icon: Package,
+    icon: Inventory2OutlinedIcon,
     title: "Real-Time Inventory",
     description:
       "Maintain complete oversight with instant stock updates directly from your dashboard.",
   },
   {
-    icon: TrendingUp,
+    icon: TrendingUpIcon,
     title: "Low-Stock Intelligence",
     description:
       "Anticipate shortages before they affect your operations with automated low-stock alerts.",
   },
   {
-    icon: Users,
+    icon: PeopleOutlineIcon,
     title: "Role-Based Access",
     description:
       "Control permissions with structured team management and granular access roles.",
   },
   {
-    icon: PieChart,
+    icon: PieChartOutlineIcon,
     title: "Insightful Metrics",
     description:
       "Make informed decisions with elegant, easy-to-read data visualization metrics.",
@@ -201,7 +204,7 @@ export default function LandingPage() {
                       transition: theme.transitions.create("transform"),
                     }}
                   >
-                    <feat.icon size={40} strokeWidth={1.5} />
+                    <feat.icon sx={{ fontSize: 40 }} />
                   </Box>
                   <Typography
                     variant="h6"
