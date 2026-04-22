@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ItemDetailsModal from "../components/inventory/itemDetailsModal";
+import { toMediaUrl } from "../utils/mediaUrl";
 
 describe("ItemDetailsModal", () => {
   beforeEach(() => {
@@ -76,10 +77,7 @@ describe("ItemDetailsModal", () => {
     const image = within(dialog).getByRole("img", { name: /milk/i });
 
     expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute(
-      "src",
-      expect.stringMatching(/\/media\/items\/milk\.png$/i),
-    );
+    expect(image).toHaveAttribute("src", toMediaUrl("/media/items/milk.png"));
 
     await user.click(image);
 

@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import ApiClient from "../../services/apiClient";
 import type { ItemCategory } from "../../services/inventoryService";
+import { toMediaUrl } from "../../utils/mediaUrl";
 import {
   adjustStock,
   createItem,
@@ -207,7 +208,7 @@ export default function ItemFormModal({
     }
 
     if (removeImage) return null;
-    return currentImageUrl;
+    return toMediaUrl(currentImageUrl);
   }, [currentImageUrl, removeImage, selectedImage]);
 
   useEffect(() => {

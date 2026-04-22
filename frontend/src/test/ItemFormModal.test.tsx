@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ApiClient from "../services/apiClient";
+import { toMediaUrl } from "../utils/mediaUrl";
 import {
   adjustStock,
   createActiveCategory,
@@ -494,7 +495,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     await waitFor(() => {
       expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
         "src",
-        "/media/items/milk.png",
+        toMediaUrl("/media/items/milk.png"),
       );
     });
   });

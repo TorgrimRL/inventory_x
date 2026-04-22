@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import { toMediaUrl } from "../../utils/mediaUrl";
+
 type Props = {
   open: boolean;
   item?: {
@@ -60,6 +62,8 @@ export default function ItemDetailsModal({
 
   if (!open) return null;
 
+  const imageUrl = toMediaUrl(item?.imageUrl);
+
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -82,11 +86,11 @@ export default function ItemDetailsModal({
                   <Typography variant="h6">{item.name}</Typography>
                 </Box>
 
-                {item.imageUrl ? (
+                {imageUrl ? (
                   <Box
                     component="img"
-                    src={item.imageUrl}
-                    alt={item.name}
+                    src={imageUrl}
+                    alt={item?.name || "Item image"}
                     onClick={() => setPreviewOpen(true)}
                     sx={{
                       width: 72,
@@ -164,7 +168,10 @@ export default function ItemDetailsModal({
                 <>
                   <Divider />
                   {customFields.map((field) => {
-                    const value = getCustomFieldValue(item.custom_fields, field.id);
+                    const value = getCustomFieldValue(
+                      item.custom_fields,
+                      field.id,
+                    );
 
                     return (
                       <div key={field.id}>
@@ -195,11 +202,11 @@ export default function ItemDetailsModal({
         maxWidth="md"
       >
         <DialogContent sx={{ p: 1 }}>
-          {item?.imageUrl ? (
+          {imageUrl ? (
             <Box
               component="img"
-              src={item.imageUrl}
-              alt={item.name}
+              src={imageUrl}
+              alt={item?.name || "Item image"}
               sx={{
                 display: "block",
                 maxWidth: "min(90vw, 900px)",
