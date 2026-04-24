@@ -17,6 +17,7 @@ export type InventoryItem = {
   category_ids?: string[];
   order_id?: string;
   custom_fields?: string | Record<string, any>;
+  description?: string;
 };
 
 export type Category = {
