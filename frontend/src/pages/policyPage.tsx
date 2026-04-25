@@ -53,14 +53,22 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             <strong>Last Updated:</strong>{" "}
             <Box component="span" sx={badgeStyle}>
               2026-04-21
             </Box>
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             Welcome to{" "}
             <Box component="span" sx={badgeStyle}>
               Inventory X
@@ -78,7 +86,11 @@ export default function PrivacyPolicy() {
           >
             1. Information We Collect
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We collect information that you provide to us directly when you
             register for an account, create an organization, or use our
             services. Based on our system architecture, this includes:
@@ -122,7 +134,11 @@ export default function PrivacyPolicy() {
           >
             2. How We Use Your Information
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We use the collected data strictly to provide and improve our
             services to you:
           </Typography>
@@ -167,7 +183,11 @@ export default function PrivacyPolicy() {
           >
             3. Cookies and Tracking Technologies
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             Our frontend application uses essential technologies (like local
             storage or session cookies) to keep you logged in securely.
           </Typography>
@@ -179,7 +199,11 @@ export default function PrivacyPolicy() {
           >
             4. How We Share Your Information
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We do not sell your personal or inventory data. We only share
             information in the following limited circumstances:
           </Typography>
@@ -209,7 +233,11 @@ export default function PrivacyPolicy() {
           >
             5. Data Retention and Deletion
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We retain your personal and inventory data for as long as your
             organization's account or inventory is active. Because audit logs
             are critical for business inventory integrity, records of stock
@@ -217,7 +245,11 @@ export default function PrivacyPolicy() {
             organization owner even if your specific user account is removed
             from the organization.
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             If you wish to permanently delete your account, please contact us at{" "}
             <Box component="span" sx={badgeStyle}>
               inventoryx176@gmail.com
@@ -232,7 +264,11 @@ export default function PrivacyPolicy() {
           >
             6. Contact Us
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "text.secondary" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             If you have any questions about this Privacy Policy or the data we
             hold, please contact us at:
           </Typography>
