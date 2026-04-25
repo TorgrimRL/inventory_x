@@ -10,6 +10,7 @@ from api.inventory.models import InventoryCustomField
 class InventoryItemUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, trim_whitespace=True)
     price = serializers.IntegerField(min_value=0)
+    description = serializers.CharField(required=False, allow_blank=True)
     category_ids = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list
     )

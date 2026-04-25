@@ -125,6 +125,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
         low_stock_notification: false,
         category_ids: [],
         custom_fields: {},
+        description: "",
       });
     });
 
@@ -140,6 +141,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       low_stock_notification: false,
       category_ids: [],
       custom_fields: {},
+      description: "",
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -368,6 +370,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
         low_stock_notification: false,
         category_ids: [],
         custom_fields: {},
+        description: "",
       });
     });
 
@@ -379,6 +382,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       low_stock_notification: false,
       category_ids: [],
       custom_fields: {},
+      description: "",
     });
 
     expect(props.onClose).toHaveBeenCalled();
