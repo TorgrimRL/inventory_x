@@ -143,6 +143,7 @@ describe("ItemPage", () => {
       data: {
         id: 5,
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         category_ids: [],
@@ -181,6 +182,7 @@ describe("ItemPage", () => {
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         low_stock_threshold: null,
@@ -199,6 +201,7 @@ describe("ItemPage", () => {
       data: {
         id: 6,
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
@@ -238,6 +241,7 @@ describe("ItemPage", () => {
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
         name: "Keyboard",
+        description: "",
         price: 100,
         stock: 5,
         low_stock_threshold: 4,
@@ -257,6 +261,7 @@ describe("ItemPage", () => {
       data: {
         id: 7,
         name: "Monitor",
+        description: "",
         price: 200,
         stock: 10,
         low_stock_threshold: null,
@@ -306,6 +311,7 @@ describe("ItemPage", () => {
     await waitFor(() => {
       expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
         name: "Monitor",
+        description: "",
         price: 200,
         stock: 10,
         low_stock_threshold: null,
@@ -455,6 +461,7 @@ describe("ItemPage", () => {
       expect(mockedAxios.patch).toHaveBeenCalledWith("/api/inventory/1/", {
         name: "Milk",
         price: 20,
+        description: "",
         low_stock_threshold: 8,
         category_ids: ["c1", "c3"],
         low_stock_notification: false,
