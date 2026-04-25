@@ -1,10 +1,23 @@
 import { Box, Container, Paper, Typography } from "@mui/material";
 
 export default function PrivacyPolicy() {
+  // Reusable style for the monospace "badges" to keep the code clean
+  const badgeStyle = {
+    bgcolor: "action.hover", // Swaps between light grey and dark translucent grey
+    px: 0.75,
+    py: 0.25,
+    borderRadius: 1,
+    fontFamily: "monospace",
+    color: "text.primary",
+    border: "1px solid",
+    borderColor: "divider",
+    fontSize: "0.9em",
+  };
+
   return (
     <Box
       sx={{
-        bgcolor: "#f9f9f9",
+        bgcolor: "background.default",
         minHeight: "100vh",
         py: { xs: 4, md: 8 },
       }}
@@ -15,15 +28,23 @@ export default function PrivacyPolicy() {
           sx={{
             p: { xs: 3, md: 5 },
             borderRadius: 2,
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            // Soft shadow for light mode, removed for dark mode for a cleaner look
+            boxShadow: (theme) =>
+              theme.palette.mode === "light"
+                ? "0 4px 6px rgba(0, 0, 0, 0.05)"
+                : "none",
           }}
         >
           <Typography
             variant="h4"
             component="h1"
             sx={{
-              color: "#2c3e50",
-              borderBottom: "2px solid #eee",
+              color: "text.primary",
+              borderBottom: "2px solid",
+              borderColor: "divider",
               pb: 1.5,
               mb: 3,
               fontWeight: 600,
@@ -32,36 +53,24 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             <strong>Last Updated:</strong>{" "}
-            <Box
-              component="span"
-              sx={{
-                bgcolor: "#e2e3e5",
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 1,
-                fontFamily: "monospace",
-                color: "#383d41",
-              }}
-            >
+            <Box component="span" sx={badgeStyle}>
               2026-04-21
             </Box>
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             Welcome to{" "}
-            <Box
-              component="span"
-              sx={{
-                bgcolor: "#e2e3e5",
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 1,
-                fontFamily: "monospace",
-                color: "#383d41",
-              }}
-            >
+            <Box component="span" sx={badgeStyle}>
               Inventory X
             </Box>
             . We respect your privacy and are committed to protecting your
@@ -73,11 +82,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             1. Information We Collect
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We collect information that you provide to us directly when you
             register for an account, create an organization, or use our
             services. Based on our system architecture, this includes:
@@ -87,7 +100,7 @@ export default function PrivacyPolicy() {
             sx={{
               pl: 3,
               m: 0,
-              color: "#555",
+              color: "text.secondary",
               display: "flex",
               flexDirection: "column",
               gap: 1,
@@ -117,11 +130,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             2. How We Use Your Information
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We use the collected data strictly to provide and improve our
             services to you:
           </Typography>
@@ -130,7 +147,7 @@ export default function PrivacyPolicy() {
             sx={{
               pl: 3,
               m: 0,
-              color: "#555",
+              color: "text.secondary",
               display: "flex",
               flexDirection: "column",
               gap: 1,
@@ -162,11 +179,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             3. Cookies and Tracking Technologies
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             Our frontend application uses essential technologies (like local
             storage or session cookies) to keep you logged in securely.
           </Typography>
@@ -174,11 +195,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             4. How We Share Your Information
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We do not sell your personal or inventory data. We only share
             information in the following limited circumstances:
           </Typography>
@@ -187,7 +212,7 @@ export default function PrivacyPolicy() {
             sx={{
               pl: 3,
               m: 0,
-              color: "#555",
+              color: "text.secondary",
               display: "flex",
               flexDirection: "column",
               gap: 1,
@@ -204,11 +229,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             5. Data Retention and Deletion
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             We retain your personal and inventory data for as long as your
             organization's account or inventory is active. Because audit logs
             are critical for business inventory integrity, records of stock
@@ -216,19 +245,13 @@ export default function PrivacyPolicy() {
             organization owner even if your specific user account is removed
             from the organization.
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             If you wish to permanently delete your account, please contact us at{" "}
-            <Box
-              component="span"
-              sx={{
-                bgcolor: "#e2e3e5",
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 1,
-                fontFamily: "monospace",
-                color: "#383d41",
-              }}
-            >
+            <Box component="span" sx={badgeStyle}>
               inventoryx176@gmail.com
             </Box>
             .
@@ -237,11 +260,15 @@ export default function PrivacyPolicy() {
           <Typography
             variant="h6"
             component="h3"
-            sx={{ color: "#34495e", mt: 4, mb: 2, fontWeight: 600 }}
+            sx={{ color: "text.primary", mt: 4, mb: 2, fontWeight: 600 }}
           >
             6. Contact Us
           </Typography>
-          <Typography variant="body1" paragraph sx={{ color: "#555" }}>
+          <Typography
+            variant="body1"
+            paragraph
+            sx={{ color: "text.secondary" }}
+          >
             If you have any questions about this Privacy Policy or the data we
             hold, please contact us at:
           </Typography>
@@ -250,7 +277,7 @@ export default function PrivacyPolicy() {
             sx={{
               pl: 3,
               m: 0,
-              color: "#555",
+              color: "text.secondary",
               display: "flex",
               flexDirection: "column",
               gap: 1,
@@ -258,17 +285,7 @@ export default function PrivacyPolicy() {
           >
             <li>
               <strong>Email:</strong>{" "}
-              <Box
-                component="span"
-                sx={{
-                  bgcolor: "#e2e3e5",
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 1,
-                  fontFamily: "monospace",
-                  color: "#383d41",
-                }}
-              >
+              <Box component="span" sx={badgeStyle}>
                 inventoryx176@gmail.com
               </Box>
             </li>
