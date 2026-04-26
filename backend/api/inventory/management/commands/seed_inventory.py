@@ -128,6 +128,8 @@ class Command(BaseCommand):
                 self.simulated_time += timedelta(days=random.randint(18, 35))
             return min(self.simulated_time, STOCK_LOG_CUTOFF)
 
+        seeded_images_attached = 0
+
         with transaction.atomic():
             # Delete in safe order for FK changes
             InventoryMembership.objects.all().delete()
@@ -326,6 +328,15 @@ class Command(BaseCommand):
                 ("Vegan Chocolate Cookie (single)", 79),
                 ("Gluten-free Chocolate Cookie (single)", 89),
                 ("Oatmeal Raisin Cookie (single)", 69),
+                # Demo-friendly grocery items so image support is visible after seeding
+                ("Milk (1L)", 32),
+                ("Bread Loaf", 45),
+                ("Apples (1kg)", 49),
+                ("Bananas (1kg)", 39),
+                ("Tomatoes (500g)", 35),
+                ("Coffee Beans (1kg)", 189),
+                ("Rice (2kg)", 59),
+                ("Cheese (1kg)", 129),
                 # Bokser (pop-up salg)
                 ("Cookie Box (6 pcs) — assorted", 199),
                 ("Cookie Box (12 pcs) — assorted", 349),
@@ -679,6 +690,7 @@ class Command(BaseCommand):
                         if seeded_image_path:
                             item.image.name = seeded_image_path
                             item.save(update_fields=["image"])
+                            seeded_images_attached += 1
 
                     selected_categories = pick_categories_for_item(
                         inventory, name
@@ -891,6 +903,9 @@ class Command(BaseCommand):
 
             self.stdout.write(
                 f"- Descriptions added: {descriptions_added_count}"
+            )
+            self.stdout.write(
+                f"- Seed demo images attached: {seeded_images_attached}"
             )
 
             self.stdout.write(
