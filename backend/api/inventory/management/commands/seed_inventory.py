@@ -127,7 +127,7 @@ class Command(BaseCommand):
                 self.simulated_time += timedelta(days=random.randint(18, 35))
             return min(self.simulated_time, STOCK_LOG_CUTOFF)
 
-        seeded_images_attached = 0
+        seeded_images_attached = {"count": 0}
 
         with transaction.atomic():
             # Delete in safe order for FK changes
@@ -685,7 +685,7 @@ class Command(BaseCommand):
                     if seed_demo_image_filename and attach_seed_demo_image(
                         item, seed_demo_image_filename
                     ):
-                        seeded_images_attached += 1
+                        seeded_images_attached["count"] += 1
 
                     selected_categories = pick_categories_for_item(
                         inventory, name
@@ -900,7 +900,7 @@ class Command(BaseCommand):
                 f"- Descriptions added: {descriptions_added_count}"
             )
             self.stdout.write(
-                f"- Seed demo images attached: {seeded_images_attached}"
+                f"- Seed demo images attached: {seeded_images_attached['count']}"
             )
 
             self.stdout.write(
