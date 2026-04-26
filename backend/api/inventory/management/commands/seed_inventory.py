@@ -57,11 +57,7 @@ def pick_seed_demo_image_filename(item_name: str) -> str | None:
 
 
 def attach_seed_demo_image(item: InventoryItem, filename: str) -> bool:
-    source = (
-        Path(__file__).resolve().parents[2]
-        / "seed_assets"
-        / filename
-    )
+    source = Path(__file__).resolve().parents[2] / "seed_assets" / filename
     if not source.exists():
         return False
 
@@ -327,7 +323,8 @@ class Command(BaseCommand):
                 ("Vegan Chocolate Cookie (single)", 79),
                 ("Gluten-free Chocolate Cookie (single)", 89),
                 ("Oatmeal Raisin Cookie (single)", 69),
-                # Demo-friendly grocery items so image support is visible after seeding
+                # Demo-friendly grocery items so image support is
+                # visible after seeding
                 ("Milk (1L)", 32),
                 ("Bread Loaf", 45),
                 ("Apples (1kg)", 49),
@@ -900,7 +897,8 @@ class Command(BaseCommand):
                 f"- Descriptions added: {descriptions_added_count}"
             )
             self.stdout.write(
-                f"- Seed demo images attached: {seeded_images_attached['count']}"
+                "- Seed demo images attached: "
+                f"{seeded_images_attached['count']}"
             )
 
             self.stdout.write(
