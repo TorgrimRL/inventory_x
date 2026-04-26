@@ -1,7 +1,10 @@
 import random
+import shutil
 import uuid
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -17,6 +20,21 @@ from api.inventory.models import (
 )
 
 
+SEED_DEMO_IMAGE_MAP = {
+    "milk": "milk.svg",
+    "bread": "bread.svg",
+    "loaf": "bread.svg",
+    "eggs": "eggs.svg",
+    "butter": "butter.svg",
+    "cheese": "cheese.svg",
+    "apples": "apples.svg",
+    "bananas": "bananas.svg",
+    "coffee": "coffee.svg",
+    "rice": "rice.svg",
+    "tomatoes": "tomatoes.svg",
+}
+
+
 def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
     pattern = index % 4
 
@@ -28,6 +46,36 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
         return 9, 5  # above threshold
 
     return random.randint(6, 18), None  # no threshold
+
+
+def pick_seed_demo_image_filename(item_name: str) -> str | None:
+    normalized_name = item_name.lower()
+    for key, filename in SEED_DEMO_IMAGE_MAP.items():
+        if key in normalized_name:
+            return filename
+    return None
+
+
+def ensure_seed_demo_image(filename: str) -> str | None:
+    workspace_root = settings.BASE_DIR.parent
+    source = (
+        workspace_root
+        / "frontend"
+        / "public"
+        / "demo-seed-images"
+        / filename
+    )
+    if not source.exists():
+        return None
+
+    destination_dir = Path(settings.MEDIA_ROOT) / "seed-demo-images"
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    destination = destination_dir / filename
+
+    if not destination.exists():
+        shutil.copyfile(source, destination)
+
+    return f"seed-demo-images/{filename}"
 
 
 class Command(BaseCommand):
@@ -620,6 +668,17 @@ class Command(BaseCommand):
                         description=build_item_description(inventory, name),
                         custom_fields=mock_cf_data,
                     )
+
+                    seed_demo_image_filename = pick_seed_demo_image_filename(
+                        name
+                    )
+                    if seed_demo_image_filename:
+                        seeded_image_path = ensure_seed_demo_image(
+                            seed_demo_image_filename
+                        )
+                        if seeded_image_path:
+                            item.image.name = seeded_image_path
+                            item.save(update_fields=["image"])
 
                     selected_categories = pick_categories_for_item(
                         inventory, name

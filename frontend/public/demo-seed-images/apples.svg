@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FFF7F5"/>
+  <ellipse cx="256" cy="430" rx="130" ry="24" fill="#E7D5D1"/>
+  <circle cx="224" cy="270" r="74" fill="#E6574E"/>
+  <circle cx="292" cy="270" r="74" fill="#D94A42"/>
+  <path d="M258 182C258 164 266 150 282 140" stroke="#6A4B2A" stroke-width="10" stroke-linecap="round"/>
+  <path d="M284 150C304 140 322 146 334 162" stroke="#69A85A" stroke-width="10" stroke-linecap="round"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#9D2E28">APPLES</text>
+</svg>

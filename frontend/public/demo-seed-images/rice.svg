@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FAFAF8"/>
+  <ellipse cx="256" cy="430" rx="126" ry="24" fill="#DFDDD7"/>
+  <path d="M188 176H324L344 364C346 386 329 404 307 404H205C183 404 166 386 168 364L188 176Z" fill="#EFE8D8" stroke="#CFC4AF" stroke-width="8"/>
+  <rect x="208" y="222" width="96" height="92" rx="16" fill="#FFF8EB"/>
+  <text x="256" y="274" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#91826A">RICE</text>
+  <text x="256" y="438" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#8A7D66">RICE</text>
+</svg>
