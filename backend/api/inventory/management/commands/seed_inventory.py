@@ -10,12 +10,14 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from api.inventory.models import Inventory
-from api.inventory.models import InventoryCustomField
-from api.inventory.models import InventoryItem
-from api.inventory.models import InventoryMembership
-from api.inventory.models import ItemCategory
-from api.inventory.models import StockLog
+from api.inventory.models import (
+    Inventory,
+    InventoryCustomField,
+    InventoryItem,
+    InventoryMembership,
+    ItemCategory,
+    StockLog,
+)
 
 
 SEED_DEMO_IMAGE_MAP = {
