@@ -19,7 +19,6 @@ from api.inventory.models import (
     StockLog,
 )
 
-
 SEED_DEMO_IMAGE_MAP = {
     "milk": "milk.svg",
     "bread": "bread.svg",
