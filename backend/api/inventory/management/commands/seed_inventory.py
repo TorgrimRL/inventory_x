@@ -56,7 +56,7 @@ def pick_seed_demo_image_filename(item_name: str) -> str | None:
     return None
 
 
-def ensure_seed_demo_image(filename: str) -> str | None:
+def attach_seed_demo_image(item: InventoryItem, filename: str) -> bool:
     workspace_root = settings.BASE_DIR.parent
     source = (
         workspace_root
@@ -66,16 +66,18 @@ def ensure_seed_demo_image(filename: str) -> str | None:
         / filename
     )
     if not source.exists():
-        return None
+        return False
 
-    destination_dir = Path(settings.MEDIA_ROOT) / "seed-demo-images"
-    destination_dir.mkdir(parents=True, exist_ok=True)
-    destination = destination_dir / filename
+    destination_relative = (
+        f"item-images/{item.inventory_id}/{item.id}{Path(filename).suffix}"
+    )
+    destination = Path(settings.MEDIA_ROOT) / destination_relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
 
-    if not destination.exists():
-        shutil.copyfile(source, destination)
-
-    return f"seed-demo-images/{filename}"
+    item.image.name = destination_relative
+    item.save(update_fields=["image"])
+    return True
 
 
 class Command(BaseCommand):
@@ -683,14 +685,10 @@ class Command(BaseCommand):
                     seed_demo_image_filename = pick_seed_demo_image_filename(
                         name
                     )
-                    if seed_demo_image_filename:
-                        seeded_image_path = ensure_seed_demo_image(
-                            seed_demo_image_filename
-                        )
-                        if seeded_image_path:
-                            item.image.name = seeded_image_path
-                            item.save(update_fields=["image"])
-                            seeded_images_attached += 1
+                    if seed_demo_image_filename and attach_seed_demo_image(
+                        item, seed_demo_image_filename
+                    ):
+                        seeded_images_attached += 1
 
                     selected_categories = pick_categories_for_item(
                         inventory, name
