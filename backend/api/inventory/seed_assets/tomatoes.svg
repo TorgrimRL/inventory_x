@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FFF6F4"/>
+  <ellipse cx="256" cy="430" rx="124" ry="24" fill="#E8D1CD"/>
+  <circle cx="208" cy="276" r="54" fill="#E65245"/>
+  <circle cx="304" cy="276" r="54" fill="#DD463B"/>
+  <path d="M208 230L220 214L232 230L224 242H212L208 230Z" fill="#4E8F46"/>
+  <path d="M304 230L316 214L328 230L320 242H308L304 230Z" fill="#4E8F46"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#9A2F28">TOMATOES</text>
+</svg>

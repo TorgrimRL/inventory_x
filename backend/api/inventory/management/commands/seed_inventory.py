@@ -57,12 +57,9 @@ def pick_seed_demo_image_filename(item_name: str) -> str | None:
 
 
 def attach_seed_demo_image(item: InventoryItem, filename: str) -> bool:
-    workspace_root = settings.BASE_DIR.parent
     source = (
-        workspace_root
-        / "frontend"
-        / "public"
-        / "demo-seed-images"
+        Path(__file__).resolve().parents[2]
+        / "seed_assets"
         / filename
     )
     if not source.exists():
