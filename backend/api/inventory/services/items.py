@@ -165,8 +165,8 @@ def update_item(
                 item.name = name
             if price is not None:
                 item.price = price
-
-            item.low_stock_threshold = low_stock_threshold
+            if low_stock_threshold is not None:
+                item.low_stock_threshold = low_stock_threshold
 
             if custom_fields is not None:
                 if not isinstance(item.custom_fields, dict):

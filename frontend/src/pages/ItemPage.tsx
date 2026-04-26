@@ -165,6 +165,18 @@ export default function ItemPage() {
     setSelectedDetailsItem(null);
   }
 
+  useEffect(() => {
+    if (!selectedDetailsItem) return;
+
+    const latestSelectedItem = items.find(
+      (item) => item.id === selectedDetailsItem.id,
+    );
+
+    if (latestSelectedItem) {
+      setSelectedDetailsItem(latestSelectedItem);
+    }
+  }, [items, selectedDetailsItem]);
+
   const lowStockThreshold = Math.max(
     0,
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
