@@ -20,17 +20,16 @@ from api.inventory.models import (
 )
 
 SEED_DEMO_IMAGE_MAP = {
-    "milk": "milk.svg",
-    "bread": "bread.svg",
-    "loaf": "bread.svg",
-    "eggs": "eggs.svg",
-    "butter": "butter.svg",
-    "cheese": "cheese.svg",
-    "apples": "apples.svg",
-    "bananas": "bananas.svg",
-    "coffee": "coffee.svg",
-    "rice": "rice.svg",
-    "tomatoes": "tomatoes.svg",
+    "milk (1l)": "milk.svg",
+    "bread loaf": "bread.svg",
+    "eggs (30-pack)": "eggs.svg",
+    "butter (2kg)": "butter.svg",
+    "cheese (1kg)": "cheese.svg",
+    "apples (1kg)": "apples.svg",
+    "bananas (1kg)": "bananas.svg",
+    "coffee beans (1kg)": "coffee.svg",
+    "rice (2kg)": "rice.svg",
+    "tomatoes (500g)": "tomatoes.svg",
 }
 
 
@@ -48,11 +47,7 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
 
 
 def pick_seed_demo_image_filename(item_name: str) -> str | None:
-    normalized_name = item_name.lower()
-    for key, filename in SEED_DEMO_IMAGE_MAP.items():
-        if key in normalized_name:
-            return filename
-    return None
+    return SEED_DEMO_IMAGE_MAP.get(item_name.strip().lower())
 
 
 def attach_seed_demo_image(item: InventoryItem, filename: str) -> bool:
