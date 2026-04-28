@@ -82,6 +82,14 @@ const EMPTY_ARRAY: string[] = [];
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 
+function appendCacheBust(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^blob:/i.test(url)) return url;
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}t=${Date.now()}`;
+}
+
 export default function ItemFormModal({
   open,
   mode,
@@ -349,8 +357,13 @@ export default function ItemFormModal({
           remove_image: removeImage && !selectedImage,
         };
         const createdData = await createItem(payload);
-        setCurrentImageUrl(createdData?.image_url ?? null);
-        if (onItemCreated) onItemCreated(createdData);
+        const createdImageUrl = appendCacheBust(createdData?.image_url ?? null);
+        setCurrentImageUrl(createdImageUrl);
+        if (onItemCreated)
+          onItemCreated({
+            ...createdData,
+            image_url: createdImageUrl,
+          });
         onClose();
         return;
       }
@@ -369,9 +382,10 @@ export default function ItemFormModal({
           remove_image: removeImage && !selectedImage,
         };
         const updatedResponse = await updateItem(itemId, payload);
-        const updatedImageUrl =
-          updatedResponse?.image_url ??
-          (selectedImage ? null : removeImage ? null : currentImageUrl);
+        const updatedImageUrl = selectedImage
+          ? appendCacheBust(updatedResponse?.image_url ?? null)
+          : (updatedResponse?.image_url ??
+            (removeImage ? null : currentImageUrl));
         setCurrentImageUrl(updatedImageUrl);
         setSelectedImage(null);
         setRemoveImage(false);
