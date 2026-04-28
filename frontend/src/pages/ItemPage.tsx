@@ -143,28 +143,11 @@ export default function ItemPage() {
     setFormOpen(true);
   }
 
-  async function fetchLatestItem(itemId: number | string) {
-    const res = await ApiClient.get(`/api/inventory/${itemId}/`);
-    return (res.data?.data || res.data) as InventoryItem;
-  }
-
-  async function openEditDetails(item: InventoryItem) {
+  function openEditDetails(item: InventoryItem) {
     setError(null);
     setSelectedItem(item);
     setFormMode("edit");
     setFormOpen(true);
-
-    try {
-      const latestItem = await fetchLatestItem(item.id);
-      setSelectedItem(latestItem);
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === latestItem.id ? { ...it, ...latestItem } : it,
-        ),
-      );
-    } catch {
-      // Keep the current list snapshot if the fresh fetch fails.
-    }
   }
 
   function closeForm() {
@@ -172,21 +155,9 @@ export default function ItemPage() {
     setSelectedItem(null);
   }
 
-  async function handleOpenItemDetails(item: InventoryItem) {
+  function handleOpenItemDetails(item: InventoryItem) {
     setSelectedDetailsItem(item);
     setDetailsOpen(true);
-
-    try {
-      const latestItem = await fetchLatestItem(item.id);
-      setSelectedDetailsItem(latestItem);
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === latestItem.id ? { ...it, ...latestItem } : it,
-        ),
-      );
-    } catch {
-      // Keep the current list snapshot if the fresh fetch fails.
-    }
   }
 
   function handleCloseItemDetails() {
