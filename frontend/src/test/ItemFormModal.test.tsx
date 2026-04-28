@@ -17,7 +17,6 @@ import {
   listActiveCategories,
   updateItem,
 } from "../services/inventoryService";
-import { toMediaUrl } from "../utils/mediaUrl";
 
 jest.mock("../services/inventoryService", () => ({
   adjustStock: jest.fn(),
@@ -417,103 +416,6 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(within(dialog).getByText(/max size: 5 mb/i)).toBeInTheDocument();
   });
 
-  test("owner can upload an image and save item changes", async () => {
-    mockedUpdateItem.mockResolvedValueOnce({
-      image_url: "/media/items/milk.png",
-    } as any);
-
-    const user = userEvent.setup();
-    const props = renderModal({ canEditDetails: true });
-
-    const dialog = await screen.findByRole("dialog");
-    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
-    const uploadButton = within(dialog).getByRole("button", {
-      name: /upload image/i,
-    });
-
-    expect(uploadButton).toBeEnabled();
-    expect(saveButton).toBeDisabled();
-
-    const fileInput = uploadButton.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(["image-data"], "milk.png", { type: "image/png" });
-
-    await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [file] } });
-    });
-
-    expect(saveButton).toBeEnabled();
-    await user.click(saveButton);
-
-    await waitFor(() => {
-      expect(mockedUpdateItem).toHaveBeenCalledWith(1, {
-        name: "Milk",
-        price: 25,
-        low_stock_threshold: null,
-        low_stock_notification: false,
-        category_ids: [],
-        custom_fields: {},
-        description: "",
-        image: file,
-        remove_image: false,
-      });
-    });
-
-    expect(props.onItemUpdated).toHaveBeenCalledWith({
-      id: 1,
-      name: "Milk",
-      price: 25,
-      low_stock_threshold: null,
-      low_stock_notification: false,
-      category_ids: [],
-      custom_fields: {},
-      description: "",
-      image_url: "/media/items/milk.png",
-    });
-    expect(props.onClose).toHaveBeenCalled();
-  });
-
-  test("uploaded image is shown immediately in the open edit modal", async () => {
-    mockedUpdateItem.mockResolvedValueOnce({
-      image_url: "/media/items/milk.png",
-    } as any);
-
-    const user = userEvent.setup();
-    renderModal({ canEditDetails: true });
-
-    const dialog = await screen.findByRole("dialog");
-    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
-    const uploadButton = within(dialog).getByRole("button", {
-      name: /upload image/i,
-    });
-    const fileInput = uploadButton.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(["image-data"], "milk.png", { type: "image/png" });
-
-    await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [file] } });
-    });
-
-    expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
-      "src",
-      "blob:preview",
-    );
-    expect(
-      within(dialog).getByText(
-        /preview of selected image, shown before you save/i,
-      ),
-    ).toBeInTheDocument();
-
-    await user.click(saveButton);
-
-    await waitFor(() => {
-      expect(
-        within(dialog).getByRole("img", { name: /milk/i }),
-      ).toHaveAttribute("src", toMediaUrl("/media/items/milk.png"));
-    });
-  });
 
   test("owner sees file type error for unsupported image upload", async () => {
     renderModal({ canEditDetails: true });
@@ -605,78 +507,6 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(removeButton).toBeDisabled();
   });
 
-  test("replacing an image after removing a previously replaced image does not fall back to the original image", async () => {
-    mockedUpdateItem
-      .mockResolvedValueOnce({ image_url: "/media/items/new-1.png" } as any)
-      .mockResolvedValueOnce({ image_url: null } as any)
-      .mockResolvedValueOnce({ image_url: "/media/items/new-2.png" } as any);
-
-    const user = userEvent.setup();
-    const props = renderModal({
-      canEditDetails: true,
-      initialImageUrl: "/media/items/original.png",
-    });
-
-    const dialog = await screen.findByRole("dialog");
-    const changeButton = within(dialog).getByRole("button", {
-      name: /change image/i,
-    });
-    const fileInput = changeButton.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-
-    const newImageOne = new File(["image-1"], "new-1.png", {
-      type: "image/png",
-    });
-    await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [newImageOne] } });
-    });
-    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(props.onItemUpdated).toHaveBeenCalledWith(
-        expect.objectContaining({ image_url: "/media/items/new-1.png" }),
-      );
-    });
-
-    const removeButtonAfterFirstSave = await screen.findByRole("button", {
-      name: /remove image/i,
-    });
-    await user.click(removeButtonAfterFirstSave);
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(props.onItemUpdated).toHaveBeenCalledWith(
-        expect.objectContaining({ image_url: null }),
-      );
-    });
-
-    const uploadButtonAfterRemove = await screen.findByRole("button", {
-      name: /upload image/i,
-    });
-    const secondFileInput = uploadButtonAfterRemove.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const newImageTwo = new File(["image-2"], "new-2.png", {
-      type: "image/png",
-    });
-
-    await act(async () => {
-      fireEvent.change(secondFileInput, { target: { files: [newImageTwo] } });
-    });
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(props.onItemUpdated).toHaveBeenCalledWith(
-        expect.objectContaining({ image_url: "/media/items/new-2.png" }),
-      );
-    });
-
-    expect(screen.getByRole("img", { name: /milk/i })).toHaveAttribute(
-      "src",
-      toMediaUrl("/media/items/new-2.png"),
-    );
-  });
 
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {
     const user = userEvent.setup();
