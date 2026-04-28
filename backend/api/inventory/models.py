@@ -21,7 +21,8 @@ def item_image_upload_path(instance: Any, filename: str) -> str:
     extension = os.path.splitext(filename)[1].lower() or ".png"
     inventory_id = instance.inventory_id or "unassigned"
     item_id = instance.id or uuid.uuid4()
-    return f"item-images/{inventory_id}/{item_id}{extension}"
+    upload_id = uuid.uuid4()
+    return f"item-images/{inventory_id}/{item_id}-{upload_id}{extension}"
 
 
 def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
