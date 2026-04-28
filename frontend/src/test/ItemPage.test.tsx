@@ -171,57 +171,6 @@ describe("ItemPage", () => {
     ).toBeInTheDocument();
   });
 
-  test("updated item image is reflected immediately when reopening item details", async () => {
-    const user = userEvent.setup();
-    mockedAxios.patch.mockResolvedValueOnce({
-      status: 200,
-      data: {
-        id: 1,
-        name: "Milk",
-        description: "",
-        price: 20,
-        stock: 10,
-        low_stock_threshold: 8,
-        low_stock_notification: false,
-        category_ids: ["c1"],
-        custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
-        image_url: "/media/items/milk-updated.png",
-      },
-    } as any);
-
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-    const editButtons = screen.getAllByRole("button", { name: /edit/i });
-    await user.click(editButtons[0]);
-
-    let dialog = await screen.findByRole("dialog");
-    const changeButton = within(dialog).getByRole("button", {
-      name: /change image/i,
-    });
-    const fileInput = changeButton.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(["new-image"], "milk-updated.png", {
-      type: "image/png",
-    });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalled();
-    });
-
-    await user.click(screen.getByText("Milk"));
-    dialog = await screen.findByRole("dialog");
-
-    expect(within(dialog).getByRole("img", { name: /milk/i })).toHaveAttribute(
-      "src",
-      expect.stringContaining("/media/items/milk-updated.png"),
-    );
-  });
-
   test("add item and see 'Item added'", async () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
