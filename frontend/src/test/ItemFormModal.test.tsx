@@ -416,7 +416,6 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(within(dialog).getByText(/max size: 5 mb/i)).toBeInTheDocument();
   });
 
-
   test("owner sees file type error for unsupported image upload", async () => {
     renderModal({ canEditDetails: true });
 
@@ -506,7 +505,6 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(changeButton).toHaveAttribute("aria-disabled", "true");
     expect(removeButton).toBeDisabled();
   });
-
 
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {
     const user = userEvent.setup();
