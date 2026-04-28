@@ -279,7 +279,7 @@ describe("ItemPage", () => {
     await user.click(firstEditButton);
 
     let dialog = await screen.findByRole("dialog");
-    let changeButton = within(dialog).getByRole("button", {
+    const changeButton = within(dialog).getByRole("button", {
       name: /change image/i,
     });
     let fileInput = changeButton.querySelector(
