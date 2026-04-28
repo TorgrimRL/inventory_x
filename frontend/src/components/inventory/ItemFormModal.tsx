@@ -346,7 +346,7 @@ export default function ItemFormModal({
           category_ids: [...selectedCategoryIds],
           custom_fields: customFieldValues,
           image: selectedImage,
-          remove_image: removeImage,
+          remove_image: removeImage && !selectedImage,
         };
         const createdData = await createItem(payload);
         setCurrentImageUrl(createdData?.image_url ?? null);
@@ -366,11 +366,12 @@ export default function ItemFormModal({
           category_ids: [...selectedCategoryIds],
           custom_fields: customFieldValues,
           image: selectedImage,
-          remove_image: removeImage,
+          remove_image: removeImage && !selectedImage,
         };
         const updatedResponse = await updateItem(itemId, payload);
         const updatedImageUrl =
-          updatedResponse?.image_url ?? (removeImage ? null : currentImageUrl);
+          updatedResponse?.image_url ??
+          (selectedImage ? null : removeImage ? null : currentImageUrl);
         setCurrentImageUrl(updatedImageUrl);
         setSelectedImage(null);
         setRemoveImage(false);

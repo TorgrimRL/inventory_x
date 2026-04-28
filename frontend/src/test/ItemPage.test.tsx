@@ -222,6 +222,130 @@ describe("ItemPage", () => {
     );
   });
 
+  test("item page keeps latest image across replace, remove, and replace again", async () => {
+    const user = userEvent.setup();
+
+    mockedAxios.patch
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          id: 1,
+          name: "Milk",
+          description: "",
+          price: 20,
+          stock: 10,
+          low_stock_threshold: 8,
+          low_stock_notification: false,
+          category_ids: ["c1"],
+          custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
+          image_url: "/media/items/milk-updated-1.png",
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          id: 1,
+          name: "Milk",
+          description: "",
+          price: 20,
+          stock: 10,
+          low_stock_threshold: 8,
+          low_stock_notification: false,
+          category_ids: ["c1"],
+          custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
+          image_url: null,
+        },
+      } as any)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          id: 1,
+          name: "Milk",
+          description: "",
+          price: 20,
+          stock: 10,
+          low_stock_threshold: 8,
+          low_stock_notification: false,
+          category_ids: ["c1"],
+          custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
+          image_url: "/media/items/milk-updated-2.png",
+        },
+      } as any);
+
+    render(<ItemPage />);
+    await screen.findByText("Milk");
+
+    const firstEditButton = screen.getAllByRole("button", { name: /edit/i })[0];
+    await user.click(firstEditButton);
+
+    let dialog = await screen.findByRole("dialog");
+    let changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    let fileInput = changeButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(["new-image-1"], "milk-updated-1.png", {
+            type: "image/png",
+          }),
+        ],
+      },
+    });
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledTimes(1);
+    });
+
+    await user.click(firstEditButton);
+    dialog = await screen.findByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: /remove image/i }),
+    );
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledTimes(2);
+    });
+
+    await user.click(firstEditButton);
+    dialog = await screen.findByRole("dialog");
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(["new-image-2"], "milk-updated-2.png", {
+            type: "image/png",
+          }),
+        ],
+      },
+    });
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.patch).toHaveBeenCalledTimes(3);
+    });
+
+    await user.click(screen.getByText("Milk"));
+    const detailsDialog = await screen.findByRole("dialog");
+    expect(
+      within(detailsDialog).getByRole("img", { name: /milk/i }),
+    ).toHaveAttribute(
+      "src",
+      expect.stringContaining("/media/items/milk-updated-2.png"),
+    );
+  });
+
   test("add item and see 'Item added'", async () => {
     mockedAxios.post.mockResolvedValueOnce({
       status: 201,
@@ -676,7 +800,7 @@ test("filters low stock by threshold, shows empty state, and reset restores full
   await screen.findByText("Milk");
 
   const thresholdInput = screen.getByRole("spinbutton", {
-    name: /low stock threshold/i,
+    name: /stock filter/i,
   });
 
   // Default threshold=5 and low-stock-only ON => only Bread (3)

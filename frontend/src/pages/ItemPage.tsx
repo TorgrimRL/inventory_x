@@ -539,7 +539,7 @@ export default function ItemPage() {
                 <TextField
                   size="small"
                   type="number"
-                  label="Low stock threshold"
+                  label="Stock filter (<)"
                   value={lowStockThresholdInput}
                   onFocus={(e) => {
                     if (e.target.value === "0") setLowStockThresholdInput("");
@@ -682,12 +682,19 @@ export default function ItemPage() {
           setSnackMessage("Item added");
           setSnackOpen(true);
         }}
-        onItemUpdated={(updated: any) => {
+        onItemUpdated={async (updated: any) => {
           setItems((prev) =>
             prev.map((it) =>
               it.id === updated.id ? { ...it, ...updated } : it,
             ),
           );
+          setSelectedItem((prev) =>
+            prev && prev.id === updated.id ? { ...prev, ...updated } : prev,
+          );
+          setSelectedDetailsItem((prev) =>
+            prev && prev.id === updated.id ? { ...prev, ...updated } : prev,
+          );
+          await loadItems();
           setSnackMessage("Item updated");
           setSnackOpen(true);
         }}

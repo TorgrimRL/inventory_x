@@ -605,6 +605,79 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
     expect(removeButton).toBeDisabled();
   });
 
+  test("replacing an image after removing a previously replaced image does not fall back to the original image", async () => {
+    mockedUpdateItem
+      .mockResolvedValueOnce({ image_url: "/media/items/new-1.png" } as any)
+      .mockResolvedValueOnce({ image_url: null } as any)
+      .mockResolvedValueOnce({ image_url: "/media/items/new-2.png" } as any);
+
+    const user = userEvent.setup();
+    const props = renderModal({
+      canEditDetails: true,
+      initialImageUrl: "/media/items/original.png",
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    const fileInput = changeButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    const newImageOne = new File(["image-1"], "new-1.png", {
+      type: "image/png",
+    });
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [newImageOne] } });
+    });
+    await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(props.onItemUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({ image_url: "/media/items/new-1.png" }),
+      );
+    });
+
+    const removeButtonAfterFirstSave = await screen.findByRole("button", {
+      name: /remove image/i,
+    });
+    await user.click(removeButtonAfterFirstSave);
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(props.onItemUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({ image_url: null }),
+      );
+    });
+
+    const uploadButtonAfterRemove = await screen.findByRole("button", {
+      name: /upload image/i,
+    });
+    const secondFileInput = uploadButtonAfterRemove.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const newImageTwo = new File(["image-2"], "new-2.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      fireEvent.change(secondFileInput, { target: { files: [newImageTwo] } });
+    });
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(props.onItemUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({ image_url: "/media/items/new-2.png" }),
+      );
+    });
+
+    expect(screen.getByRole("img", { name: /milk/i })).toHaveAttribute(
+      "src",
+      toMediaUrl("/media/items/new-2.png"),
+    );
+  });
+
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {
     const user = userEvent.setup();
     renderModal({ canEditDetails: true });
