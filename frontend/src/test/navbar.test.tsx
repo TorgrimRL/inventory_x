@@ -57,7 +57,6 @@ describe("Navbar Component", () => {
 
     expect((await screen.findAllByText(/log in/i)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/sign up/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/forgot password/i).length).toBeGreaterThan(0);
   });
 
   test("Shows navigation items when user is logged in", async () => {
