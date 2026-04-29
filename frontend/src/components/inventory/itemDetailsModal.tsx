@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -8,6 +9,9 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
+
+import { toMediaUrl } from "../../utils/mediaUrl";
 
 type Props = {
   open: boolean;
@@ -20,6 +24,7 @@ type Props = {
     status?: string;
     custom_fields?: string | Record<string, any>;
     description?: string | undefined;
+    imageUrl?: string | null;
   };
   customFields?: {
     id: string;
@@ -53,116 +58,167 @@ export default function ItemDetailsModal({
   customFields,
   onClose,
 }: Props) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   if (!open) return null;
 
+  const imageUrl = toMediaUrl(item?.imageUrl);
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Item details</DialogTitle>
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Item details</DialogTitle>
 
-      <DialogContent dividers>
-        {!item ? (
-          <Typography>
-            Could not open item details. Please try again.
-          </Typography>
-        ) : (
-          <Stack spacing={2}>
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Product name
-              </Typography>
-              <Typography variant="h6">{item.name}</Typography>
-            </div>
+        <DialogContent dividers>
+          {!item ? (
+            <Typography>
+              Could not open item details. Please try again.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Box
+                  sx={{ flex: 1, minWidth: 0, maxWidth: "calc(100% - 104px)" }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Product name
+                  </Typography>
+                  <Typography variant="h6">{item.name}</Typography>
+                </Box>
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Description
-              </Typography>
-              <Typography
-                sx={{
-                  maxHeight: 95,
-                  overflowY: "auto",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {item.description?.trim() || "No description added"}
-              </Typography>
-            </div>
+                {imageUrl ? (
+                  <Box
+                    component="img"
+                    src={imageUrl}
+                    alt={item?.name || "Item image"}
+                    onClick={() => setPreviewOpen(true)}
+                    sx={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 1,
+                      objectFit: "cover",
+                      cursor: "zoom-in",
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : null}
+              </Stack>
 
-            <Divider />
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Description
+                </Typography>
+                <Typography
+                  sx={{
+                    maxHeight: 95,
+                    overflowY: "auto",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {item.description?.trim() || "No description added"}
+                </Typography>
+              </div>
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Category
-              </Typography>
-              <Typography>{item.category || "—"}</Typography>
-            </div>
+              <Divider />
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Stock
-              </Typography>
-              <Typography>{item.stock ?? "—"}</Typography>
-            </div>
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Category
+                </Typography>
+                <Typography>{item.category || "—"}</Typography>
+              </div>
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Price
-              </Typography>
-              <Typography>
-                {typeof item.price === "number"
-                  ? new Intl.NumberFormat("nb-NO", {
-                      style: "currency",
-                      currency: "NOK",
-                    }).format(item.price)
-                  : "—"}
-              </Typography>
-            </div>
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Stock
+                </Typography>
+                <Typography>{item.stock ?? "—"}</Typography>
+              </div>
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Status
-              </Typography>
-              <Typography>{item.status || "—"}</Typography>
-            </div>
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Price
+                </Typography>
+                <Typography>
+                  {typeof item.price === "number"
+                    ? new Intl.NumberFormat("nb-NO", {
+                        style: "currency",
+                        currency: "NOK",
+                      }).format(item.price)
+                    : "—"}
+                </Typography>
+              </div>
 
-            <div>
-              <Typography variant="body2" color="text.secondary">
-                Low stock threshold
-              </Typography>
-              <Typography>{item.lowStockThreshold ?? "—"}</Typography>
-            </div>
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Status
+                </Typography>
+                <Typography>{item.status || "—"}</Typography>
+              </div>
 
-            {customFields && customFields.length > 0 && (
-              <>
-                <Divider />
-                {customFields.map((field) => {
-                  const value = getCustomFieldValue(
-                    item?.custom_fields,
-                    field.id,
-                  );
+              <div>
+                <Typography variant="body2" color="text.secondary">
+                  Low stock threshold
+                </Typography>
+                <Typography>{item.lowStockThreshold ?? "—"}</Typography>
+              </div>
 
-                  return (
-                    <div key={field.id}>
-                      <Typography variant="body2" color="text.secondary">
-                        {field.name}
-                      </Typography>
+              {customFields && customFields.length > 0 && (
+                <>
+                  <Divider />
+                  {customFields.map((field) => {
+                    const value = getCustomFieldValue(
+                      item.custom_fields,
+                      field.id,
+                    );
 
-                      <Typography>{value}</Typography>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </Stack>
-        )}
-      </DialogContent>
+                    return (
+                      <div key={field.id}>
+                        <Typography variant="body2" color="text.secondary">
+                          {field.name}
+                        </Typography>
 
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
+                        <Typography>{value}</Typography>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={onClose} variant="outlined">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        maxWidth="md"
+      >
+        <DialogContent sx={{ p: 1 }}>
+          {imageUrl ? (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={item?.name || "Item image"}
+              sx={{
+                display: "block",
+                maxWidth: "min(90vw, 900px)",
+                maxHeight: "80vh",
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FFFBEF"/>
+  <ellipse cx="256" cy="426" rx="126" ry="24" fill="#E5DDB9"/>
+  <path d="M154 250C154 231.222 169.222 216 188 216H322C340.778 216 356 231.222 356 250V322C356 340.778 340.778 356 322 356H188C169.222 356 154 340.778 154 322V250Z" fill="#F7D85C" stroke="#D6B23C" stroke-width="8"/>
+  <path d="M190 216H322L338 196H206L190 216Z" fill="#FFF0A6"/>
+  <rect x="196" y="248" width="120" height="72" rx="14" fill="#FFF3B9"/>
+  <text x="256" y="292" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#9A7A16">BUTTER</text>
+  <text x="256" y="394" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#8A761E">BUTTER</text>
+</svg>

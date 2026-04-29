@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#F6F8FC"/>
+  <ellipse cx="256" cy="430" rx="118" ry="24" fill="#D9E2F2"/>
+  <path d="M196 136L236 92H316L342 136V382C342 401.882 325.882 418 306 418H226C206.118 418 190 401.882 190 382V160C190 151.163 192.107 143.105 196 136Z" fill="#FFFFFF" stroke="#B8C6DB" stroke-width="8"/>
+  <path d="M236 92H316L300 136H220L236 92Z" fill="#DCEBFF"/>
+  <rect x="218" y="196" width="96" height="118" rx="18" fill="#E8F1FF"/>
+  <path d="M272 222C248 222 230 238 230 259C230 292 272 318 272 318C272 318 314 292 314 259C314 238 296 222 272 222Z" fill="#7DB7FF"/>
+  <text x="256" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#5D6F8B">MILK</text>
+</svg>

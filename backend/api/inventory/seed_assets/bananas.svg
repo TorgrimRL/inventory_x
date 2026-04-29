@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FFFDF2"/>
+  <ellipse cx="256" cy="430" rx="126" ry="24" fill="#E7E0B8"/>
+  <path d="M182 300C214 348 286 362 344 330C306 346 248 338 210 286C198 270 190 252 186 234C170 252 168 278 182 300Z" fill="#F4D448" stroke="#D3B332" stroke-width="8"/>
+  <path d="M202 266C236 320 308 332 360 298C322 316 264 308 228 254C220 242 214 228 212 214C198 226 194 246 202 266Z" fill="#F8DE61" stroke="#D3B332" stroke-width="8"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#8E7A18">BANANAS</text>
+</svg>

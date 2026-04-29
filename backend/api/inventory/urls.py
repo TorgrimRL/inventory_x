@@ -11,6 +11,7 @@ from api.inventory.views.inventory import InventoryView
 from api.inventory.views.inventory_history import InventoryHistoryView
 from api.inventory.views.invite_user import InviteUserView
 from api.inventory.views.item_detail import ItemDetailView
+from api.inventory.views.item_image import ItemImageUploadView
 from api.inventory.views.list_inventories import ListInventoriesView
 from api.inventory.views.list_members import ListMembersView
 from api.inventory.views.register_inventory import RegisterInventoryView
@@ -28,6 +29,11 @@ urlpatterns = [
         "<uuid:item_id>/adjust-stock/",
         AdjustStockView.as_view(),
         name="adjust-stock",
+    ),
+    path(
+        "<uuid:item_id>/image/",
+        ItemImageUploadView.as_view(),
+        name="item-image-upload",
     ),
     path(
         "register/", RegisterInventoryView.as_view(), name="inventory-register"

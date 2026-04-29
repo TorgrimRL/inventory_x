@@ -1,7 +1,4 @@
-import type {
-  DataTypeEnum,
-  InventoryCustomField,
-} from "../types/itemPageTypes";
+import type { DataTypeEnum } from "../types/itemPageTypes";
 import apiClient from "./apiClient";
 export type AdjustStockDirection = "increase" | "decrease";
 export type InventoryMemberRole = "OWNER" | "EMPLOYEE" | "owner" | "employee";
@@ -130,15 +127,18 @@ export type InventoryItem = {
   stock: number;
   price: number;
   low_stock_threshold: number | null;
-  category_ids: number[] | null;
-  category_names: string[] | null;
-  custom_fields: Record<string, any> | null;
+  low_stock_notification?: boolean;
+  category_ids?: string[];
+  category_names?: string[];
+  image_url?: string | null;
+  custom_fields?: Record<string, any> | null;
+  description?: string;
 };
 
 export interface CustomFieldSchema {
   id: number;
   name: string;
-  data_type: string;
+  data_type: DataTypeEnum;
 }
 
 export async function listInventoryItems(): Promise<InventoryItem[]> {
@@ -147,17 +147,59 @@ export async function listInventoryItems(): Promise<InventoryItem[]> {
   return (data.data || data) as InventoryItem[];
 }
 
+type ItemMutationPayload = {
+  name: string;
+  price: number;
+  description?: string;
+  low_stock_threshold: null | number;
+  low_stock_notification: boolean;
+  category_ids?: string[];
+  custom_fields?: Record<string, any>;
+  image?: File | null;
+  remove_image?: boolean;
+};
+
+function buildItemFormData(payload: ItemMutationPayload): FormData {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  formData.append("price", String(payload.price));
+  formData.append("description", payload.description ?? "");
+  formData.append(
+    "low_stock_threshold",
+    payload.low_stock_threshold === null
+      ? ""
+      : String(payload.low_stock_threshold),
+  );
+  formData.append(
+    "low_stock_notification",
+    String(payload.low_stock_notification),
+  );
+
+  for (const categoryId of payload.category_ids ?? []) {
+    formData.append("category_ids", categoryId);
+  }
+
+  formData.append("custom_fields", JSON.stringify(payload.custom_fields ?? {}));
+
+  if (payload.image) {
+    formData.append("image", payload.image);
+  }
+
+  if (payload.remove_image) {
+    formData.append("remove_image", "true");
+  }
+
+  return formData;
+}
+
 export async function updateItem(
   itemId: number | string,
-  payload: {
-    name: string;
-    price: number;
-    low_stock_threshold: null | number;
-    low_stock_notification: boolean;
-    category_ids?: string[];
-  },
+  payload: ItemMutationPayload,
 ) {
-  const res = await apiClient.patch(`/api/inventory/${itemId}/`, payload);
+  const res = await apiClient.patch(
+    `/api/inventory/${itemId}/`,
+    buildItemFormData(payload),
+  );
   return res.data;
 }
 
@@ -175,15 +217,15 @@ export async function getInventoryHistory(
   return res.data as InventoryHistoryPoint[];
 }
 
-export async function createItem(payload: {
-  name: string;
-  price: number;
-  stock: number;
-  low_stock_threshold: number | null;
-  low_stock_notification: boolean;
-  category_ids?: string[];
-}) {
-  const res = await apiClient.post("/api/inventory/", payload);
+export async function createItem(
+  payload: ItemMutationPayload & {
+    stock: number;
+  },
+) {
+  const formData = buildItemFormData(payload);
+  formData.append("stock", String(payload.stock));
+
+  const res = await apiClient.post("/api/inventory/", formData);
   return res.data;
 }
 
@@ -205,6 +247,26 @@ export async function deleteActiveCategory(categoryId: string) {
 
 export async function deleteItem(itemId: number | string) {
   const res = await apiClient.delete(`/api/inventory/${itemId}/`);
+  return res.data;
+}
+
+export async function uploadItemImage(itemId: number | string, image: File) {
+  const formData = new FormData();
+  formData.append("image", image);
+
+  const res = await apiClient.post(`/api/inventory/${itemId}/image/`, formData);
+  return res.data as { image_url: string; message: string };
+}
+
+export async function removeItemImage(itemId: number | string) {
+  const res = await apiClient.patch(
+    `/api/inventory/${itemId}/`,
+    (() => {
+      const formData = new FormData();
+      formData.append("remove_image", "true");
+      return formData;
+    })(),
+  );
   return res.data;
 }
 
@@ -279,7 +341,12 @@ export async function removeInventoryMember(
 export async function createCustomField(
   name: string,
   data_type: DataTypeEnum,
-): Promise<InventoryCustomField> {
+): Promise<{
+  id: string;
+  name: string;
+  data_type: DataTypeEnum;
+  created_at: string;
+}> {
   const res = await apiClient.post("/api/inventory/active/fields/", {
     name,
     data_type,
