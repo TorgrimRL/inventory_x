@@ -18,6 +18,7 @@ export type InventoryItem = {
   order_id?: string;
   custom_fields?: string | Record<string, any>;
   description?: string;
+  image_url?: string | null;
 };
 
 export type Category = {

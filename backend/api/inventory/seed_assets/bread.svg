@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FBF7F1"/>
+  <ellipse cx="256" cy="428" rx="128" ry="24" fill="#E7D9C6"/>
+  <path d="M154 256C154 184 208 136 256 136C304 136 358 184 358 256V330C358 368.66 326.66 400 288 400H224C185.34 400 154 368.66 154 330V256Z" fill="#D89A52" stroke="#B97833" stroke-width="8"/>
+  <path d="M180 238C180 192 216 160 256 160C296 160 332 192 332 238V316C332 342.51 310.51 364 284 364H228C201.49 364 180 342.51 180 316V238Z" fill="#E8B06A"/>
+  <path d="M224 194C214 206 210 220 212 238" stroke="#FFF2D9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M262 186C252 198 248 214 250 232" stroke="#FFF2D9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M300 194C290 206 286 220 288 238" stroke="#FFF2D9" stroke-width="10" stroke-linecap="round"/>
+  <text x="256" y="448" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#8A5B28">BREAD</text>
+</svg>

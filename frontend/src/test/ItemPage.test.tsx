@@ -10,6 +10,18 @@ import axios from "axios";
 
 import ItemPage from "../pages/ItemPage";
 
+function expectFormDataEntries(
+  actual: unknown,
+  expected: Record<string, string[]>,
+) {
+  expect(actual).toBeInstanceOf(FormData);
+  const formData = actual as FormData;
+
+  for (const [key, values] of Object.entries(expected)) {
+    expect(formData.getAll(key)).toEqual(values);
+  }
+}
+
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -41,26 +53,27 @@ function getVisibleRows(): RowItem[] {
 
 describe("ItemPage", () => {
   jest.setTimeout(30000);
-  let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.resetAllMocks();
-    consoleWarnSpy = jest
-      .spyOn(console, "warn")
-      .mockImplementation((...args: unknown[]) => {
-        const first = String(args[0] ?? "");
-        const second = String(args[1] ?? "");
-        const combined = `${first} ${second}`;
-        if (
-          combined.includes(
-            "MUI: The `anchorEl` prop provided to the component is invalid.",
-          )
-        ) {
-          return;
-        }
+    URL.createObjectURL = jest.fn(
+      () => "blob:item-page-preview",
+    ) as typeof URL.createObjectURL;
+    URL.revokeObjectURL = jest.fn() as typeof URL.revokeObjectURL;
+    jest.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
+      const first = String(args[0] ?? "");
+      const second = String(args[1] ?? "");
+      const combined = `${first} ${second}`;
+      if (
+        combined.includes(
+          "MUI: The `anchorEl` prop provided to the component is invalid.",
+        )
+      ) {
+        return;
+      }
 
-        console.info(...args);
-      });
+      console.info(...args);
+    });
     mockedAxios.get.mockImplementation((url) => {
       if (url === "/api/inventory/active/fields/") {
         return Promise.resolve({
@@ -84,6 +97,8 @@ describe("ItemPage", () => {
                 price: 20,
                 category_ids: ["c1"],
                 low_stock_threshold: 8,
+                low_stock_notification: false,
+                image_url: "/media/items/milk.png",
                 custom_fields: JSON.stringify({ cf1: "Aisle 1", cf2: "0" }),
               },
               {
@@ -93,6 +108,7 @@ describe("ItemPage", () => {
                 price: 5,
                 category_ids: [],
                 low_stock_threshold: 3,
+                low_stock_notification: false,
                 custom_fields: JSON.stringify({ cf1: "Aisle 2" }),
               },
               {
@@ -102,6 +118,7 @@ describe("ItemPage", () => {
                 price: 12,
                 category_ids: ["c1", "c3"],
                 low_stock_threshold: 4,
+                low_stock_notification: false,
                 custom_fields: "{}",
               },
               {
@@ -135,6 +152,23 @@ describe("ItemPage", () => {
 
       return Promise.resolve({ data: {} } as any);
     });
+  });
+
+  test("item image is shown only inside item details", async () => {
+    const user = userEvent.setup();
+    render(<ItemPage />);
+
+    await screen.findByText("Milk");
+    expect(
+      screen.queryByRole("img", { name: /milk/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByText("Milk"));
+
+    const dialogs = await screen.findAllByRole("dialog");
+    expect(
+      within(dialogs[dialogs.length - 1]).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
   });
 
   test("add item and see 'Item added'", async () => {
@@ -180,17 +214,21 @@ describe("ItemPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
-        name: "Keyboard",
-        description: "",
-        price: 100,
-        stock: 5,
-        low_stock_threshold: null,
-        low_stock_notification: false,
-        category_ids: [],
-        custom_fields: {},
-      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Keyboard"],
+      description: [""],
+      price: ["100"],
+      stock: ["5"],
+      low_stock_threshold: [""],
+      low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({})],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
@@ -239,17 +277,21 @@ describe("ItemPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
-        name: "Keyboard",
-        description: "",
-        price: 100,
-        stock: 5,
-        low_stock_threshold: 4,
-        low_stock_notification: false,
-        category_ids: [],
-        custom_fields: {},
-      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Keyboard"],
+      description: [""],
+      price: ["100"],
+      stock: ["5"],
+      low_stock_threshold: ["4"],
+      low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({})],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Keyboard")).toBeInTheDocument();
@@ -309,17 +351,21 @@ describe("ItemPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/inventory/", {
-        name: "Monitor",
-        description: "",
-        price: 200,
-        stock: 10,
-        low_stock_threshold: null,
-        low_stock_notification: false,
-        category_ids: [],
-        custom_fields: { cf1: "Aisle 3", cf2: "24" },
-      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
     });
+
+    const [url, payload] = mockedAxios.post.mock.calls[0];
+    expect(url).toBe("/api/inventory/");
+    expectFormDataEntries(payload, {
+      name: ["Monitor"],
+      description: [""],
+      price: ["200"],
+      stock: ["10"],
+      low_stock_threshold: [""],
+      low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({ cf1: "Aisle 3", cf2: "24" })],
+    });
+    expect((payload as FormData).getAll("category_ids")).toEqual([]);
 
     expect(await screen.findByText(/item added/i)).toBeInTheDocument();
     expect(await screen.findByText("Monitor")).toBeInTheDocument();
@@ -458,390 +504,383 @@ describe("ItemPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/inventory/1/", {
-        name: "Milk",
-        price: 20,
-        description: "",
-        low_stock_threshold: 8,
-        category_ids: ["c1", "c3"],
-        low_stock_notification: false,
-        custom_fields: { cf1: "Aisle 1", cf2: "0" },
-      });
+      expect(mockedAxios.patch).toHaveBeenCalledTimes(1);
+    });
+
+    const [url, payload] = mockedAxios.patch.mock.calls[0];
+    expect(url).toBe("/api/inventory/1/");
+    expectFormDataEntries(payload, {
+      name: ["Milk"],
+      price: ["20"],
+      description: [""],
+      low_stock_threshold: ["8"],
+      low_stock_notification: ["false"],
+      custom_fields: [JSON.stringify({ cf1: "Aisle 1", cf2: "0" })],
+      category_ids: ["c1", "c3"],
     });
   });
+});
 
-  test("filters items by selected category and supports clearing filter", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
+test("filters items by selected category and supports clearing filter", async () => {
+  const user = userEvent.setup();
+  render(<ItemPage />);
 
-    await screen.findByText("Milk");
+  await screen.findByText("Milk");
 
-    const categorySelect = screen.getByRole("combobox", {
-      name: /^category$/i,
-    });
-    fireEvent.mouseDown(categorySelect);
-    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
-    fireEvent.keyDown(document.activeElement || categorySelect, {
-      key: "Escape",
-      code: "Escape",
-    });
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("listbox", { name: /category/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Milk")).toBeInTheDocument();
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
-    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-
-    await user.type(
-      screen.getByRole("textbox", { name: /search by name/i }),
-      "zzz",
-    );
+  const categorySelect = screen.getByRole("combobox", {
+    name: /^category$/i,
+  });
+  fireEvent.mouseDown(categorySelect);
+  fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+  fireEvent.keyDown(document.activeElement || categorySelect, {
+    key: "Escape",
+    code: "Escape",
+  });
+  await waitFor(() => {
     expect(
-      await screen.findByText(/no items match your search/i),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /clear category/i }));
-    await user.click(screen.getByRole("button", { name: /^clear$/i }));
-
-    expect(screen.getByText("Milk")).toBeInTheDocument();
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-  });
-
-  test("multiple selected categories use AND matching", async () => {
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-
-    const categorySelect = screen.getByRole("combobox", {
-      name: /^category$/i,
-    });
-    fireEvent.mouseDown(categorySelect);
-    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Dairy" }));
-    fireEvent.keyDown(document.activeElement || categorySelect, {
-      key: "Escape",
-      code: "Escape",
-    });
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("listbox", { name: /category/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
-  });
-
-  test("can filter by 'No category added' from category dropdown", async () => {
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-
-    const categorySelect = screen.getByRole("combobox", {
-      name: /^category$/i,
-    });
-    fireEvent.mouseDown(categorySelect);
-    fireEvent.click(
-      await screen.findByRole("option", { name: /no category added/i }),
-    );
-    fireEvent.keyDown(document.activeElement || categorySelect, {
-      key: "Escape",
-      code: "Escape",
-    });
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("listbox", { name: /category/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
-    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-  });
-
-  test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-
-    const thresholdInput = screen.getByRole("spinbutton", {
-      name: /low stock threshold/i,
-    });
-
-    // Default threshold=5 and low-stock-only ON => only Bread (3)
-    await user.click(screen.getByRole("switch"));
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
-    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-
-    // Raise threshold to 7 => Bread + Eggs
-    await user.clear(thresholdInput);
-    await user.type(thresholdInput, "7");
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Butter")).not.toBeInTheDocument();
-
-    // Lower threshold to 2 => empty state
-    await user.clear(thresholdInput);
-    await user.type(thresholdInput, "1");
-    expect(await screen.findByText(/no items found/i)).toBeInTheDocument();
-
-    // Reset => full list back
-    await user.click(screen.getByRole("button", { name: /^reset$/i }));
-    expect(screen.getByText("Milk")).toBeInTheDocument();
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.getByText("Eggs")).toBeInTheDocument();
-    expect(screen.queryByText("Butter")).toBeInTheDocument();
-  });
-  afterEach(() => {
-    consoleWarnSpy.mockRestore();
-  });
-
-  test("shows low stock status only for items at or below their item threshold", async () => {
-    render(<ItemPage />);
-
-    await screen.findByText("Milk");
-
-    const breadRow = screen.getByText("Bread").closest("tr");
-    const butterRow = screen.getByText("Butter").closest("tr");
-
-    expect(breadRow).not.toBeNull();
-    expect(butterRow).not.toBeNull();
-
-    expect(
-      within(breadRow as HTMLElement).getByText("Low stock"),
-    ).toBeInTheDocument();
-
-    expect(
-      within(butterRow as HTMLElement).queryByText("Low stock"),
+      screen.queryByRole("listbox", { name: /category/i }),
     ).not.toBeInTheDocument();
   });
 
-  test("category filter mutual exclusivity for 'No category added'", async () => {
-    render(<ItemPage />);
-    await screen.findByText("Milk");
+  expect(screen.getByText("Milk")).toBeInTheDocument();
+  expect(screen.getByText("Eggs")).toBeInTheDocument();
+  expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+  expect(screen.queryByText("Butter")).not.toBeInTheDocument();
 
-    const categorySelect = screen.getByRole("combobox", {
-      name: /^category$/i,
-    });
+  await user.type(
+    screen.getByRole("textbox", { name: /search by name/i }),
+    "zzz",
+  );
+  expect(
+    await screen.findByText(/no items match your search/i),
+  ).toBeInTheDocument();
 
-    // Open dropdown
-    fireEvent.mouseDown(categorySelect);
-    // Select 'Cookies'
-    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
-    // Select 'No category added'
-    fireEvent.click(
-      await screen.findByRole("option", { name: /no category added/i }),
-    );
+  await user.click(screen.getByRole("button", { name: /clear category/i }));
+  await user.click(screen.getByRole("button", { name: /^clear$/i }));
 
-    // Close dropdown
-    fireEvent.keyDown(document.activeElement || categorySelect, {
-      key: "Escape",
-      code: "Escape",
-    });
-    await waitFor(() => {
-      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    });
+  expect(screen.getByText("Milk")).toBeInTheDocument();
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.getByText("Eggs")).toBeInTheDocument();
+});
 
-    expect(screen.getByText("Bread")).toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+test("multiple selected categories use AND matching", async () => {
+  render(<ItemPage />);
 
-    // Now test the reverse
-    fireEvent.mouseDown(categorySelect);
-    fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
-    fireEvent.keyDown(document.activeElement || categorySelect, {
-      key: "Escape",
-      code: "Escape",
-    });
-    await waitFor(() => {
-      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    });
+  await screen.findByText("Milk");
 
-    // We should now see Milk and not Bread
-    expect(screen.getByText("Milk")).toBeInTheDocument();
-    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+  const categorySelect = screen.getByRole("combobox", {
+    name: /^category$/i,
+  });
+  fireEvent.mouseDown(categorySelect);
+  fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+  fireEvent.click(await screen.findByRole("option", { name: "Dairy" }));
+  fireEvent.keyDown(document.activeElement || categorySelect, {
+    key: "Escape",
+    code: "Escape",
+  });
+  await waitFor(() => {
+    expect(
+      screen.queryByRole("listbox", { name: /category/i }),
+    ).not.toBeInTheDocument();
   });
 
-  test("Manage categories dialog - add, delete, and nested error handling", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
-    await screen.findByText("Milk");
+  expect(screen.getByText("Eggs")).toBeInTheDocument();
+  expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+  expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+  expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+});
 
-    // Open the manage categories dialog
-    await user.click(
-      screen.getByRole("button", { name: /manage categories/i }),
-    );
-    const dialog = await screen.findByRole("dialog");
+test("can filter by 'No category added' from category dropdown", async () => {
+  render(<ItemPage />);
 
-    // Verify existing categories loaded
-    expect(within(dialog).getByText("Cookies")).toBeInTheDocument();
+  await screen.findByText("Milk");
 
-    // Add a category successfully
-    mockedAxios.post.mockResolvedValueOnce({
-      status: 201,
-      data: { id: "c4", name: "Snacks" },
-    } as any);
+  const categorySelect = screen.getByRole("combobox", {
+    name: /^category$/i,
+  });
+  fireEvent.mouseDown(categorySelect);
+  fireEvent.click(
+    await screen.findByRole("option", { name: /no category added/i }),
+  );
+  fireEvent.keyDown(document.activeElement || categorySelect, {
+    key: "Escape",
+    code: "Escape",
+  });
+  await waitFor(() => {
+    expect(
+      screen.queryByRole("listbox", { name: /category/i }),
+    ).not.toBeInTheDocument();
+  });
 
-    const newCatInput = within(dialog).getByRole("textbox", {
-      name: /new category/i,
-    });
-    await user.type(newCatInput, "Snacks");
-    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+  expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
+  expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+});
 
-    expect(await screen.findByText("Category created")).toBeInTheDocument();
-    expect(await within(dialog).findByText("Snacks")).toBeInTheDocument();
+test("filters low stock by threshold, shows empty state, and reset restores full list", async () => {
+  const user = userEvent.setup();
+  render(<ItemPage />);
 
-    // Nested Error Parsing
-    mockedAxios.post.mockRejectedValueOnce({
-      response: {
-        data: {
-          detail: {
-            non_field_errors: ["A category with this name already exists."],
-          },
+  await screen.findByText("Milk");
+
+  const thresholdInput = screen.getByRole("spinbutton", {
+    name: /stock filter/i,
+  });
+
+  // Default threshold=5 and low-stock-only ON => only Bread (3)
+  await user.click(screen.getByRole("switch"));
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+  expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
+  expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+
+  // Raise threshold to 7 => Bread + Eggs
+  await user.clear(thresholdInput);
+  await user.type(thresholdInput, "7");
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.getByText("Eggs")).toBeInTheDocument();
+  expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+  expect(screen.queryByText("Butter")).not.toBeInTheDocument();
+
+  // Lower threshold to 2 => empty state
+  await user.clear(thresholdInput);
+  await user.type(thresholdInput, "1");
+  expect(await screen.findByText(/no items found/i)).toBeInTheDocument();
+
+  // Reset => full list back
+  await user.click(screen.getByRole("button", { name: /^reset$/i }));
+  expect(screen.getByText("Milk")).toBeInTheDocument();
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.getByText("Eggs")).toBeInTheDocument();
+  expect(screen.queryByText("Butter")).toBeInTheDocument();
+});
+
+test("shows low stock status only for items at or below their item threshold", async () => {
+  render(<ItemPage />);
+
+  await screen.findByText("Milk");
+
+  const breadRow = screen.getByText("Bread").closest("tr");
+  const butterRow = screen.getByText("Butter").closest("tr");
+
+  expect(breadRow).not.toBeNull();
+  expect(butterRow).not.toBeNull();
+
+  expect(
+    within(breadRow as HTMLElement).getByText("Low stock"),
+  ).toBeInTheDocument();
+
+  expect(
+    within(butterRow as HTMLElement).queryByText("Low stock"),
+  ).not.toBeInTheDocument();
+});
+
+test("category filter mutual exclusivity for 'No category added'", async () => {
+  render(<ItemPage />);
+  await screen.findByText("Milk");
+
+  const categorySelect = screen.getByRole("combobox", {
+    name: /^category$/i,
+  });
+
+  // Open dropdown
+  fireEvent.mouseDown(categorySelect);
+  // Select 'Cookies'
+  fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+  // Select 'No category added'
+  fireEvent.click(
+    await screen.findByRole("option", { name: /no category added/i }),
+  );
+
+  // Close dropdown
+  fireEvent.keyDown(document.activeElement || categorySelect, {
+    key: "Escape",
+    code: "Escape",
+  });
+  await waitFor(() => {
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  expect(screen.getByText("Bread")).toBeInTheDocument();
+  expect(screen.queryByText("Milk")).not.toBeInTheDocument();
+
+  // Now test the reverse
+  fireEvent.mouseDown(categorySelect);
+  fireEvent.click(await screen.findByRole("option", { name: "Cookies" }));
+  fireEvent.keyDown(document.activeElement || categorySelect, {
+    key: "Escape",
+    code: "Escape",
+  });
+  await waitFor(() => {
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  // We should now see Milk and not Bread
+  expect(screen.getByText("Milk")).toBeInTheDocument();
+  expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+});
+
+test("Manage categories dialog - add, delete, and nested error handling", async () => {
+  const user = userEvent.setup();
+  render(<ItemPage />);
+  await screen.findByText("Milk");
+
+  // Open the manage categories dialog
+  await user.click(screen.getByRole("button", { name: /manage categories/i }));
+  const dialog = await screen.findByRole("dialog");
+
+  // Verify existing categories loaded
+  expect(within(dialog).getByText("Cookies")).toBeInTheDocument();
+
+  // Add a category successfully
+  mockedAxios.post.mockResolvedValueOnce({
+    status: 201,
+    data: { id: "c4", name: "Snacks" },
+  } as any);
+
+  const newCatInput = within(dialog).getByRole("textbox", {
+    name: /new category/i,
+  });
+  await user.type(newCatInput, "Snacks");
+  await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+
+  expect(await screen.findByText("Category created")).toBeInTheDocument();
+  expect(await within(dialog).findByText("Snacks")).toBeInTheDocument();
+
+  // Nested Error Parsing
+  mockedAxios.post.mockRejectedValueOnce({
+    response: {
+      data: {
+        detail: {
+          non_field_errors: ["A category with this name already exists."],
         },
       },
-    });
-
-    await user.type(newCatInput, "Duplicate");
-    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
-
-    expect(
-      await screen.findByText("A category with this name already exists."),
-    ).toBeInTheDocument();
-
-    // Delete a category
-    mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
-
-    // Find the row containing 'Cookies' and click its specific Delete button
-    const cookiesText = within(dialog).getByText("Cookies");
-    const cookiesRow = cookiesText.closest(".MuiStack-root") as HTMLElement;
-    await user.click(
-      within(cookiesRow).getByRole("button", { name: /delete/i }),
-    );
-
-    expect(await screen.findByText("Category deleted")).toBeInTheDocument();
-    expect(within(dialog).queryByText("Cookies")).not.toBeInTheDocument();
+    },
   });
 
-  test("renders custom field columns and supports sorting", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
+  await user.type(newCatInput, "Duplicate");
+  await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
 
-    await screen.findByText("Milk");
+  expect(
+    await screen.findByText("A category with this name already exists."),
+  ).toBeInTheDocument();
 
-    // Check if custom field headers are rendered
-    expect(
-      screen.getByRole("button", { name: /location/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /warranty/i }),
-    ).toBeInTheDocument();
+  // Delete a category
+  mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
 
-    // Check if custom field data is rendered in the table for Milk
-    expect(screen.getByText("Aisle 1")).toBeInTheDocument();
+  // Find the row containing 'Cookies' and click its specific Delete button
+  const cookiesText = within(dialog).getByText("Cookies");
+  const cookiesRow = cookiesText.closest(".MuiStack-root") as HTMLElement;
+  await user.click(within(cookiesRow).getByRole("button", { name: /delete/i }));
 
-    // Test sorting by a custom field (Location)
-    await user.click(screen.getByRole("button", { name: /location/i }));
+  expect(await screen.findByText("Category deleted")).toBeInTheDocument();
+  expect(within(dialog).queryByText("Cookies")).not.toBeInTheDocument();
+});
 
-    // Check order
-    let rows = getVisibleRows().map((r) => r.name);
-    // Since Bread is Aisle 2 and Milk is Aisle 1:
-    expect(rows.indexOf("Bread")).toBeLessThan(rows.indexOf("Milk"));
+test("renders custom field columns and supports sorting", async () => {
+  const user = userEvent.setup();
+  render(<ItemPage />);
 
-    // Click again for Descending
-    await user.click(screen.getByRole("button", { name: /location/i }));
-    rows = getVisibleRows().map((r) => r.name);
-    expect(rows.indexOf("Milk")).toBeLessThan(rows.indexOf("Bread"));
+  await screen.findByText("Milk");
+
+  // Check if custom field headers are rendered
+  expect(screen.getByRole("button", { name: /location/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /warranty/i })).toBeInTheDocument();
+
+  // Check if custom field data is rendered in the table for Milk
+  expect(screen.getByText("Aisle 1")).toBeInTheDocument();
+
+  // Test sorting by a custom field (Location)
+  await user.click(screen.getByRole("button", { name: /location/i }));
+
+  // Check order
+  let rows = getVisibleRows().map((r) => r.name);
+  // Since Bread is Aisle 2 and Milk is Aisle 1:
+  expect(rows.indexOf("Bread")).toBeLessThan(rows.indexOf("Milk"));
+
+  // Click again for Descending
+  await user.click(screen.getByRole("button", { name: /location/i }));
+  rows = getVisibleRows().map((r) => r.name);
+  expect(rows.indexOf("Milk")).toBeLessThan(rows.indexOf("Bread"));
+});
+
+test("Manage custom fields dialog - add, delete, and type selection", async () => {
+  const user = userEvent.setup();
+  render(<ItemPage />);
+  await screen.findByText("Milk");
+
+  // Open manage fields dialog
+  await user.click(screen.getByRole("button", { name: /manage fields/i }));
+  const dialog = await screen.findByRole("dialog", {
+    name: /manage custom fields/i,
   });
 
-  test("Manage custom fields dialog - add, delete, and type selection", async () => {
-    const user = userEvent.setup();
-    render(<ItemPage />);
-    await screen.findByText("Milk");
+  // Verify existing fields are loaded
+  expect(within(dialog).getByText(/Location/i)).toBeInTheDocument();
+  expect(within(dialog).getByText(/Warranty/i)).toBeInTheDocument();
 
-    // Open manage fields dialog
-    await user.click(screen.getByRole("button", { name: /manage fields/i }));
-    const dialog = await screen.findByRole("dialog", {
-      name: /manage custom fields/i,
-    });
+  // Mock the create field response
+  mockedAxios.post.mockResolvedValueOnce({
+    status: 201,
+    data: { id: "cf3", name: "Color", data_type: "text" },
+  } as any);
 
-    // Verify existing fields are loaded
-    expect(within(dialog).getByText(/Location/i)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Warranty/i)).toBeInTheDocument();
+  // Add a new field
+  const nameInput = within(dialog).getByRole("textbox", {
+    name: /new field name/i,
+  });
+  await user.type(nameInput, "Color");
 
-    // Mock the create field response
-    mockedAxios.post.mockResolvedValueOnce({
-      status: 201,
-      data: { id: "cf3", name: "Color", data_type: "text" },
-    } as any);
+  // Select type
+  const typeSelect = within(dialog).getByRole("combobox", { name: /type/i });
+  fireEvent.mouseDown(typeSelect);
+  fireEvent.click(await screen.findByRole("option", { name: /text/i }));
 
-    // Add a new field
-    const nameInput = within(dialog).getByRole("textbox", {
-      name: /new field name/i,
-    });
-    await user.type(nameInput, "Color");
+  await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
 
-    // Select type
-    const typeSelect = within(dialog).getByRole("combobox", { name: /type/i });
-    fireEvent.mouseDown(typeSelect);
-    fireEvent.click(await screen.findByRole("option", { name: /text/i }));
+  expect(await screen.findByText("Custom field created")).toBeInTheDocument();
+  expect(await within(dialog).findByText(/Color/i)).toBeInTheDocument();
 
-    await user.click(within(dialog).getByRole("button", { name: /^add$/i }));
+  // Delete a field
+  mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
 
-    expect(await screen.findByText("Custom field created")).toBeInTheDocument();
-    expect(await within(dialog).findByText(/Color/i)).toBeInTheDocument();
+  // Find the row containing 'Warranty' and click its Delete button
+  const warrantyText = within(dialog).getByText(/Warranty/i);
+  const warrantyRow = warrantyText.closest(".MuiStack-root") as HTMLElement;
+  await user.click(
+    within(warrantyRow).getByRole("button", { name: /delete/i }),
+  );
 
-    // Delete a field
-    mockedAxios.delete.mockResolvedValueOnce({ status: 204 } as any);
+  expect(await screen.findByText("Custom field deleted")).toBeInTheDocument();
+  expect(within(dialog).queryByText(/Warranty/i)).not.toBeInTheDocument();
+});
 
-    // Find the row containing 'Warranty' and click its Delete button
-    const warrantyText = within(dialog).getByText(/Warranty/i);
-    const warrantyRow = warrantyText.closest(".MuiStack-root") as HTMLElement;
-    await user.click(
-      within(warrantyRow).getByRole("button", { name: /delete/i }),
-    );
-
-    expect(await screen.findByText("Custom field deleted")).toBeInTheDocument();
-    expect(within(dialog).queryByText(/Warranty/i)).not.toBeInTheDocument();
+test("employees cannot see the 'Manage fields' button", async () => {
+  // Mock the active inventory check to return role: 'employee'
+  mockedAxios.get.mockImplementation((url) => {
+    if (url === "/api/inventory/active/") {
+      return Promise.resolve({
+        data: {
+          id: "inv1",
+          name: "Test",
+          orgNumber: "123",
+          role: "employee",
+        },
+      } as any);
+    }
+    return Promise.resolve({ data: { data: [] } } as any);
   });
 
-  test("employees cannot see the 'Manage fields' button", async () => {
-    // Mock the active inventory check to return role: 'employee'
-    mockedAxios.get.mockImplementation((url) => {
-      if (url === "/api/inventory/active/") {
-        return Promise.resolve({
-          data: {
-            id: "inv1",
-            name: "Test",
-            orgNumber: "123",
-            role: "employee",
-          },
-        } as any);
-      }
-      return Promise.resolve({ data: { data: [] } } as any);
-    });
+  render(<ItemPage />);
 
-    render(<ItemPage />);
-
-    // Wait for the page to load
-    await waitFor(() => {
-      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    });
-
-    // Manage fields button should be hidden for employees
-    expect(
-      screen.queryByRole("button", { name: /manage fields/i }),
-    ).not.toBeInTheDocument();
+  // Wait for the page to load
+  await waitFor(() => {
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
+
+  // Manage fields button should be hidden for employees
+  expect(
+    screen.queryByRole("button", { name: /manage fields/i }),
+  ).not.toBeInTheDocument();
 });

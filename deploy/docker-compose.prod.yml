@@ -43,6 +43,7 @@ services:
       - "8000"
     volumes:
       - static_volume:/app/static
+      - media_volume:/app/media
     command: >
       sh -c "uv run python manage.py collectstatic --noinput &&
              uv run python manage.py migrate &&
@@ -68,8 +69,10 @@ services:
       - ./certbot/www:/var/www/certbot:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - static_volume:/app/static:ro
+      - media_volume:/app/media:ro
 
 volumes:
   postgres_data:
   static_volume:
   redis_data:
+  media_volume:

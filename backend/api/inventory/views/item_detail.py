@@ -2,7 +2,7 @@ import logging
 from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, views
+from rest_framework import parsers, status, views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -20,6 +20,11 @@ logger = logging.getLogger(__name__)
 class ItemDetailView(views.APIView):
     permission_classes = (IsAuthenticated, IsActiveInventoryOwner)
     serializer_class = InventoryItemUpdateSerializer
+    parser_classes = (
+        parsers.JSONParser,
+        parsers.MultiPartParser,
+        parsers.FormParser,
+    )
 
     @extend_schema(
         summary="Update item details",
@@ -38,7 +43,6 @@ class ItemDetailView(views.APIView):
             )
 
         try:
-            membership = get_active_membership_or_raise(request)
             updated = update_item(
                 inventory_id=membership.inventory.id,
                 item_id=item_id,
@@ -54,6 +58,10 @@ class ItemDetailView(views.APIView):
                 ),
                 category_ids=serializer.validated_data.get("category_ids"),
                 custom_fields=serializer.validated_data.get("custom_fields"),
+                image=serializer.validated_data.get("image"),
+                remove_image=serializer.validated_data.get(
+                    "remove_image", False
+                ),
             )
             return Response(updated, status=status.HTTP_200_OK)
 
@@ -81,9 +89,6 @@ class ItemDetailView(views.APIView):
     def delete(
         self, request: Request, item_id: UUID, *args, **kwargs
     ) -> Response:
-        """
-        Delete an item using the active inventory context.
-        """
         try:
             membership = get_active_membership_or_raise(request)
 
