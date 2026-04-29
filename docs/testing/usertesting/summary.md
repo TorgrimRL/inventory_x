@@ -60,7 +60,7 @@ Based on the findings from the user tests, several improvements were implemented
 
 - The issue where employees could add items was fixed in pull request `#259`. 
 
-- Low-stock threshold filter was renamed to "Stock filter (<)" in pull request `#290`.
+- Low-stock threshold filter was renamed to "Stock filter (<=)" in pull request `#290`. "Low stock only" was renamed to "Activate stock filter" in pull request `#296`.
 
 - The Item History & Logs was moved to a dedicated action button with tooltip for improved discoverability in pull request `#287`.
 
