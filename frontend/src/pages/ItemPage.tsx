@@ -539,7 +539,7 @@ export default function ItemPage() {
                 <TextField
                   size="small"
                   type="number"
-                  label="Stock filter (<)"
+                  label="Stock filter (<=)"
                   value={lowStockThresholdInput}
                   onFocus={(e) => {
                     if (e.target.value === "0") setLowStockThresholdInput("");
@@ -561,11 +561,13 @@ export default function ItemPage() {
                 />
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="body2">Low stock only</Typography>
+                    <Typography variant="body2">
+                      Activate stock filter
+                    </Typography>
                     <Switch
                       checked={lowStockOnly}
                       onChange={(e) => setLowStockOnly(e.target.checked)}
-                      inputProps={{ "aria-label": "Low stock only" }}
+                      inputProps={{ "aria-label": "Activate stock filter" }}
                     />
                   </Stack>
 
