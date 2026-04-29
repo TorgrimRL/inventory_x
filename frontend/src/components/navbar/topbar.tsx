@@ -331,14 +331,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                     >
                       Sign Up
                     </Button>
-
-                    <Button
-                      component={RouterLink}
-                      to={PATHS.PASSWORD_FORGOT}
-                      variant="text"
-                    >
-                      Forgot password
-                    </Button>
                   </>
                 )}
               </>
@@ -484,16 +476,6 @@ export default function Navbar({ mode, setMode }: NavbarProps) {
                       }}
                     >
                       Sign Up
-                    </MenuItem>,
-
-                    <MenuItem
-                      key="forgot"
-                      onClick={() => {
-                        navigate(PATHS.PASSWORD_FORGOT);
-                        closeMobileMenu();
-                      }}
-                    >
-                      Forgot password
                     </MenuItem>,
                   ]}
               <MenuItem
