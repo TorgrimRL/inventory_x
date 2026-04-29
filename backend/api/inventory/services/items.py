@@ -1,10 +1,38 @@
 from typing import Any
 from uuid import UUID
 
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 
 from api.inventory.decorators import audit_logger, notify_low_stock
 from api.inventory.models import InventoryItem, ItemCategory
+
+
+def _serialize_item(item: InventoryItem) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "name": item.name,
+        "description": item.description,
+        "price": item.price,
+        "stock": item.stock,
+        "low_stock_threshold": item.low_stock_threshold,
+        "low_stock_notification": item.low_stock_notification,
+        "category_ids": [
+            str(category.id) for category in item.categories.all()
+        ],
+        "custom_fields": item.custom_fields,
+        "image_url": item.image_url,
+    }
+
+
+def get_all_items(inventory_id: UUID):
+    items_qs = (
+        InventoryItem.objects.filter(inventory_id=inventory_id)
+        .prefetch_related("categories")
+        .order_by("id")
+    )
+
+    return [_serialize_item(item) for item in items_qs]
 
 
 def _get_validated_categories(
@@ -21,40 +49,15 @@ def _get_validated_categories(
     )
 
     if len(categories) != len(set(category_ids)):
-        raise ValueError("All categories must belong to the active inventory.")
+        raise ValueError(
+            "One or more categories are invalid or do not belong "
+            "to this inventory."
+        )
 
     return categories
 
 
-def get_all_items(inventory_id: UUID):
-    """
-    Fetches all inventory items from the database.
-    Returns them as a list of dictionaries.
-    """
-    items_qs = (
-        InventoryItem.objects.filter(inventory_id=inventory_id)
-        .prefetch_related("categories")
-        .order_by("id")
-    )
-
-    return [
-        {
-            "id": item.id,
-            "name": item.name,
-            "description": item.description,
-            "price": item.price,
-            "stock": item.stock,
-            "low_stock_threshold": item.low_stock_threshold,
-            "low_stock_notification": item.low_stock_notification,
-            "category_ids": [
-                str(category.id) for category in item.categories.all()
-            ],
-            "custom_fields": item.custom_fields,
-        }
-        for item in items_qs
-    ]
-
-
+@notify_low_stock
 @audit_logger("create_item")
 def create_item(
     inventory_id: UUID,
@@ -66,6 +69,7 @@ def create_item(
     low_stock_notification=False,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
+    image: UploadedFile | None = None,
     user=None,
 ):
     try:
@@ -83,22 +87,13 @@ def create_item(
                 low_stock_threshold=low_stock_threshold,
                 custom_fields=custom_fields or {},
                 low_stock_notification=low_stock_notification,
+                image=image,
             )
 
             if category_ids:
                 item.categories.set(categories)
 
-            return {
-                "id": item.id,
-                "name": item.name,
-                "price": item.price,
-                "description": item.description,
-                "stock": item.stock,
-                "low_stock_threshold": item.low_stock_threshold,
-                "category_ids": category_ids or [],
-                "custom_fields": item.custom_fields,
-                "low_stock_notification": item.low_stock_notification,
-            }
+            return _serialize_item(item)
     except ValueError as ve:
         raise ve
     except Exception as e:
@@ -110,11 +105,6 @@ def create_item(
 def adjust_stock(
     inventory_id: UUID, item_id: UUID, direction: str, amount: int, user=None
 ):
-    """
-    Adjusts stock for an inventory item.
-    direction: "increase" or "decrease"
-    amount: integer > 0
-    """
     if amount <= 0:
         raise ValueError("Amount must be a positive whole number")
 
@@ -155,18 +145,16 @@ def update_item(
     low_stock_notification=None,
     category_ids: list[UUID] | None = None,
     custom_fields: dict[str, Any] | None = None,
+    image: UploadedFile | None = None,
+    remove_image: bool = False,
     user=None,
 ):
-    """
-    Updates item fields. Stock is not changed here.
-    """
     try:
         with transaction.atomic():
             item = InventoryItem.objects.select_for_update().get(
                 id=item_id, inventory_id=inventory_id
             )
 
-            categories: list[ItemCategory] = []
             if category_ids is not None:
                 categories = _get_validated_categories(
                     item.inventory_id, category_ids
@@ -177,8 +165,8 @@ def update_item(
                 item.name = name
             if price is not None:
                 item.price = price
-
-            item.low_stock_threshold = low_stock_threshold
+            if low_stock_threshold is not None:
+                item.low_stock_threshold = low_stock_threshold
 
             if custom_fields is not None:
                 if not isinstance(item.custom_fields, dict):
@@ -191,29 +179,33 @@ def update_item(
             if low_stock_notification is not None:
                 item.low_stock_notification = low_stock_notification
 
-            item.save()
-            return {
-                "id": str(item.id),
-                "name": item.name,
-                "description": item.description,
-                "price": item.price,
-                "stock": item.stock,
-                "custom_fields": item.custom_fields,
-                "low_stock_threshold": item.low_stock_threshold,
-                "category_ids": [
-                    category.id for category in item.categories.all()
-                ],
-                "low_stock_notification": item.low_stock_notification,
-            }
+            update_fields = [
+                "name",
+                "description",
+                "price",
+                "low_stock_threshold",
+                "custom_fields",
+                "low_stock_notification",
+            ]
+
+            if remove_image and item.image:
+                item.image.delete(save=False)
+                item.image = None  # type: ignore[assignment]
+                update_fields.append("image")
+            elif image is not None:
+                if item.image:
+                    item.image.delete(save=False)
+                item.image = image  # type: ignore[assignment]
+                update_fields.append("image")
+
+            item.save(update_fields=update_fields)
+            return _serialize_item(item)
 
     except InventoryItem.DoesNotExist as err:
         raise ValueError("Item not found in this inventory.") from err
 
 
 def delete_item(inventory_id: UUID, item_id: UUID) -> None:
-    """
-    Deletes an inventory item belonging to the active inventory.
-    """
     try:
         item = InventoryItem.objects.get(id=item_id, inventory_id=inventory_id)
         item.delete()

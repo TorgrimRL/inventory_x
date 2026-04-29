@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="48" fill="#FFF9E9"/>
+  <ellipse cx="256" cy="424" rx="124" ry="24" fill="#E6D7A4"/>
+  <path d="M162 344L286 184C296 171 314 166 330 171L382 188C404 195 410 223 393 237L264 353C255 361 242 366 229 366H182C165 366 153 352 162 344Z" fill="#F4D14B" stroke="#D8B034" stroke-width="8"/>
+  <circle cx="290" cy="236" r="14" fill="#E2B93A"/>
+  <circle cx="332" cy="232" r="10" fill="#E2B93A"/>
+  <circle cx="274" cy="290" r="12" fill="#E2B93A"/>
+  <circle cx="228" cy="320" r="9" fill="#E2B93A"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#8B6C16">CHEESE</text>
+</svg>

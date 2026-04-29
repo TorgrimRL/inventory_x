@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -14,6 +15,18 @@ org_number_validator = RegexValidator(
     regex=r"^\d{9}$",
     message="Organization number must be 9 digits",
 )
+
+
+def item_image_upload_path(instance: Any, filename: str) -> str:
+    extension = os.path.splitext(filename)[1].lower() or ".png"
+    inventory_id = instance.inventory_id or "unassigned"
+    item_id = instance.id or uuid.uuid4()
+    upload_id = uuid.uuid4()
+    return f"item-images/{inventory_id}/{item_id}-{upload_id}{extension}"
+
+
+def inventory_item_image_upload_to(instance: Any, filename: str) -> str:
+    return item_image_upload_path(instance, filename)
 
 
 class InventoryAlreadyExistsError(Exception):
@@ -169,6 +182,17 @@ class InventoryItem(models.Model):
             ),
         )
     low_stock_notification = models.BooleanField(default=False)
+    image = models.ImageField(
+        upload_to=item_image_upload_path,
+        null=True,
+        blank=True,
+    )
+
+    @property
+    def image_url(self) -> str | None:
+        if not self.image:
+            return None
+        return self.image.url
 
     def __str__(self):
         return self.name

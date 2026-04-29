@@ -165,6 +165,18 @@ export default function ItemPage() {
     setSelectedDetailsItem(null);
   }
 
+  useEffect(() => {
+    if (!selectedDetailsItem) return;
+
+    const latestSelectedItem = items.find(
+      (item) => item.id === selectedDetailsItem.id,
+    );
+
+    if (latestSelectedItem) {
+      setSelectedDetailsItem(latestSelectedItem);
+    }
+  }, [items, selectedDetailsItem]);
+
   const lowStockThreshold = Math.max(
     0,
     Number.parseInt(lowStockThresholdInput || "0", 10) || 0,
@@ -527,7 +539,7 @@ export default function ItemPage() {
                 <TextField
                   size="small"
                   type="number"
-                  label="Low stock threshold"
+                  label="Stock filter (<)"
                   value={lowStockThresholdInput}
                   onFocus={(e) => {
                     if (e.target.value === "0") setLowStockThresholdInput("");
@@ -656,6 +668,7 @@ export default function ItemPage() {
         initialPrice={selectedItem ? Number(selectedItem.price) : 0}
         currentStock={selectedItem?.stock || 0}
         initialCategoryIds={initialCategoryIds}
+        initialImageUrl={selectedItem?.image_url ?? null}
         initialCustomFields={selectedItem?.custom_fields}
         initialLowStockThreshold={selectedItem?.low_stock_threshold ?? null}
         low_stock_notification={selectedItem?.low_stock_notification || false}
@@ -669,12 +682,19 @@ export default function ItemPage() {
           setSnackMessage("Item added");
           setSnackOpen(true);
         }}
-        onItemUpdated={(updated: any) => {
+        onItemUpdated={async (updated: any) => {
           setItems((prev) =>
             prev.map((it) =>
               it.id === updated.id ? { ...it, ...updated } : it,
             ),
           );
+          setSelectedItem((prev) =>
+            prev && prev.id === updated.id ? { ...prev, ...updated } : prev,
+          );
+          setSelectedDetailsItem((prev) =>
+            prev && prev.id === updated.id ? { ...prev, ...updated } : prev,
+          );
+          await loadItems();
           setSnackMessage("Item updated");
           setSnackOpen(true);
         }}
@@ -729,6 +749,7 @@ export default function ItemPage() {
                       : "In stock",
                 lowStockThreshold: selectedDetailsItem.low_stock_threshold,
                 description: selectedDetailsItem.description ?? undefined,
+                imageUrl: selectedDetailsItem.image_url ?? null,
                 custom_fields: selectedDetailsItem.custom_fields,
               }
             : undefined
