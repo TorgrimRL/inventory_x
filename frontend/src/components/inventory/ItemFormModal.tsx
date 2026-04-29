@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ApiClient from "../../services/apiClient";
 import type { ItemCategory } from "../../services/inventoryService";
@@ -31,6 +31,7 @@ import type {
   InventoryCustomField,
   InventoryItem,
 } from "../../types/itemPageTypes";
+import { toMediaUrl } from "../../utils/mediaUrl";
 
 type Props = {
   open: boolean;
@@ -42,6 +43,7 @@ type Props = {
   currentStock?: number;
   initialCategoryIds?: string[];
   initialLowStockThreshold?: number | null;
+  initialImageUrl?: string | null;
   low_stock_notification?: boolean;
   initialCustomFields?: string | Record<string, any>;
   canEditDetails: boolean;
@@ -59,6 +61,7 @@ type Props = {
     category_ids?: string[];
     custom_fields?: Record<string, any>;
     description?: string;
+    image_url?: string | null;
   }) => void;
   onStockUpdated?: (newStock: number) => void;
   onItemDeleted?: (id: number | string) => void;
@@ -76,6 +79,8 @@ function extractError(err: any, fallback: string) {
 }
 
 const EMPTY_ARRAY: string[] = [];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 
 export default function ItemFormModal({
   open,
@@ -85,6 +90,7 @@ export default function ItemFormModal({
   description = "",
   initialPrice = 0,
   initialLowStockThreshold = null,
+  initialImageUrl = null,
   low_stock_notification = false,
   currentStock = 0,
   initialCategoryIds = EMPTY_ARRAY,
@@ -129,6 +135,11 @@ export default function ItemFormModal({
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [desc, setDescription] = useState(description);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
+    initialImageUrl,
+  );
+  const [removeImage, setRemoveImage] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -144,6 +155,9 @@ export default function ItemFormModal({
     setSelectedCategoryIds(initialCategoryIds);
     setError(null);
     setDescription(description || "");
+    setSelectedImage(null);
+    setCurrentImageUrl(initialImageUrl);
+    setRemoveImage(false);
 
     let parsed = {};
     if (typeof initialCustomFields === "string") {
@@ -177,7 +191,37 @@ export default function ItemFormModal({
     initialCategoryIds,
     initialCustomFields,
     description,
+    initialImageUrl,
   ]);
+
+  const objectUrlRef = useRef<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+
+    if (!selectedImage) {
+      setLocalPreviewUrl(null);
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(selectedImage);
+    objectUrlRef.current = nextUrl;
+    setLocalPreviewUrl(nextUrl);
+
+    return () => {
+      if (objectUrlRef.current === nextUrl) {
+        URL.revokeObjectURL(nextUrl);
+        objectUrlRef.current = null;
+      }
+    };
+  }, [selectedImage]);
+
+  const previewUrl =
+    localPreviewUrl ?? (removeImage ? null : toMediaUrl(currentImageUrl));
 
   const priceNumber = useMemo(() => Number(price), [price]);
   const priceIsInvalid = !Number.isFinite(priceNumber) || priceNumber < 0;
@@ -235,7 +279,9 @@ export default function ItemFormModal({
         initialCategoryKey !== selectedCategoryKey ||
         notification !== Boolean(low_stock_notification) ||
         initialCustomFieldsKey !== currentCustomFieldsKey ||
-        desc.trim() !== (description || "").trim()));
+        desc.trim() !== (description || "").trim() ||
+        selectedImage !== null ||
+        removeImage));
   const stockChanged = wantsStockChange && direction !== null;
   const hasChanges = isAdd || detailsChanged || stockChanged;
 
@@ -244,6 +290,20 @@ export default function ItemFormModal({
       setError(null);
       onClose();
     }
+  }
+
+  function validateSelectedImage(file: File | null): string | null {
+    if (!file) return null;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return "File type not supported";
+    }
+
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      return "File is too large (max 5 MB)";
+    }
+
+    return null;
   }
 
   async function handleSave() {
@@ -270,6 +330,9 @@ export default function ItemFormModal({
       if (stockWouldBeNegative) return setError("Stock cannot be negative.");
     }
 
+    const imageValidationError = validateSelectedImage(selectedImage);
+    if (imageValidationError) return setError(imageValidationError);
+
     setSaving(true);
     try {
       if (isAdd) {
@@ -282,8 +345,11 @@ export default function ItemFormModal({
           low_stock_notification: notification,
           category_ids: [...selectedCategoryIds],
           custom_fields: customFieldValues,
+          image: selectedImage,
+          remove_image: removeImage && !selectedImage,
         };
         const createdData = await createItem(payload);
+        setCurrentImageUrl(createdData?.image_url ?? null);
         if (onItemCreated) onItemCreated(createdData);
         onClose();
         return;
@@ -299,8 +365,17 @@ export default function ItemFormModal({
           low_stock_notification: notification,
           category_ids: [...selectedCategoryIds],
           custom_fields: customFieldValues,
+          image: selectedImage,
+          remove_image: removeImage && !selectedImage,
         };
-        await updateItem(itemId, payload);
+        const updatedResponse = await updateItem(itemId, payload);
+        const updatedImageUrl =
+          updatedResponse?.image_url ??
+          (selectedImage ? null : removeImage ? null : currentImageUrl);
+        setCurrentImageUrl(updatedImageUrl);
+        setSelectedImage(null);
+        setRemoveImage(false);
+
         if (onItemUpdated) {
           onItemUpdated({
             id: itemId,
@@ -311,6 +386,7 @@ export default function ItemFormModal({
             category_ids: payload.category_ids,
             custom_fields: payload.custom_fields,
             description: desc.trim(),
+            image_url: updatedImageUrl,
           });
         }
       }
@@ -446,6 +522,91 @@ export default function ItemFormModal({
                   : "Leave empty if no threshold should be set"
               }
             />
+
+            {(isAdd || canEditDetails || previewUrl) && (
+              <Stack spacing={1}>
+                <Typography variant="body2" color="text.secondary">
+                  Image
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Allowed formats: JPG, JPEG, PNG, WEBP. Max size: 5 MB.
+                </Typography>
+                {previewUrl ? (
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={previewUrl}
+                      alt={name || initialName || "Item image"}
+                      sx={{
+                        width: { xs: "100%", sm: 220 },
+                        maxWidth: 220,
+                        height: { xs: 220, sm: 220 },
+                        borderRadius: 1,
+                        objectFit: "cover",
+                        border: (theme) => `1px solid ${theme.palette.divider}`,
+                        backgroundColor: "background.paper",
+                      }}
+                    />
+                    {selectedImage ? (
+                      <Typography variant="caption" color="text.secondary">
+                        Preview of selected image, shown before you save
+                      </Typography>
+                    ) : null}
+                  </Box>
+                ) : null}
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    disabled={saving || (!isAdd && !canEditDetails)}
+                    aria-disabled={
+                      !isAdd && !canEditDetails ? "true" : undefined
+                    }
+                  >
+                    {previewUrl ? "Change image" : "Upload image"}
+                    <input
+                      hidden
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        const validationError = validateSelectedImage(file);
+
+                        if (validationError) {
+                          setSelectedImage(null);
+                          setError(validationError);
+                          return;
+                        }
+
+                        setError(null);
+                        setSelectedImage(file);
+                        setRemoveImage(false);
+                      }}
+                    />
+                  </Button>
+                  {previewUrl && (
+                    <Button
+                      variant="outlined"
+                      color="inherit"
+                      disabled={saving || (!isAdd && !canEditDetails)}
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setRemoveImage(true);
+                      }}
+                    >
+                      Remove image
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            )}
 
             <FormControlLabel
               control={

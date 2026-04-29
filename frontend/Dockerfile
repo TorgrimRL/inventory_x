@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Pin npm for reproducible builds
-RUN npm i -g npm@11.12.0
+RUN npm i -g npm@11.13.0
 
 COPY package*.json ./
 RUN npm ci

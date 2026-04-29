@@ -1,4 +1,11 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ItemFormModal from "../components/inventory/ItemFormModal";
@@ -42,6 +49,10 @@ const mockedCreateActiveCategory = createActiveCategory as jest.MockedFunction<
 describe("Edit Mode in ItemFormModal - user story tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    URL.createObjectURL = jest.fn(
+      () => "blob:preview",
+    ) as typeof URL.createObjectURL;
+    URL.revokeObjectURL = jest.fn() as typeof URL.revokeObjectURL;
     mockedListActiveCategories.mockResolvedValue([
       { id: "c1", name: "Cookies" },
       { id: "c2", name: "Cakes" },
@@ -126,6 +137,8 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
         category_ids: [],
         custom_fields: {},
         description: "",
+        image: null,
+        remove_image: false,
       });
     });
 
@@ -142,6 +155,7 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       category_ids: [],
       custom_fields: {},
       description: "",
+      image_url: null,
     });
 
     expect(props.onStockUpdated).toHaveBeenCalledWith(5);
@@ -371,6 +385,8 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
         category_ids: [],
         custom_fields: {},
         description: "",
+        image: null,
+        remove_image: false,
       });
     });
 
@@ -383,9 +399,111 @@ describe("Edit Mode in ItemFormModal - user story tests", () => {
       category_ids: [],
       custom_fields: {},
       description: "",
+      image_url: null,
     });
 
     expect(props.onClose).toHaveBeenCalled();
+  });
+
+  test("shows upload requirements text for item images", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).getByText(/allowed formats: jpg, jpeg, png, webp/i),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText(/max size: 5 mb/i)).toBeInTheDocument();
+  });
+
+  test("owner sees file type error for unsupported image upload", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const saveButton = within(dialog).getByRole("button", { name: /^save$/i });
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["gif-data"], "milk.gif", { type: "image/gif" });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(
+      await within(dialog).findByText(/file type not supported/i),
+    ).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+  });
+
+  test("owner sees file size error for oversized image upload", async () => {
+    renderModal({ canEditDetails: true });
+
+    const dialog = await screen.findByRole("dialog");
+    const uploadButton = within(dialog).getByRole("button", {
+      name: /upload image/i,
+    });
+    const fileInput = uploadButton.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "large.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(
+      await within(dialog).findByText(/file is too large \(max 5 mb\)/i),
+    ).toBeInTheDocument();
+    expect(mockedUpdateItem).not.toHaveBeenCalled();
+  });
+
+  test("owner sees change image and remove image actions when item already has an image", async () => {
+    renderModal({
+      canEditDetails: true,
+      initialImageUrl: "/media/items/existing.png",
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    const removeButton = within(dialog).getByRole("button", {
+      name: /remove image/i,
+    });
+
+    expect(
+      within(dialog).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
+    expect(changeButton).toBeEnabled();
+    expect(removeButton).toBeEnabled();
+  });
+
+  test("employee can see existing image but image actions are disabled", async () => {
+    renderModal({
+      canEditDetails: false,
+      initialImageUrl: "/media/items/existing.png",
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    const changeButton = within(dialog).getByRole("button", {
+      name: /change image/i,
+    });
+    const removeButton = within(dialog).getByRole("button", {
+      name: /remove image/i,
+    });
+
+    expect(
+      within(dialog).getByRole("img", { name: /milk/i }),
+    ).toBeInTheDocument();
+    expect(changeButton).toHaveAttribute("aria-disabled", "true");
+    expect(removeButton).toBeDisabled();
   });
 
   test("blocks save and shows warning when amount is set but direction is not selected", async () => {

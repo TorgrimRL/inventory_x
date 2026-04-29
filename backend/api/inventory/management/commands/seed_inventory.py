@@ -1,7 +1,10 @@
 import random
+import shutil
 import uuid
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -15,6 +18,19 @@ from api.inventory.models import (
     ItemCategory,
     StockLog,
 )
+
+SEED_DEMO_IMAGE_MAP = {
+    "milk (1l)": "milk.svg",
+    "bread loaf": "bread.svg",
+    "eggs (30-pack)": "eggs.svg",
+    "butter (2kg)": "butter.svg",
+    "cheese (1kg)": "cheese.svg",
+    "apples (1kg)": "apples.svg",
+    "bananas (1kg)": "bananas.svg",
+    "coffee beans (1kg)": "coffee.svg",
+    "rice (2kg)": "rice.svg",
+    "tomatoes (500g)": "tomatoes.svg",
+}
 
 
 def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
@@ -30,6 +46,27 @@ def seeded_stock_and_threshold(index: int) -> tuple[int, int | None]:
     return random.randint(6, 18), None  # no threshold
 
 
+def pick_seed_demo_image_filename(item_name: str) -> str | None:
+    return SEED_DEMO_IMAGE_MAP.get(item_name.strip().lower())
+
+
+def attach_seed_demo_image(item: InventoryItem, filename: str) -> bool:
+    source = Path(__file__).resolve().parents[2] / "seed_assets" / filename
+    if not source.exists():
+        return False
+
+    destination_relative = (
+        f"item-images/{item.inventory_id}/{item.id}{Path(filename).suffix}"
+    )
+    destination = Path(settings.MEDIA_ROOT) / destination_relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+
+    item.image.name = destination_relative
+    item.save(update_fields=["image"])
+    return True
+
+
 class Command(BaseCommand):
     help = (
         "Seeds database with mock inventory data (items +"
@@ -42,6 +79,9 @@ class Command(BaseCommand):
         # Static UUIDs for manual testing
         STATIC_INV_UUID = uuid.UUID("11111111-1111-1111-1111-111111111111")
         STATIC_ITEM_UUID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+        STOCK_LOG_CUTOFF = timezone.make_aware(
+            timezone.datetime(2026, 6, 15, 23, 59, 59)
+        )
 
         required_emails = [
             "admin@example.com",
@@ -64,15 +104,10 @@ class Command(BaseCommand):
         bob = users["bob@example.com"]
 
         # --- Simulated Time Helper ---
-        # Starts in early 2024 and moves forward to simulate longer history
-        self.simulated_time = timezone.now().replace(
-            year=2024,
-            month=1,
-            day=5,
-            hour=9,
-            minute=0,
-            second=0,
-            microsecond=0,
+        # Starts in early 2024 and moves forward to simulate longer history.
+        # Keep all seeded stock logs at or before mid-June 2026.
+        self.simulated_time = timezone.make_aware(
+            timezone.datetime(2024, 1, 5, 9, 0, 0)
         )
 
         def get_next_timestamp():
@@ -80,7 +115,9 @@ class Command(BaseCommand):
                 self.simulated_time += timedelta(days=random.randint(10, 24))
             else:
                 self.simulated_time += timedelta(days=random.randint(18, 35))
-            return self.simulated_time
+            return min(self.simulated_time, STOCK_LOG_CUTOFF)
+
+        seeded_images_attached = {"count": 0}
 
         with transaction.atomic():
             # Delete in safe order for FK changes
@@ -280,6 +317,16 @@ class Command(BaseCommand):
                 ("Vegan Chocolate Cookie (single)", 79),
                 ("Gluten-free Chocolate Cookie (single)", 89),
                 ("Oatmeal Raisin Cookie (single)", 69),
+                # Demo-friendly grocery items so image support is
+                # visible after seeding
+                ("Milk (1L)", 32),
+                ("Bread Loaf", 45),
+                ("Apples (1kg)", 49),
+                ("Bananas (1kg)", 39),
+                ("Tomatoes (500g)", 35),
+                ("Coffee Beans (1kg)", 189),
+                ("Rice (2kg)", 59),
+                ("Cheese (1kg)", 129),
                 # Bokser (pop-up salg)
                 ("Cookie Box (6 pcs) — assorted", 199),
                 ("Cookie Box (12 pcs) — assorted", 349),
@@ -552,14 +599,15 @@ class Command(BaseCommand):
                     final_stock, low_stock_threshold = (
                         seeded_stock_and_threshold(index)
                     )
-                    final_target_date = timezone.now().replace(
-                        year=2026,
-                        month=6,
-                        day=min(10 + (index % 18), 28),
-                        hour=9,
-                        minute=0,
-                        second=0,
-                        microsecond=0,
+                    final_target_date = timezone.make_aware(
+                        timezone.datetime(
+                            2026,
+                            6,
+                            min(10 + (index % 6), 15),
+                            9,
+                            0,
+                            0,
+                        )
                     )
 
                     initial_stock = final_stock + random.randint(20, 80)
@@ -622,6 +670,14 @@ class Command(BaseCommand):
                         custom_fields=mock_cf_data,
                     )
 
+                    seed_demo_image_filename = pick_seed_demo_image_filename(
+                        name
+                    )
+                    if seed_demo_image_filename and attach_seed_demo_image(
+                        item, seed_demo_image_filename
+                    ):
+                        seeded_images_attached["count"] += 1
+
                     selected_categories = pick_categories_for_item(
                         inventory, name
                     )
@@ -629,7 +685,19 @@ class Command(BaseCommand):
                         item.categories.set(selected_categories)
 
                     actor = random.choice(members)
-                    ts_creation = get_next_timestamp()
+                    ts_creation = min(
+                        timezone.make_aware(
+                            timezone.datetime(
+                                2024,
+                                1 + (index % 6),
+                                min(5 + (index % 20), 28),
+                                10,
+                                0,
+                                0,
+                            )
+                        ),
+                        STOCK_LOG_CUTOFF,
+                    )
 
                     log = StockLog.objects.create(
                         item_id=item.id,
@@ -665,11 +733,21 @@ class Command(BaseCommand):
                     ]
 
                     for year, month in timeline_points:
-                        ts_adj = current_ts.replace(
-                            year=year,
-                            month=month,
-                            day=min(5 + (index % 20), 28),
+                        ts_adj = timezone.make_aware(
+                            timezone.datetime(
+                                year,
+                                month,
+                                min(5 + (index % 20), 28),
+                                11,
+                                0,
+                                0,
+                            )
                         )
+
+                        if ts_adj <= current_ts:
+                            ts_adj = current_ts + timedelta(hours=1)
+
+                        ts_adj = min(ts_adj, STOCK_LOG_CUTOFF)
                         adj_actor = random.choice(members)
 
                         if month in {3, 6, 9, 12}:
@@ -767,7 +845,7 @@ class Command(BaseCommand):
                         performed_by=random.choice(members),
                     )
                     StockLog.objects.filter(pk=final_log.pk).update(
-                        timestamp=final_target_date
+                        timestamp=min(final_target_date, STOCK_LOG_CUTOFF)
                     )
 
             self.stdout.write(
@@ -811,6 +889,10 @@ class Command(BaseCommand):
 
             self.stdout.write(
                 f"- Descriptions added: {descriptions_added_count}"
+            )
+            self.stdout.write(
+                "- Seed demo images attached: "
+                f"{seeded_images_attached['count']}"
             )
 
             self.stdout.write(
