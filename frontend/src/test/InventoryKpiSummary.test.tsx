@@ -15,7 +15,6 @@ describe("InventoryKpiSummary", () => {
         allItems={items}
         visibleItems={items}
         showFilteredMetrics={false}
-        lowStockFilterThreshold={5}
       />,
     );
 
@@ -52,7 +51,6 @@ describe("InventoryKpiSummary", () => {
         allItems={allItems}
         visibleItems={filteredItems}
         showFilteredMetrics
-        lowStockFilterThreshold={5}
       />,
     );
 
