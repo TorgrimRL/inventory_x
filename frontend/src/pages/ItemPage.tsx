@@ -596,7 +596,6 @@ export default function ItemPage() {
               allItems={items}
               visibleItems={displayedItems}
               showFilteredMetrics={showFilteredMetrics}
-              lowStockFilterThreshold={lowStockFilterThreshold}
             />
 
             <Typography
