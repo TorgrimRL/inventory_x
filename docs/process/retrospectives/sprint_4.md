@@ -1,10 +1,12 @@
 # Sprint 4 Retrospective (14.04.2026)
 
-## Previous Action Items
+## Action Items from Previous Retro
 - **A:** Follow up on everyone's user testing progress during Sprint 4. The goal is for each team member to perform at least one test.
 - **T:** Verify and confirm that new PRs in Sprint 4 begin with a single test commit.
 
 *Discussion:* Both action items have been successfully implemented and completed.
+
+## Sprint 4 Retrospective Board
 
 | Start | Stop | Continue |
 | :--- | :--- | :--- |
@@ -12,7 +14,7 @@
 | | | **D:** Great effort |
 | | | **T:** Good teamwork and communication |
 
-## Discussion
+## Discussion Topics
 
 ### Shifting Priorities to the Report
 - **Context:** The team needs to transition away from building large features and making major site changes, shifting focus entirely toward writing the report.

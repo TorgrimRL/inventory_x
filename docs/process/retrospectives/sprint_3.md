@@ -1,8 +1,10 @@
 # Sprint 3 Retrospective (25.03.2026)
 
-## Previous Action Items
+## Action Items from Previous Retro
 - **K:** Configure a Discord bot during Sprint 3 to announce when code is merged into `main` (and potentially announce PR assignments).
 *Discussion:* Deemed less crucial than previously thought. The team will stick to manually sending short messages on Discord when code is merged. (Cancelled)
+
+## Sprint 3 Retrospective Board
 
 | Start | Stop | Continue |
 | :--- | :--- | :--- |
@@ -10,7 +12,7 @@
 | **T:** Actually try test-driven development (TDD) | | **D:** Good communication from everyone |
 | | | **A:** Continue with manual merge updates on Discord |
 
-## Discussion
+## Discussion Topics
 
 ### User Testing on Friends/Family
 - **Context:** The team wants to start gathering feedback from real users to guide development.
