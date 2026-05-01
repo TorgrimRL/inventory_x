@@ -64,10 +64,11 @@ Based on the findings from the user tests, several improvements were implemented
 
 - Fixed permission issue where employees could add items (PR `#259`)
 - Low-stock threshold filter was renamed to "Stock filter (<=)" (PR `#290`)
-- "Low stock only" was renamed to "Activate stock filter" (PR `#296`)
+- The toggle used to activate the stock filter was renamed from "Low stock only" to "Activate stock filter" (PR `#296`)
+- The stock filter behavior was aligned with key metrics to improve consistency: key metrics no longer change when the filter is not activated, and low-stock items are now based on each item's own threshold (PR `#298`)
 - Item History & Logs was moved to a dedicated action button with tooltip for improved discoverability (PR `#287`)
-- "Forgot password" was moved from the navigation bar to the login flow for better placement (PR: `#293`)
-- Log out was moved from the navigation bar to a user profile dropdown menu (PR: `#282`)
+- "Forgot password" was moved from the navigation bar to the login flow for better placement (PR `#293`)
+- Log out was moved from the navigation bar to a user profile dropdown menu (PR `#282`)
 
 ## Business Fit
 Most participants stated that the system would be useful in practice and could reduce manual work. However, the system still felt somewhat unfinished and required manual data entry, reducing efficiency gains. 
