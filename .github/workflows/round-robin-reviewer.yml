@@ -17,13 +17,13 @@ jobs:
   assign:
     runs-on: ubuntu-latest
     steps:
-      - name: Velg neste reviewer og be om review
+      - name: Select next reviewer and request review
         uses: actions/github-script@v7
         with:
           script: |
             const reviewers = [
               "TorgrimRL",
-              "blackh-t",
+              "N-Choo",
               "Daniel-De-Dev",
               "Vargren11",
               "lottehenriksen",
@@ -33,46 +33,46 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            // Pull request-nummeret vi jobber med
+            // Pull request number we are working with
             const prNumber = context.payload.pull_request.number;
 
-            // Label som "låser" PR-en slik at synchronize-events ikke reassigner
+            // Label that locks the PR so synchronize events do not reassign it
             const assignedLabel = "rr-assigned";
 
-            // Issue som brukes til å lagre "peker" (hvem som er neste i rotasjonen)
+            // Issue used to store the pointer for the next reviewer in the rotation
             const stateIssueTitle = "reviewer-rotation-state";
 
-            // Hent full PR fra API (payload kan være ufullstendig / utdatert)
+            // Fetch the full PR from the API because the payload can be incomplete or outdated
             const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: prNumber,
             });
 
-            // Ikke auto-assign på draft PRs
+            // Do not auto-assign draft PRs
             if (pr.draft) {
-              core.info("PR er draft; skipper.");
+              core.info("PR is a draft; skipping.");
               return;
             }
 
-            // Hvis PR allerede er merket som rr-assigned, ikke reassign på synchronize
+            // If the PR is already marked as rr-assigned, do not reassign on synchronize
             const alreadyAssigned = (pr.labels || []).some((l) => l.name === assignedLabel);
             if (alreadyAssigned) {
-              core.info(`PR er allerede merket '${assignedLabel}'; skipper reassign.`);
+              core.info(`PR is already marked '${assignedLabel}'; skipping reassignment.`);
               return;
             }
 
-            // Hvis noen allerede er forespurt som reviewer, ikke overstyr
+            // If someone is already requested as a reviewer, do not override it
             if ((pr.requested_reviewers?.length ?? 0) > 0) {
-              core.info("PR har allerede requested reviewers; skipper.");
+              core.info("PR already has requested reviewers; skipping.");
               return;
             }
 
             const author = pr.user.login;
 
-            // Ekstra "safety":
-            // Hvis PR allerede har fått en review (Approved/Changes requested/Comment),
-            // så skal vi IKKE be om en ny reviewer ved senere synchronize-events.
+            // Extra safety:
+            // If the PR has already received a review (Approved/Changes requested/Comment),
+            // do not request a new reviewer on later synchronize events.
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner,
               repo,
@@ -90,11 +90,11 @@ jobs:
             });
 
             if (hasReview) {
-              core.info("PR har allerede minst én review; skipper reassign.");
+              core.info("PR already has at least one review; skipping reassignment.");
               return;
             }
 
-            // Finn (eller lag) issue som lagrer pekeren
+            // Find or create the issue that stores the pointer
             const search = await github.rest.search.issuesAndPullRequests({
               q: `repo:${owner}/${repo} is:issue in:title "${stateIssueTitle}"`,
             });
@@ -105,7 +105,7 @@ jobs:
               const issue = search.data.items[0];
               issueNumber = issue.number;
 
-              // search-resultat kan ha truncated body, så les issue for å være sikker
+              // Search results can have truncated bodies, so read the issue to be sure
               const full = await github.rest.issues.get({
                 owner,
                 repo,
@@ -126,7 +126,7 @@ jobs:
               pointer = 0;
             }
 
-            // Velg neste reviewer i round-robin, men hopp over PR-forfatter
+            // Select the next reviewer in round-robin order, but skip the PR author
             let pickIndex = null;
             for (let i = 0; i < reviewers.length; i++) {
               const idx = (pointer + i) % reviewers.length;
@@ -138,14 +138,14 @@ jobs:
             }
 
             if (pickIndex === null) {
-              core.info("Fant ingen eligible reviewer (er alle forfatteren?).");
+              core.info("Found no eligible reviewer (is everyone the author?).");
               return;
             }
 
             const chosen = reviewers[pickIndex];
             const nextPointer = (pickIndex + 1) % reviewers.length;
 
-            // Be om review på PR-en
+            // Request a review on the PR
             await github.rest.pulls.requestReviewers({
               owner,
               repo,
@@ -153,7 +153,7 @@ jobs:
               reviewers: [chosen],
             });
 
-            // Merk PR med rr-assigned så synchronize ikke reassigner senere
+            // Mark the PR with rr-assigned so synchronize does not reassign it later
             await github.rest.issues.addLabels({
               owner,
               repo,
@@ -161,7 +161,7 @@ jobs:
               labels: [assignedLabel],
             });
 
-            // Oppdater pekeren i state-issue
+            // Update the pointer in the state issue
             await github.rest.issues.update({
               owner,
               repo,
@@ -169,4 +169,4 @@ jobs:
               body: String(nextPointer),
             });
 
-            core.info(`Requested review fra ${chosen}. Neste pointer: ${nextPointer}`);
+            core.info(`Requested review from ${chosen}. Next pointer: ${nextPointer}`);
