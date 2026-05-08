@@ -43,7 +43,7 @@ To get the development stack running locally:
 
 ```
 
-2. Start the stack (this will wipe the database and seed it with initial data & users):
+2. Start the stack (this will wipe the database and seed it with initial data & users, if it fails try again):
 
 ```bash
 make init
