@@ -1,103 +1,73 @@
-# Frontend
+# Frontend Development Guide
 
-> **Recommended:** For local development, use the Docker quickstart in the repo root (`../README.md`).
-> This README is mainly for running the frontend outside Docker.
+> **Recommended:** For local development, use the Docker quickstart in the repository root (`../README.md`). This guide is primarily for running and developing the React frontend directly on your host machine.
 
-# Download Node.js
+---
 
-`https://nodejs.org/en/download`
+## Prerequisites
 
-# Run these to check if the installation was successful
+Ensure you have the following installed on your machine:
+* [Node.js](https://nodejs.org/en/download) (LTS version recommended)
+* `npm` (This is included automatically when you install Node.js)
 
-Commands:
-`node -v`
-`npm -v`
-
-# Install npm
-
-Command: `npm install`
-
-# Run the program
-
-Make sure to be in the correct folder `frontend`
-Run this command: `npm run dev`
-
-Click on `http://localhost:5173/` to get to the web page
-
-# Testing
-
-## Install Jest and other packages
-
-`npm install --save-dev jest`
-
-# Download Node.js
-
-`https://nodejs.org/en/download`
-
-# Run these to check if the installation was successful
-
-Commands:
-`node -v`
-`npm -v`
-
-# Install npm
-
-Command: `npm install`
-
-# Run the program
-
-Make sure to be in the correct folder `frontend`
-Run this command: `npm run dev`
-
-Click on `http://localhost:5173/` to get to the web page
-
-# Testing
-
-## Install Jest and other packages
-
-`npm install --save-dev jest`
-
-`npm i -D jest`
-
-`npm i -D jest jest-environment-jsdom @types/jest ts-jest`
-
-`npm i -D @testing-library/react @testing-library/jest-dom @testing-library/user-event`
-
-`npm i -D identity-obj-proxy`
-
-`npm i -D @types/jest jest-environment-jsdom`
-
-`npm i -D ts-jest typescript`
-
-## Run tests
-
-Command: `npm test`
-`npm i -D jest`
-
-`npm i -D jest jest-environment-jsdom @types/jest ts-jest`
-
-`npm i -D @testing-library/react @testing-library/jest-dom @testing-library/user-event`
-
-`npm i -D identity-obj-proxy`
-
-`npm i -D @types/jest jest-environment-jsdom`
-
-`npm i -D ts-jest typescript`
-
-## Run tests
-
-Command: `npm test`
-
-## Frontend checks
-
-### Format:
-
+You can verify your installation by running:
 ```bash
- npx prettier --write .
+node -v
+npm -v
+
 ```
 
-### Lint:
+---
+
+## Local Setup (Without Docker)
+
+1. **Install Dependencies:**
+Ensure you are in the `frontend/` directory, then install all required packages. This will automatically install React, Vite, Jest, ESLint, Prettier, and all other necessary testing libraries defined in your `package.json`.
+```bash
+npm install
+
+```
+
+
+2. **Run the Development Server:**
+Start the Vite development server:
+```bash
+npm run dev
+
+```
+
+
+Once running, open your browser and navigate to: [http://localhost:5173/](https://www.google.com/search?q=http://localhost:5173/)
+
+---
+
+## Development Commands
+
+### Testing
+
+We use Jest and React Testing Library for our frontend tests.
+
+**Run the test suite:**
 
 ```bash
- npx eslint . --fix
+npm test
+
+```
+
+### Code Quality
+
+Maintain code quality by running our formatters and linters before committing changes.
+
+**Auto-format everything (Prettier):**
+
+```bash
+npx prettier --write .
+
+```
+
+**Check and auto-fix linting errors (ESLint):**
+
+```bash
+npx eslint . --fix
+
 ```

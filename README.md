@@ -1,176 +1,73 @@
-# Inventory X (Monorepo)
+# Inventory X
 
-Monorepo containing:
+A simple and robust inventory management system for businesses.
 
-- **Frontend**: React + TypeScript + Vite (+ Jest)
-- **Backend**: Django (uv)
-- **Database**: PostgreSQL
-- **Dev environment**: Docker Compose
+**[Watch the quick intro video](https://drive.proton.me/urls/1V9PWTF8HC#gjIBtKFVzvnI)**
 
 ---
 
-## Quickstart (Docker)
+## Live Production Version
 
-### 1) Create your environment file
+Try out the latest version live: [https://inventoryx.td.org.uit.no/](https://inventoryx.td.org.uit.no/)
+
+### Test Accounts
+
+| Role                         | Username            | Password       |
+| :--------------------------- | :------------------ | :------------- |
+| **Owner** (All inventories)  | `admin@example.com` | `adminpass123` |
+| **Employee** (2 inventories) | `alice@example.com` | `alicepass456` |
+| **Owner** (Single inventory) | `bob@example.com`   | `bobpass789`   |
+
+---
+
+## Project Structure
+
+This repository is a monorepo containing both the frontend and backend code.
+
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Django
+- **Database**: PostgreSQL
+- **Infrastructure**: Docker Compose
+
+---
+
+## Quickstart (Local Development)
+
+To get the development stack running locally:
+
+1. Set up your environment variables:
 
 ```bash
-cp .env.example .env
+   cp .env.example .env
+
 ```
 
-### 2) First-time setup (fresh DB + seed)
+2. Start the stack (this will wipe the database and seed it with initial data & users):
 
 ```bash
 make init
+
 ```
 
-make init resets the database volume (all data is deleted) and seeds mock data.
+Once running, the applications are available at:
 
-### 3) Start the stack (next times)
+- **Frontend**: [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
+- **Backend**: [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
+
+To resume the instance on subsequent runs without wiping data, simply use:
 
 ```bash
 make up
+
 ```
-
-This starts the development stack (Vite + Django + Postgres) via Docker Compose.
-
-- Frontend: [http://localhost:5173](http://localhost:5173)
-- Backend: [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## Useful commands
+## Documentation & Development
 
-Run all checks (format, lint, tests):
+For detailed technical information, including testing, debugging, and operational commands, please see our dedicated documentation:
 
-```bash
-make check
-```
-
-Auto-format everything:
-
-```bash
-make fmt
-```
-
-Testing
-
-```bash
-make test
-```
-
-`make test` runs all tests. You can scope it to `backend` or `frontend`, and narrow it further by adding an optional
-path after that.
-
-You may omit:
-
-- the `api/` prefix for backend paths
-- the `src/` prefix for frontend paths
-- the `test/` prefix for frontend test files (tests live under `src/test/`)
-
-Examples:
-
-```bash
-make test frontend inventories.test.tsx
-make test frontend test/inventories.test.tsx
-make test frontend ItemPage.test.tsx
-make test backend inventory/tests/test_views.py
-```
-
-Stop containers:
-
-```bash
-make down
-```
-
-Reset database (removes all data):
-
-```bash
-make reset
-```
-
-Seed mock data:
-
-```bash
-make seed
-```
-
-Follow logs:
-
-```bash
-make logs
-```
-
-Follow logs for a single service:
-
-```bash
-make logs-backend
-```
-
-```bash
-make logs-frontend
-```
-
-```bash
-make logs-db
-```
-
-## Prod-like smoke test
-
-A prod-like smoke test is available to verify that the full stack starts correctly behind nginx.
-
-Run locally with:
-
-```bash
-./scripts/prod_smoke.sh
-```
-
-For more details, see:
-
-- `docs/prod_smoke.md`
-
-## Debugging (VS Code + Docker)
-
-### 1) Start backend + db i debug-modus (debugpy på :5678)
-
-```bash
-make debug-up
-```
-
-### 2) Debug Django runserver (attach :5678)
-
-VS Code → Run and Debug → Django runserver in Docker (attach :5678)
-
-### 3) Debug Pytest (attach :5679)
-
-VS Code → Run and Debug → Pytest in Docker (attach :5679)
-Stop debug
-
-### Stop debug
-
-```bash
-make debug-down
-```
-
-## Documentation
-
-- Backend docs: `backend/README.md`
-- Frontend docs: `frontend/README.md`
-- Production deployment documentation: `deploy/README.md`
-
-### Swagger documentation
-
-```bash
-make init # initialize server
-make swagger # load the swagger
-```
-
-### Login credentials to test
-
-username: admin@example.com
-password: adminpass123
-
-username: alice@example.com
-password: alicepass456
-
-username: bob@example.com
-password: bobpass789
+- **[Development Guide](./docs/development.md)**: Testing, debugging, and `make` commands.
+- **[Backend Docs](./backend/README.md)**
+- **[Frontend Docs](./frontend/README.md)**
+- **[Deployment Docs](./deploy/README.md)**
