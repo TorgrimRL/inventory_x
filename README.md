@@ -32,6 +32,7 @@ This repository is a monorepo containing both the frontend and backend code.
 ---
 
 ## Quickstart (Local Development)
+
 REQUIREMENTS: DOCKER
 
 To get the development stack running locally:
@@ -43,17 +44,20 @@ To get the development stack running locally:
 
 ```
 
-2. Start the stack (this will wipe the database and seed it with initial data & users, if it fails try again):
+2. Start the stack:
 
 ```bash
-make init
+make up
 
 ```
 
+> [!TIP]
+**First time setting up?** Run `make up`, wait about 5 seconds for the database to finish initializing, and then run `make seed` to populate it with test users and demo inventory items.
+
 Once running, the applications are available at:
 
-- **Frontend**: [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
-- **Backend**: [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Backend**: [http://localhost:8000](http://localhost:8000)
 
 To resume the instance on subsequent runs without wiping data, simply use:
 
