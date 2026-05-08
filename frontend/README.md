@@ -7,10 +7,12 @@
 ## Prerequisites
 
 Ensure you have the following installed on your machine:
-* [Node.js](https://nodejs.org/en/download) (LTS version recommended)
-* `npm` (This is included automatically when you install Node.js)
+
+- [Node.js](https://nodejs.org/en/download) (LTS version recommended)
+- `npm` (This is included automatically when you install Node.js)
 
 You can verify your installation by running:
+
 ```bash
 node -v
 npm -v
@@ -22,20 +24,20 @@ npm -v
 ## Local Setup (Without Docker)
 
 1. **Install Dependencies:**
-Ensure you are in the `frontend/` directory, then install all required packages. This will automatically install React, Vite, Jest, ESLint, Prettier, and all other necessary testing libraries defined in your `package.json`.
+   Ensure you are in the `frontend/` directory, then install all required packages. This will automatically install React, Vite, Jest, ESLint, Prettier, and all other necessary testing libraries defined in your `package.json`.
+
 ```bash
 npm install
 
 ```
 
-
 2. **Run the Development Server:**
-Start the Vite development server:
+   Start the Vite development server:
+
 ```bash
 npm run dev
 
 ```
-
 
 Once running, open your browser and navigate to: [http://localhost:5173/](https://www.google.com/search?q=http://localhost:5173/)
 
