@@ -39,7 +39,7 @@ npm run dev
 
 ```
 
-Once running, open your browser and navigate to: [http://localhost:5173/](https://www.google.com/search?q=http://localhost:5173/)
+Once running, open your browser and navigate to: [http://localhost:5173/](http://localhost:5173/)
 
 ---
 
