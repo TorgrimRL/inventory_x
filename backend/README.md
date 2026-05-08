@@ -1,199 +1,196 @@
-# Backend
+# Backend Development Guide
 
-> **Recommended:** For local development, use the Docker quickstart in the repo
-> root (`../README.md`). This README is mainly for running the backend outside
-> Docker.
-
-## Admin Interface
-
-The Django Admin panel is enabled for data inspection and management.
-
-- **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
-- **Default Superuser:**
-  - **Email:** `admin@example.com`
-  - **Password:** `adminpass123` _(Available after running
-    `python manage.py seed_users` or `make seed`)_
-
-## Commands
-
-**Installation**
-
-```bash
-uv sync --frozen
-```
-
-**Apply Migration**
-
-```bash
-uv run python manage.py migrate
-```
-
-**Seed Mock Data**
-
-```bash
-uv run python manage.py seed_db
-```
-
-NOTE: `seed_db` is just the name of the `.py` file in
-`api/<domain>/management/commands/`
-
-**Running the Server**
-
-```bash
-uv run python manage.py runserver
-```
-
-Note for docker this has to be run instead:
-`uv run python manage.py runserver 0.0.0.0:8000`
-
-**Running General Commands in uv**
-
-```bash
-uv run {command}
-```
-
-### Format (Ruff)
-
-**Check formatting**
-
-```bash
-uv run ruff format --check .
-```
-
-**Auto-fix formatting**
-
-```bash
-uv run ruff format .
-```
-
-### Lint (Ruff)
-
-**Check lint**
-
-```bash
-uv run ruff check .
-```
-
-**Auto-fix lint**
-
-```bash
-uv run ruff check --fix .
-```
-
-### Format README (Prettier)
-
-**Check formatting**
-
-```bash
-npx prettier --check README.md
-```
-
-**Auto-fix formatting**
-
-```bash
-npx prettier --write README.md
-```
-
-### Run Testing for backend
-
-```bash
-uv run pytest -v -x
-```
-
-### Run Type checking
-
-```bash
-uv run mypy . --exclude 'migrations/'
-```
-
-### MIGRATION
-
-**Add Migration**
-
-A Database schema presents as a object, create a new table is done by initialize
-a new class, and sets its field by sets the class attributes in
-'api/inventory/models.py'. Then run the command below to generate a completed
-migrate file and sync to the database.
-
-```bash
-uv run python manage.py makemigrations
-```
-
-If the migration check fails, generate the missing migration files locally, run
-migrations, then commit the newly created migration file(s) and push again.
-
-```bash
-uv run python manage.py makemigrations
-uv run python manage.py migrate
-```
+> **Recommended:** For local development, use the Docker quickstart in the
+> repository root (`../README.md`). This guide is primarily for running and
+> developing the Django backend directly on your host machine.
 
 ---
 
 ## Architecture & Structure
 
-Domain-Driven structure with a Service Layer pattern to ensure testability and
-robustness.
+The backend uses a **Domain-Driven Design (DDD)** approach combined with a
+**Service Layer pattern**. This ensures business logic is highly testable,
+robust, and decoupled from the HTTP routing.
 
 ### Directory Layout
 
-The standard Django "inner project folder" (usually named `backend/`) has been
-renamed to `config/` to avoid the repetitive `backend/backend/` structure.
+The standard Django inner project folder is named `config/` (instead of
+`backend/`) to house global settings, while domain logic lives inside the `api/`
+directory.
 
 ```text
 backend/
-├── config/             <-- Global Settings, Env, & Main Router
-├── api/                <-- Domain Logic Container
-│   ├── inventory/      <-- Inventory Domain (App)
-│   │   ├── migrations/     <-- Database schema changes (Do not edit manually)
-│   │   ├── management/
-│   │   │   └── commands/
-│   │   │       └── seed_db.py  <-- Script: Populates DB with mock data
-│   │   ├── tests/          <-- Domain Tests
-│   │   │   ├── test_services.py <-- Unit Tests (Logic only)
-│   │   │   └── test_views.py    <-- Integration Tests (API Endpoints)
-│   │   ├── apps.py     <-- App Configuration (api.inventory)
-│   │   ├── urls.py     <-- Domain-specific Routes
-│   │   ├── services.py <-- Business Logic (Pure Python)
-│   │   └── views.py    <-- HTTP Interface (Calls Services)
-│   └── users/          <-- (Future) Users Domain
+├── config/                 <-- Global Settings
+├── api/                    <-- Domain Logic Container
+│   ├── common/             <-- Shared utilities and base classes
+│   ├── inventory/          <-- Inventory Domain
+│   │   ├── contracts/      <-- Request/Response schemas (API Contracts)
+│   │   ├── management/     <-- Custom Django management commands
+│   │   ├── migrations/     <-- Database schema changes (Auto-generated)
+│   │   ├── models.py       <-- Database schemas and ORM definitions
+│   │   ├── serializers/    <-- Data validation and object serialization
+│   │   ├── services/       <-- Business Logic
+│   │   ├── tests/          <-- Unit and Integration tests
+│   │   ├── urls.py         <-- Domain-specific routing
+│   │   └── views/          <-- HTTP Interface
+│   └── user/               <-- User & Authentication Domain
 ├── manage.py
-└── ...
+└── pyproject.toml
+
 ```
 
-### Design Patterns
+### Design Principles
 
-1. **Service Layer** (`services.py`): Contains all business logic. Pure Python
-   functions. Independent of HTTP.
-1. **Views** (`views.py`): "Thin" interface. Handles HTTP requests/responses and
-   calls the Service Layer.
-1. **Scalability:** Both views.py and services.py can be converted into
-   directories (packages) when complexity grows.
-
-This approach has the benefits of:
-
-1. better testing experience (service and responses can be tested separately)
-1. in the case of frontend changes (where response might change) the service
-   remains the same
+1. **Views (`views/`):** A "thin" HTTP interface. They extract request data,
+   call the appropriate Service, and return an HTTP response.
+2. **Service Layer (`services/`):** Contains all business logic. These are pure
+   Python functions that handle the heavy lifting and database interactions.
+3. **Contracts/Serializers (`contracts/` & `serializers/`):** Enforce strict
+   input/output boundaries.
 
 ---
 
-## Versions & Environment
+## Local Setup (Without Docker)
 
-**Core**
+### Prerequisites
 
-- `uv 0.9.24`
-- `Python 3.12.12`
-- `PostgreSQL 16`
+Ensure you have the following installed:
 
-**Formatters & Linters**
+- `uv` (0.9.24+)
+- Python 3.12+
+- PostgreSQL 16
+- Redis (for caching/sessions)
 
-- `ruff` (Python)
-- `prettier` (Markdown/Web)
-- `typos` (Spell checking)
-- `shfmt` (Shell/Bash)
+### 1. Environment Configuration
 
-**Environment Variables**
+Copy the example environment file and configure it for your local machine:
 
-- `DATABASE_URL`: `postgres://<USERNAME>:pass@db_container:5432/inventory_db`
-- `DEBUG`: `True`
-- `SECRET_KEY`: `<any-random-string>`
+```bash
+cp ../.env.example .env
+
+```
+
+_Note: If running outside of Docker, ensure your `DATABASE_URL` and `REDIS_URL`
+point to `localhost` or `127.0.0.1` instead of the Docker service names._
+
+### 2. Installation
+
+Sync your Python environment using `uv`:
+
+```bash
+uv sync --frozen
+
+```
+
+### 3. Database Setup & Seeding
+
+Apply database migrations:
+
+```bash
+uv run python manage.py migrate
+
+```
+
+Seed the database with mock data and test users:
+
+```bash
+uv run python manage.py seed_users
+uv run python manage.py seed_inventory
+
+```
+
+---
+
+## Running the Server
+
+Start the Django development server:
+
+```bash
+uv run python manage.py runserver
+
+```
+
+_(Note: Inside a Docker container, you must bind to all interfaces using
+`uv run python manage.py runserver 0.0.0.0:8000`)_
+
+### Admin Interface
+
+The Django Admin panel is enabled for rapid data inspection:
+
+- **URL:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+- **Default Superuser:** (Available after running `seed_users`)
+- **Email:** `admin@example.com`
+- **Password:** `adminpass123`
+
+---
+
+## Development Commands
+
+All Python scripts and tools should be executed through `uv run`.
+
+### Formatting & Linting (Ruff & Prettier)
+
+**Auto-format Python code:**
+
+```bash
+uv run ruff format .
+
+```
+
+**Check Python formatting:**
+
+```bash
+uv run ruff format --check .
+
+```
+
+**Auto-fix Python linting errors:**
+
+```bash
+uv run ruff check --fix .
+
+```
+
+**Auto-format Markdown docs:**
+
+```bash
+npx prettier --write README.md
+
+```
+
+### Type Checking (Mypy)
+
+Run strict type checking across the codebase:
+
+```bash
+uv run mypy . --exclude 'migrations/'
+
+```
+
+### Testing (Pytest)
+
+Run all backend tests (stops on first failure):
+
+```bash
+uv run pytest -v -x
+
+```
+
+### Database Migrations
+
+When you modify a model in `models.py`, generate a new migration file:
+
+```bash
+uv run python manage.py makemigrations
+
+```
+
+Then, apply the new migration to your database:
+
+```bash
+uv run python manage.py migrate
+
+```
+
+_Always remember to commit your newly generated migration files to version
+control._
