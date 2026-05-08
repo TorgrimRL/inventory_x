@@ -33,6 +33,7 @@ This repository is a monorepo containing both the frontend and backend code.
 
 ## Quickstart (Local Development)
 REQUIREMENTS: DOCKER
+
 To get the development stack running locally:
 
 1. Set up your environment variables:
